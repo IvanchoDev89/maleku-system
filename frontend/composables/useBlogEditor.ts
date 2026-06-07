@@ -94,6 +94,7 @@ export const useBlogEditor = (postId?: string) => {
       }
     } catch (error) {
       console.error('Error loading post:', error)
+      useToast().add('Error loading post', 'error')
     }
   }
 

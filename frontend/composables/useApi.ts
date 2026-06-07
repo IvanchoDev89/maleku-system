@@ -75,6 +75,7 @@ export const useApi = () => {
       }
 
       console.error(`API Error [${options.method || 'GET'} ${endpoint}]:`, error)
+      useToast().add(`API Error: ${error?.status || ''} ${endpoint}`.trim(), 'error')
       
       if (error.response) {
         throw {
@@ -116,6 +117,7 @@ export const useApi = () => {
         throw { status: 408, data: { detail: 'Upload timed out' } }
       }
       console.error(`Upload Error [${endpoint}]:`, error)
+      useToast().add(`Upload failed: ${endpoint}`, 'error')
       if (error.response) {
         throw {
           status: error.response.status,

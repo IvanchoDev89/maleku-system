@@ -98,6 +98,7 @@ export function useDashboard(revenuePeriod: Ref<string>) {
       }
     } catch (error) {
       console.error('Error loading dashboard:', error)
+      useToast().add('Error loading dashboard', 'error')
     } finally {
       loading.value = false
     }
@@ -108,6 +109,7 @@ export function useDashboard(revenuePeriod: Ref<string>) {
       await api.post(`/superadmin/dashboard/alerts/${alertId}/dismiss`)
     } catch (error) {
       console.error('Error dismissing alert:', error)
+      useToast().add('Error dismissing alert', 'error')
     }
     alerts.value = alerts.value.filter(a => a.id !== alertId)
   }

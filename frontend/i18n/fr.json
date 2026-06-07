@@ -20,8 +20,71 @@
   },
   "hero": {
     "title": "Découvrez la Magie du Costa Rica",
-    "subtitle": "Plages dorées, volcans actifs, forêts tropicales et aventures uniques vous attendent",
-    "cta": "Explorer les destinations"
+    "subtitle": {
+      "highlight": "We connect travelers with the best local providers.",
+      "main": "Pristine beaches, active volcanoes and unique adventures await you."
+    },
+    "cta": {
+      "explore": "Explore Destinations",
+      "planner": "Plan Your Trip"
+    },
+    "destinations": {
+      "guanacaste": {
+        "region": "North Pacific"
+      },
+      "lafortuna": {
+        "region": "Alajuela"
+      },
+      "manuelantonio": {
+        "region": "Central Pacific"
+      },
+      "monteverde": {
+        "region": "Puntarenas"
+      },
+      "puertoviejo": {
+        "region": "Caribbean"
+      },
+      "sanjose": {
+        "region": "Central Valley"
+      }
+    },
+    "headline": {
+      "line1": "Discover",
+      "line2": "Costa Rica"
+    },
+    "live": {
+      "mockDestination": "Manuel Antonio",
+      "mockUser": "Maria G.",
+      "recentBooking": "Recent: {user} booked in {destination}",
+      "usersOnline": "people exploring now"
+    },
+    "scrollIndicator": {
+      "label": "Scroll down"
+    },
+    "search": {
+      "button": "Search Experiences",
+      "dates": {
+        "label": "Dates",
+        "placeholder": "When do you travel?"
+      },
+      "destination": {
+        "label": "Destination",
+        "placeholder": "Where are you going?"
+      },
+      "popular": "Popular:",
+      "searching": "Searching...",
+      "travelers": {
+        "label": "Travelers"
+      }
+    },
+    "trust": {
+      "bestPrice": "Best price guaranteed",
+      "cancelation": "Free cancellation 48h",
+      "travelers": "+10,000 happy travelers"
+    },
+    "video": {
+      "fallbackAlt": "Costa Rica beach"
+    }
   },
   "stats": {
     "territory": "de la biodiversité mondiale",
@@ -32,18 +95,108 @@
   "destinations": {
     "badge": "Explorez le Costa Rica",
     "title": "Destinations Incontournables",
-    "subtitle": "Du Pacifique sec aux Caraïbes tropicales, chaque région offre une expérience unique"
+    "subtitle": "Du Pacifique sec aux Caraïbes tropicales, chaque région offre une expérience unique",
+    "items": {
+      "caribe": {
+        "ariaLabel": "Explorer la destination Caraïbe Sud",
+        "description": "Culture afro-caribéenne, kayak et tranquillité",
+        "highlights": "Culture · Kayak · Paix",
+        "imageAlt": "Canaux de Tortuguero dans les Caraïbes"
+      },
+      "guanacaste": {
+        "ariaLabel": "Explorer la destination Guanacaste",
+        "description": "Plages dorées, surf et couchers de soleil spectaculaires",
+        "highlights": "Plages · Surf · Soleil",
+        "imageAlt": "Plage dorée du Guanacaste au coucher du soleil"
+      },
+      "la-fortuna": {
+        "ariaLabel": "Explorer la destination La Fortuna",
+        "description": "Volcan Arenal, sources chaudes et aventure",
+        "highlights": "Volcan · Sources chaudes · Aventure",
+        "imageAlt": "Volcan Arenal avec lave au crépuscule"
+      },
+      "manuel-antonio": {
+        "ariaLabel": "Explorer la destination Manuel Antonio",
+        "description": "Parc national, plages et faune",
+        "highlights": "Parc · Plages · Faune",
+        "imageAlt": "Plage de Manuel Antonio avec faune"
+      },
+      "monteverde": {
+        "ariaLabel": "Explorer la destination Monteverde",
+        "description": "Forêt nuageuse, quetzals et tyroliennes",
+        "highlights": "Forêt · Quetzals · Canopée",
+        "imageAlt": "Forêt nuageuse de Monteverde"
+      },
+      "valle-central": {
+        "ariaLabel": "Explore Central Valley destination",
+        "description": "San José, museums and urban culture",
+        "highlights": "City · Museums · Coffee",
+        "imageAlt": "National Theater of Costa Rica"
+      }
+    }
   },
   "why": {
     "badge": "Pourquoi le Costa Rica",
     "title": "Pourquoi visiter le Costa Rica?",
     "subtitle": "Un pays qui offre beaucoup plus que de beaux paysages",
-    "protected": "aires protégées"
+    "protected": "aires protégées",
+    "features": {
+      "biodiversity": {
+        "description": "Just 0.03% of the world's land surface contains 6% of all known species.",
+        "title": "Unique Biodiversity"
+      },
+      "climate": {
+        "description": "In just 4 hours you can go from tropical beaches to temperate mountains or cloud forests.",
+        "title": "Varied Microclimate"
+      },
+      "safe": {
+        "description": "Costa Rica abolished its army in 1948, directing those funds to education, health, and environmental protection.",
+        "title": "Safe Country"
+      },
+      "sustainability": {
+        "description": "First country to achieve carbon neutrality. 99% of its electricity is renewable.",
+        "title": "Sustainability Leader"
+      }
+    }
   },
   "experiences": {
     "badge": "Vivez l'expérience",
     "title": "Expériences Inoubliables",
-    "subtitle": "Des activités qui transformeront votre voyage en aventure unique"
+    "subtitle": "Des activités qui transformeront votre voyage en aventure unique",
+    "items": {
+      "adventure": {
+        "ariaLabel": "View extreme adventure tours",
+        "description": "Canopy, rappelling, rafting and more thrills",
+        "difficulty": "High",
+        "duration": "1-2 days",
+        "imageAlt": "Tourist doing canopy in tropical rainforest",
+        "name": "Extreme Adventure"
+      },
+      "beach": {
+        "ariaLabel": "View beach and surf tours",
+        "description": "Surf lessons, snorkeling, kayaking",
+        "difficulty": "Medium",
+        "duration": "1 day",
+        "imageAlt": "Tropical beach in Costa Rica with surfers",
+        "name": "Beaches & Surf"
+      },
+      "culture": {
+        "ariaLabel": "View cultural tours",
+        "description": "Communities, gastronomy, history",
+        "difficulty": "Easy",
+        "duration": "1 day",
+        "imageAlt": "Typical Costa Rican casado dish",
+        "name": "Cultural Tourism"
+      },
+      "nature": {
+        "ariaLabel": "View wildlife watching tours",
+        "description": "Sloths, quetzals, monkeys and more",
+        "difficulty": "Easy",
+        "duration": "Half day",
+        "imageAlt": "Sloth in Costa Rica tree",
+        "name": "Wildlife Watching"
+      }
+    }
   },
   "accommodations": {
     "badge": "Dormir avec la nature",
@@ -184,5 +337,41 @@
       "flights": "Vols",
       "packages": "Forfaits"
     }
+  },
+  "packages": {
+    "badge": "All-Inclusive Packages",
+    "subtitle": "Offres tout compris",
+    "title": "Forfaits",
+    "viewAll": "Voir tous les forfaits",
+    "viewDetails": "View Details"
+  },
+  "properties": {
+    "title": "Hébergements"
+  },
+  "search": {
+    "travelers": {
+      "1": "1 person",
+      "2": "2 people",
+      "3": "3 people",
+      "4": "4 people",
+      "5plus": "5+ people"
+    }
+  },
+  "tours": {
+    "title": "Circuits"
+  },
+  "upload": {
+    "acceptedTypes": "JPG, PNG, GIF or WebP",
+    "clickToUpload": "Click to upload",
+    "delete": "Delete",
+    "dragAndDrop": "or drag and drop",
+    "error": {
+      "generic": "Error uploading image",
+      "maxFiles": "Maximum {count} images allowed",
+      "noImage": "Please select image files"
+    },
+    "multiple": "Up to {count} images",
+    "single": "One image",
+    "uploading": "Téléversement en cours..."
   }
 }

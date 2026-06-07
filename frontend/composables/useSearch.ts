@@ -92,6 +92,7 @@ export function useSearch() {
     } catch (err: any) {
       error.value = err?.message || err?.data?.detail || 'Error en búsqueda'
       console.error('Search error:', err)
+      useToast().add('Search failed', 'error')
     } finally {
       loading.value = false
     }

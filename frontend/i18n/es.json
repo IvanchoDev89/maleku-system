@@ -22,7 +22,7 @@
     "title": "Descubre la Magia de Costa Rica",
     "subtitle": {
       "main": "Playas vírgenes, volcanes activos y aventuras únicas te esperan.",
-      "highlight": "Conectamos travelers con los mejores proveedores locales."
+      "highlight": "Conectamos viajeros con los mejores proveedores locales."
     },
     "cta": {
       "planner": "Planifica tu Viaje",
@@ -143,7 +143,7 @@
     "viewAll": "Ver Todos los Paquetes"
   },
   "why": {
-    "badge": "Why Costa Rica",
+    "badge": "Por Qué Costa Rica",
     "title": "¿Por qué visitar Costa Rica?",
     "subtitle": "Un país que ofrece mucho más que paisajes hermosos",
     "protected": "áreas protegidas",
@@ -221,7 +221,7 @@
     "cta": {
       "title": "¿Listo para planificar tu aventura?",
       "subtitle": "Nuestro planificador interactivo te ayuda a crear el viaje perfecto",
-      "chat": "Hablá con un experto"
+      "chat": "Habla con un experto"
     },
     "generate": "Generar Itinerario"
   },

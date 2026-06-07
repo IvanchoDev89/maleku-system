@@ -149,6 +149,53 @@ npm install
 npm run dev
 ```
 
+### Option 3: Hybrid Mode (DBs already running)
+
+If you already have PostgreSQL/Redis running (e.g. via `docker run` or system services), you can run only MailHog via docker and use native processes for the rest. This gives instant hot-reload:
+
+```bash
+# 1. MailHog only (for email capture in dev)
+docker run -d --name costarica_mailhog \
+  -p 1025:1025 -p 8025:8025 \
+  mailhog/mailhog:latest
+
+# 2. Use existing PostgreSQL + Redis (configure backend/.env)
+# DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5434/costaricatravel
+# REDIS_URL=redis://localhost:6381/0
+# SMTP_HOST=localhost  # for native backend → mailhog
+# SMTP_HOST=mailhog    # for dockerized backend → mailhog
+
+# 3. Alembic stamp (skip if DB already has tables from a prior run)
+cd backend && alembic stamp head
+
+# 4. Seed (idempotent)
+python3 -m app.scripts.seed_costa_rica
+
+# 5. Start backend
+cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# 6. Start frontend
+cd frontend && npm run dev
+
+# 7. Access
+# Frontend:  http://localhost:3000
+# API:       http://localhost:8000/docs
+# MailHog:   http://localhost:8025  (catches all outgoing emails)
+```
+
+### Stripe Webhooks (Test Mode)
+
+Local webhooks need the Stripe CLI forwarder:
+
+```bash
+# Install: https://stripe.com/docs/stripe-cli
+stripe login
+stripe listen --forward-to localhost:8000/api/v1/stripe/webhook
+# Copy the printed signing secret (whsec_...) into STRIPE_WEBHOOK_SECRET in backend/.env
+# Then trigger a test event:
+stripe trigger checkout.session.completed
+```
+
 ---
 
 ## 📊 Database Schema
