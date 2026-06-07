@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+backend/venv/
+*.whl
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+
+# Node
+node_modules/
+.nuxt/
+.output/
+dist/
+*.tsbuildinfo
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
+.windsurf/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+*.pid
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Test / Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage/
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Docker
+.docker/
+
+# Nuxt
+frontend/.nuxt/
+frontend/.output/
+
+# Vite / Bundler
+*.hash

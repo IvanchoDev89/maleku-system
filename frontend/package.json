@@ -1,0 +1,44 @@
+{
+  "name": "costa-rica-travel",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "build:css": "tailwindcss -i ./assets/css/main.css -o ./public/css/tailwind.css --minify",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "start": "node .output/server/index.mjs",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxt/content": "^2.13.4",
+    "@nuxt/image": "^2.0.0",
+    "@nuxtjs/color-mode": "^4.0.0",
+    "@nuxtjs/i18n": "8.5.5",
+    "@pinia/nuxt": "^0.5.1",
+    "@sentry/vue": "^10.53.1",
+    "@vueuse/core": "^10.7.2",
+    "@vueuse/nuxt": "^10.7.2",
+    "chart.js": "^4.4.1",
+    "dompurify": "^3.4.7",
+    "leaflet": "^1.9.4",
+    "lucide-vue-next": "^1.0.0",
+    "nuxt": "3.15.0",
+    "nuxt-icon": "^1.0.0-beta.7",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.15",
+    "vue-chartjs": "^5.3.0"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "^1.0.8",
+    "@sentry/vite-plugin": "^5.3.0",
+    "@types/dompurify": "^3.0.5",
+    "@types/node": "^20.11.5",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.3.3"
+  }
+}

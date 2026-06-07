@@ -1,0 +1,169 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: crtravel-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-crtravel}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-crtravel123}
+      POSTGRES_DB: ${DB_NAME:-costaricatravel}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-crtravel}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crtravel-network
+    # Security: No root user
+    user: postgres
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: crtravel-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-} --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crtravel-network
+    tmpfs:
+      - /tmp
+      - /var/run
+    # Security: Run as non-root user
+    user: redis
+
+  # FastAPI Backend
+  api:
+    build:
+      context: ${BACKEND_DIR:-../backend}
+      dockerfile: Dockerfile
+    container_name: crtravel-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-crtravel}:${DB_PASSWORD:-crtravel123}@db:5432/${DB_NAME:-costaricatravel}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-}@redis:6379
+      - DEBUG=${DEBUG:-false}
+      - SECRET_KEY=${SECRET_KEY:-changeme-in-production}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      - REFRESH_TOKEN_EXPIRE_DAYS=${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      - ALGORITHM=${ALGORITHM:-HS256}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - BACKEND_CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ${BACKEND_DIR:-../backend}:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+    networks:
+      - crtravel-network
+    # Security: Run as non-root user
+    user: appuser
+    # Security: No new privileges
+    security_opt:
+      - no-new-privileges:true
+    # Security: Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Nuxt Frontend
+  web:
+    build:
+      context: ${FRONTEND_DIR:-../frontend}
+      dockerfile: Dockerfile
+    container_name: crtravel-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      - NUXT_PUBLIC_API_URL=http://api:8000/api/v1
+      - NUXT_PUBLIC_SITE_URL=${SITE_URL:-https://costaricatravel.dev}
+    depends_on:
+      api:
+        condition: service_started
+    volumes:
+      - ${FRONTEND_DIR:-../frontend}:/app
+      - /app/node_modules
+      - /app/.output
+    networks:
+      - crtravel-network
+    # Security: Run as non-root user
+    user: nodeuser
+    # Security: No new privileges
+    security_opt:
+      - no-new-privileges:true
+    # Security: Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: crtravel-nginx
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - nginxdata:/var/log/nginx
+    depends_on:
+      - web
+      - api
+    networks:
+      - crtravel-network
+    # Security: Run as non-root user
+    user: nginx
+    # Security: No new privileges
+    security_opt:
+      - no-new-privileges:true
+
+# Volumes with explicit options
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+  nginxdata:
+    driver: local
+
+# Network configuration
+networks:
+  crtravel-network:
+    driver: bridge
+    name: crtravel-network
+    ipam:
+      config:
+        - subnet: ${NETWORK_SUBNET:-172.20.0.0/16}

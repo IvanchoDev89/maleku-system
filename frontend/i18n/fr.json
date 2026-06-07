@@ -1,0 +1,188 @@
+{
+  "app": {
+    "name": "Costa Rica Travel",
+    "tagline": "Découvrez le paradis centre-américain"
+  },
+  "nav": {
+    "home": "Accueil",
+    "destinations": "Destinations",
+    "hotels": "Hôtels",
+    "tours": "Tours",
+    "blog": "Blog",
+    "planner": "Planificateur",
+    "contact": "Contact",
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "dashboard": "Mon compte",
+    "logout": "Déconnexion",
+    "prev": "Précédent",
+    "next": "Suivant"
+  },
+  "hero": {
+    "title": "Découvrez la Magie du Costa Rica",
+    "subtitle": "Plages dorées, volcans actifs, forêts tropicales et aventures uniques vous attendent",
+    "cta": "Explorer les destinations"
+  },
+  "stats": {
+    "territory": "de la biodiversité mondiale",
+    "species": "espèces de flore et faune",
+    "parks": "aires protégées nationales",
+    "beaches": "kilomètres de côte"
+  },
+  "destinations": {
+    "badge": "Explorez le Costa Rica",
+    "title": "Destinations Incontournables",
+    "subtitle": "Du Pacifique sec aux Caraïbes tropicales, chaque région offre une expérience unique"
+  },
+  "why": {
+    "badge": "Pourquoi le Costa Rica",
+    "title": "Pourquoi visiter le Costa Rica?",
+    "subtitle": "Un pays qui offre beaucoup plus que de beaux paysages",
+    "protected": "aires protégées"
+  },
+  "experiences": {
+    "badge": "Vivez l'expérience",
+    "title": "Expériences Inoubliables",
+    "subtitle": "Des activités qui transformeront votre voyage en aventure unique"
+  },
+  "accommodations": {
+    "badge": "Dormir avec la nature",
+    "title": "Hébergements Uniques",
+    "subtitle": "Des éco-lodges dans la jungle aux stations balnéaires"
+  },
+  "testimonials": {
+    "badge": "Témoignages",
+    "title": "Ce que disent nos voyageurs"
+  },
+  "planner": {
+    "label": "Planificateur",
+    "title": "Planifiez Votre Voyage",
+    "subtitle": "Créez votre itinéraire personnalisé en 5 étapes",
+    "cta": {
+      "title": "Prêt à planifier votre aventure?",
+      "subtitle": "Notre planificateur interactif vous aide à créer le voyage parfait",
+      "chat": "Parler à un expert"
+    },
+    "generate": "Générer l'Itinéraire"
+  },
+  "step1": {
+    "title": "Combien de temps avez-vous?",
+    "subtitle": "Sélectionnez la durée approximative de votre voyage",
+    "budgetLabel": "Budget estimé par personne:"
+  },
+  "step2": {
+    "title": "Quel type de voyageur êtes-vous?",
+    "subtitle": "Choisissez le style qui vous définit"
+  },
+  "step3": {
+    "title": "Lesquels vous interessent?",
+    "subtitle": "Sélectionnez les régions à explorer"
+  },
+  "step4": {
+    "title": "Derniers Détails",
+    "subtitle": "Parlez-nous de vous",
+    "travelers": "Combien de voyageurs?",
+    "season": "Quand prévoyez-vous voyager?",
+    "anyTime": "N'importe quand",
+    "drySeason": "Déc - Avr (Sec)",
+    "rainySeason": "Mai - Nov (Pluvieux)",
+    "notes": "Autre chose à savoir?"
+  },
+  "step5": {
+    "title": "Votre Itinéraire Personnalisé!",
+    "subtitle": "Basé sur vos préférences, voici une recommandation",
+    "print": "Imprimer"
+  },
+  "budget": {
+    "summary": "Résumé du Budget",
+    "perPerson": "Par personne",
+    "totalGroup": "Total groupe"
+  },
+  "auth": {
+    "login": {
+      "title": "Bon retour",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "submit": "Se connecter",
+      "noAccount": "Pas de compte?",
+      "register": "Inscrivez-vous ici"
+    },
+    "register": {
+      "title": "Créer un compte",
+      "name": "Nom complet",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "submit": "Créer un compte",
+      "hasAccount": "Déjà un compte?",
+      "login": "Connectez-vous"
+    }
+  },
+  "vendor": {
+    "dashboard": "Tableau de bord",
+    "properties": "Mes Propriétés",
+    "tours": "Mes Tours",
+    "bookings": "Réservations",
+    "analytics": "Statistiques",
+    "settings": "Configuration",
+    "addProperty": "Ajouter une propriété",
+    "addTour": "Ajouter un tour",
+    "totalBookings": "Total Réservations",
+    "totalRevenue": "Revenus Totaux",
+    "pendingBookings": "Réservations en attente"
+  },
+  "admin": {
+    "dashboard": "Panneau d'Administration",
+    "users": "Utilisateurs",
+    "vendors": "Fournisseurs",
+    "allBookings": "Toutes les Réservations",
+    "blog": "Gérer le Blog",
+    "destinations": "Destinations",
+    "reports": "Rapports",
+    "settings": "Configuration"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "view": "Voir",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "noResults": "Aucun résultat trouvé",
+    "seeAll": "Voir tout"
+  },
+  "footer": {
+    "brand": "Costa Rica Travel",
+    "tagline": "Votre guide complet pour découvrir le Costa Rica",
+    "about": "À propos de nous",
+    "links": "Liens rapides",
+    "destinations": "Destinations",
+    "services": "Services",
+    "contact": "Contact",
+    "copyright": "© {year} Costa Rica Travel. Tous droits réservés.",
+    "vendors": {
+      "title": "Fournisseurs",
+      "register": "S'inscrire comme fournisseur",
+      "portal": "Portail fournisseur"
+    },
+    "email": "info{'@'}costaricatravel.dev",
+    "phone": "+506 8000 0000",
+    "location": "San José, Costa Rica",
+    "destinationsList": {
+      "guanacaste": "Guanacaste",
+      "fortuna": "La Fortuna",
+      "monteverde": "Monteverde",
+      "manuelantonio": "Manuel Antonio"
+    },
+    "servicesList": {
+      "hotels": "Hôtels",
+      "tours": "Tours",
+      "flights": "Vols",
+      "packages": "Forfaits"
+    }
+  }
+}

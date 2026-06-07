@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: costarica_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-costaricatravel}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # SECURITY: Only expose to internal network, not external
+    # ports:
+    #   - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - costarica_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: costarica_redis
+    # SECURITY: Only expose to internal network
+    # ports:
+    #   - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - costarica_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: costarica_backend
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://postgres:postgres@postgres:5432/costaricatravel}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      # SECURITY: SECRET_KEY must be set via environment variable
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY environment variable must be set}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - BACKEND_CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+      - SITE_URL=http://localhost:3000
+      - ENVIRONMENT=development
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend:/app
+      - /app/venv
+    networks:
+      - costarica_network
+    command: /app/docker-entrypoint.sh
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: costarica_frontend
+    environment:
+      - NUXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - NUXT_HOST=0.0.0.0
+      - NUXT_PORT=3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - costarica_network
+    command: /app/docker-entrypoint.sh
+
+volumes:
+  postgres_data:
+
+networks:
+  costarica_network:
+    driver: bridge

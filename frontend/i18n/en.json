@@ -1,0 +1,377 @@
+{
+  "app": {
+    "name": "Costa Rica Travel",
+    "tagline": "Discover the Central American paradise"
+  },
+  "nav": {
+    "home": "Home",
+    "destinations": "Destinations",
+    "hotels": "Hotels",
+    "tours": "Tours",
+    "blog": "Blog",
+    "planner": "Planner",
+    "contact": "Contact",
+    "login": "Sign in",
+    "register": "Register",
+    "dashboard": "My account",
+    "logout": "Sign out",
+    "prev": "Previous",
+    "next": "Next"
+  },
+  "hero": {
+    "title": "Discover the Magic of Costa Rica",
+    "subtitle": {
+      "main": "Pristine beaches, active volcanoes and unique adventures await you.",
+      "highlight": "We connect travelers with the best local providers."
+    },
+    "cta": {
+      "planner": "Plan Your Trip",
+      "explore": "Explore Destinations"
+    },
+    "headline": {
+      "line1": "Discover",
+      "line2": "Costa Rica"
+    },
+    "live": {
+      "usersOnline": "people exploring now",
+      "recentBooking": "Recent: {user} booked in {destination}",
+      "mockUser": "Maria G.",
+      "mockDestination": "Manuel Antonio"
+    },
+    "trust": {
+      "cancelation": "Free cancellation 48h",
+      "bestPrice": "Best price guaranteed",
+      "travelers": "+10,000 happy travelers"
+    },
+    "search": {
+      "destination": {
+        "label": "Destination",
+        "placeholder": "Where are you going?"
+      },
+      "dates": {
+        "label": "Dates",
+        "placeholder": "When do you travel?"
+      },
+      "travelers": {
+        "label": "Travelers"
+      },
+      "button": "Search Experiences",
+      "searching": "Searching...",
+      "popular": "Popular:"
+    },
+    "destinations": {
+      "guanacaste": {
+        "region": "North Pacific"
+      },
+      "lafortuna": {
+        "region": "Alajuela"
+      },
+      "monteverde": {
+        "region": "Puntarenas"
+      },
+      "manuelantonio": {
+        "region": "Central Pacific"
+      },
+      "puertoviejo": {
+        "region": "Caribbean"
+      },
+      "sanjose": {
+        "region": "Central Valley"
+      }
+    },
+    "video": {
+      "fallbackAlt": "Costa Rica beach"
+    },
+    "scrollIndicator": {
+      "label": "Scroll down"
+    }
+  },
+  "stats": {
+    "territory": "of world's biodiversity",
+    "species": "flora & fauna species",
+    "parks": "national protected areas",
+    "beaches": "kilometers of coastline"
+  },
+  "destinations": {
+    "badge": "Explore Costa Rica",
+    "title": "Unmissable Destinations",
+    "subtitle": "From the dry Pacific to the tropical Caribbean, each region offers a unique experience",
+    "items": {
+      "guanacaste": {
+        "description": "Golden beaches, surfing and spectacular sunsets",
+        "highlights": "Beaches · Surf · Sun",
+        "imageAlt": "Golden beach in Guanacaste at sunset",
+        "ariaLabel": "Explore Guanacaste destination"
+      },
+      "la-fortuna": {
+        "description": "Arenal Volcano, hot springs and adventure",
+        "highlights": "Volcano · Hot Springs · Adventure",
+        "imageAlt": "Arenal Volcano with lava at dusk",
+        "ariaLabel": "Explore La Fortuna destination"
+      },
+      "monteverde": {
+        "description": "Cloud forest, quetzals and canopy tours",
+        "highlights": "Cloud Forest · Quetzals · Canopy",
+        "imageAlt": "Monteverde cloud forest",
+        "ariaLabel": "Explore Monteverde destination"
+      },
+      "manuel-antonio": {
+        "description": "National park, beaches and wildlife",
+        "highlights": "Park · Beaches · Wildlife",
+        "imageAlt": "Manuel Antonio beach with wildlife",
+        "ariaLabel": "Explore Manuel Antonio destination"
+      },
+      "caribe": {
+        "description": "Afro-Caribbean culture, kayaking and tranquility",
+        "highlights": "Culture · Kayak · Peace",
+        "imageAlt": "Tortuguero canals in the Caribbean",
+        "ariaLabel": "Explore Caribbean South destination"
+      },
+      "valle-central": {
+        "description": "San José, museums and urban culture",
+        "highlights": "City · Museums · Coffee",
+        "imageAlt": "National Theater of Costa Rica",
+        "ariaLabel": "Explore Central Valley destination"
+      }
+    }
+  },
+  "packages": {
+    "badge": "All-Inclusive Packages",
+    "title": "Ready-to-Book Trips",
+    "subtitle": "Expert-designed packages. Just choose, book, and enjoy.",
+    "viewDetails": "View Details",
+    "viewAll": "View All Packages"
+  },
+  "why": {
+    "badge": "Why Costa Rica",
+    "title": "Why Visit Costa Rica?",
+    "subtitle": "A country that offers much more than beautiful landscapes",
+    "protected": "protected areas",
+    "features": {
+      "biodiversity": {
+        "title": "Unique Biodiversity",
+        "description": "Just 0.03% of the world's land surface contains 6% of all known species."
+      },
+      "safe": {
+        "title": "Safe Country",
+        "description": "Costa Rica abolished its army in 1948, directing those funds to education, health, and environmental protection."
+      },
+      "sustainability": {
+        "title": "Sustainability Leader",
+        "description": "First country to achieve carbon neutrality. 99% of its electricity is renewable."
+      },
+      "climate": {
+        "title": "Varied Microclimate",
+        "description": "In just 4 hours you can go from tropical beaches to temperate mountains or cloud forests."
+      }
+    }
+  },
+  "experiences": {
+    "badge": "Live the experience",
+    "title": "Unforgettable Experiences",
+    "subtitle": "Activities that will transform your trip into a unique adventure",
+    "items": {
+      "adventure": {
+        "name": "Extreme Adventure",
+        "description": "Canopy, rappelling, rafting and more thrills",
+        "duration": "1-2 days",
+        "difficulty": "High",
+        "imageAlt": "Tourist doing canopy in tropical rainforest",
+        "ariaLabel": "View extreme adventure tours"
+      },
+      "nature": {
+        "name": "Wildlife Watching",
+        "description": "Sloths, quetzals, monkeys and more",
+        "duration": "Half day",
+        "difficulty": "Easy",
+        "imageAlt": "Sloth in Costa Rica tree",
+        "ariaLabel": "View wildlife watching tours"
+      },
+      "beach": {
+        "name": "Beaches & Surf",
+        "description": "Surf lessons, snorkeling, kayaking",
+        "duration": "1 day",
+        "difficulty": "Medium",
+        "imageAlt": "Tropical beach in Costa Rica with surfers",
+        "ariaLabel": "View beach and surf tours"
+      },
+      "culture": {
+        "name": "Cultural Tourism",
+        "description": "Communities, gastronomy, history",
+        "duration": "1 day",
+        "difficulty": "Easy",
+        "imageAlt": "Typical Costa Rican casado dish",
+        "ariaLabel": "View cultural tours"
+      }
+    }
+  },
+  "accommodations": {
+    "badge": "Sleep with nature",
+    "title": "Unique Accommodations",
+    "subtitle": "From eco-lodges in the jungle to beachfront resorts"
+  },
+  "testimonials": {
+    "badge": "Testimonials",
+    "title": "What our travelers say"
+  },
+  "planner": {
+    "label": "Planner",
+    "title": "Plan Your Trip",
+    "subtitle": "Create your personalized itinerary in 5 steps",
+    "cta": {
+      "title": "Ready to plan your adventure?",
+      "subtitle": "Our interactive planner helps you create the perfect trip",
+      "chat": "Talk to an expert"
+    },
+    "generate": "Generate Itinerary"
+  },
+  "step1": {
+    "title": "How much time do you have?",
+    "subtitle": "Select the approximate duration of your trip",
+    "budgetLabel": "Estimated budget per person:"
+  },
+  "step2": {
+    "title": "What type of traveler are you?",
+    "subtitle": "Choose the style that best defines you"
+  },
+  "step3": {
+    "title": "Which ones interest you?",
+    "subtitle": "Select the regions you want to explore"
+  },
+  "step4": {
+    "title": "Final Details",
+    "subtitle": "Tell us more about you",
+    "travelers": "How many travelers?",
+    "season": "When do you plan to travel?",
+    "anyTime": "Any time",
+    "drySeason": "Dec - Apr (Dry)",
+    "rainySeason": "May - Nov (Rainy)",
+    "notes": "Anything else we should know?"
+  },
+  "step5": {
+    "title": "Your Personalized Itinerary!",
+    "subtitle": "Based on your preferences, here is a recommendation",
+    "print": "Save / Print"
+  },
+  "budget": {
+    "summary": "Budget Summary",
+    "perPerson": "Per person",
+    "totalGroup": "Total group"
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "email": "Email address",
+      "password": "Password",
+      "submit": "Sign in",
+      "noAccount": "Don't have an account?",
+      "register": "Register here"
+    },
+    "register": {
+      "title": "Create account",
+      "name": "Full name",
+      "email": "Email address",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "submit": "Create account",
+      "hasAccount": "Already have an account?",
+      "login": "Sign in"
+    }
+  },
+  "vendor": {
+    "dashboard": "Vendor Dashboard",
+    "properties": "My Properties",
+    "tours": "My Tours",
+    "bookings": "Bookings",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "addProperty": "Add Property",
+    "addTour": "Add Tour",
+    "totalBookings": "Total Bookings",
+    "totalRevenue": "Total Revenue",
+    "pendingBookings": "Pending Bookings"
+  },
+  "admin": {
+    "dashboard": "Admin Dashboard",
+    "users": "Users",
+    "vendors": "Vendors",
+    "allBookings": "All Bookings",
+    "blog": "Manage Blog",
+    "destinations": "Destinations",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "noResults": "No results found",
+    "seeAll": "See all"
+  },
+  "footer": {
+    "brand": "Costa Rica Travel",
+    "tagline": "Your complete guide to discover Costa Rica",
+    "about": "About us",
+    "links": "Quick links",
+    "destinations": "Destinations",
+    "services": "Services",
+    "contact": "Contact",
+    "copyright": "© {year} Costa Rica Travel. All rights reserved.",
+    "vendors": {
+      "title": "Vendors",
+      "register": "Register as Vendor",
+      "portal": "Vendor Portal"
+    },
+    "email": "info{'@'}costaricatravel.dev",
+    "phone": "+506 8000 0000",
+    "location": "San José, Costa Rica",
+    "destinationsList": {
+      "guanacaste": "Guanacaste",
+      "fortuna": "La Fortuna",
+      "monteverde": "Monteverde",
+      "manuelantonio": "Manuel Antonio"
+    },
+    "servicesList": {
+      "hotels": "Hotels",
+      "tours": "Tours",
+      "flights": "Flights",
+      "packages": "Packages"
+    }
+  },
+  "upload": {
+    "uploading": "Uploading image...",
+    "clickToUpload": "Click to upload",
+    "dragAndDrop": "or drag and drop",
+    "multiple": "Up to {count} images",
+    "single": "One image",
+    "acceptedTypes": "JPG, PNG, GIF or WebP",
+    "delete": "Delete",
+    "error": {
+      "noImage": "Please select image files",
+      "maxFiles": "Maximum {count} images allowed",
+      "generic": "Error uploading image"
+    }
+  },
+  "search": {
+    "travelers": {
+      "1": "1 person",
+      "2": "2 people",
+      "3": "3 people",
+      "4": "4 people",
+      "5plus": "5+ people"
+    }
+  },
+  "tours": {
+    "title": "Discover Unique Experiences"
+  },
+  "properties": {
+    "title": "Find Your Perfect Stay"
+  }
+}

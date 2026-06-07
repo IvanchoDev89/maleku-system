@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /vendor/
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /*/admin
+Disallow: /*/vendor-dashboard
+
+# Sitemap
+Sitemap: https://costaricatravel.dev/sitemap.xml
