@@ -110,7 +110,7 @@ async def create_client_event(
         entity_type="route",
         entity_name=event_type,
         request_path=event.path,
-        request_method="CLIENT_EVENT",
+        request_method="EVENT",
         ip_address=client_ip,
         user_agent=request.headers.get("user-agent", "")[:500],
         changes_summary=f"client_event: {event_type}",

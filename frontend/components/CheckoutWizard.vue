@@ -10,6 +10,8 @@ const props = defineProps<{
   totalPrice: number
   travelers?: number
   experienceName?: string
+  tourId?: string
+  tourDate?: string
 }>()
 
 const emit = defineEmits<{
@@ -136,21 +138,59 @@ const prevStep = () => {
 
 const submitBooking = async () => {
   isProcessing.value = true
-  
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 2000))
-  
-  const bookingData = {
-    contact: contactForm.value,
-    travelers: travelers.value,
-    payment: paymentForm.value,
-    extras: extras.value,
-    total: finalTotal.value,
-    bookingId: 'CR-' + Date.now().toString().slice(-8)
+  const toast = useToast()
+
+  try {
+    if (!props.tourId || !props.tourDate) {
+      throw new Error('Missing tour reference. Please go back and pick a tour.')
+    }
+
+    const auth = useAuthStore()
+    if (!auth.isAuthenticated) {
+      throw new Error('You must be signed in to book. Redirecting to login...')
+    }
+
+    const api = useApi()
+    const firstTraveler = travelers.value[0] ?? contactForm.value
+    const guestName = `${firstTraveler.firstName} ${firstTraveler.lastName}`.trim()
+      || `${contactForm.value.firstName} ${contactForm.value.lastName}`.trim()
+
+    const response = await api.post<{
+      id: string
+      confirmation_code: string
+      status: string
+      total_amount: number
+      currency: string
+    }>('/bookings/tour', {
+      tour_id: props.tourId,
+      tour_date: props.tourDate,
+      participants: travelers.value.length,
+      guest_name: guestName,
+      guest_email: contactForm.value.email,
+      guest_phone: contactForm.value.phone || null,
+      guest_notes: null,
+    })
+
+    const bookingData = {
+      bookingId: response.confirmation_code || response.id,
+      internalId: response.id,
+      status: response.status,
+      total: response.total_amount ?? finalTotal.value,
+      currency: response.currency || 'USD',
+      contact: contactForm.value,
+      travelers: travelers.value,
+    }
+
+    toast?.success?.('Reserva creada', `Código ${bookingData.bookingId}`)
+    emit('complete', bookingData)
+  } catch (error: any) {
+    const message = error?.data?.detail || error?.message || 'Error al procesar la reserva'
+    toast?.error?.('Error en la reserva', message)
+    // Re-throw to let the success page know it failed
+    throw error
+  } finally {
+    isProcessing.value = false
   }
-  
-  emit('complete', bookingData)
-  isProcessing.value = false
 }
 
 const formatCardNumber = (value: string) => {

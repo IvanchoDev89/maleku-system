@@ -427,6 +427,7 @@ class BookingBase(BaseModel):
     guest_name: str = Field(..., min_length=2, max_length=255)
     guest_email: EmailStr
     guest_phone: Optional[str] = None
+    guest_notes: Optional[str] = None
 
     @field_validator('guest_name')
     @classmethod
@@ -447,7 +448,7 @@ class BookingPropertyRequest(BookingBase):
 
 class BookingTourRequest(BookingBase):
     tour_id: UUID
-    tour_date: datetime
+    booking_date: datetime
     participants: int = Field(1, ge=1)
 
 

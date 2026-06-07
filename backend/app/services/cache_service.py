@@ -23,9 +23,9 @@ except ImportError:
 
 
 # === HELPERS para manejo de errores Redis (elimina duplicación) ===
-    def handle_redis_error(operation: str, error: Exception) -> None:
-        if redis and isinstance(error, redis.RedisError):
-            logger.error(f"Redis {operation} error: {error}")
+def handle_redis_error(operation: str, error: Exception) -> None:
+    if redis and isinstance(error, redis.RedisError):
+        logger.error(f"Redis {operation} error: {error}")
 
 
 def safe_redis_operation(operation_name: str):

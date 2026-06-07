@@ -11,9 +11,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.core.logging import get_logger
 from app.models import NewsletterSubscriber
 from app.schemas import NewsletterSubscribe, NewsletterSubscribeResponse
+from app.services.email_service import email_service
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -104,7 +106,26 @@ async def subscribe_to_newsletter(
     db.add(subscriber)
     await db.commit()
 
-    # TODO: Send confirmation email
+    # Send confirmation email (MailHog in dev, Resend in prod)
+    try:
+        site_url = settings.SITE_URL
+        confirm_link = f"{site_url}/newsletter/confirm?token={confirmation_token}"
+        content = f"""
+            <p>Thanks for subscribing to Costa Rica Travel!</p>
+            <p>Please confirm your subscription by clicking the link below:</p>
+            <p><a href="{confirm_link}"
+                  style="background:#1e7a67;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">
+                  Confirm Subscription
+               </a></p>
+            <p>If you didn't request this, you can ignore this email.</p>
+        """
+        await email_service.send_email(
+            to=subscriber.email,
+            subject="Confirm your Costa Rica Travel subscription",
+            html=email_service._build_email_template("Confirm Subscription", content),
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Failed to send newsletter confirmation: {e}")
 
     return NewsletterSubscribeResponse(
         success=True,

@@ -48,7 +48,10 @@ function loadAuthFromSession(): { token: string | null; refreshToken: string | n
 interface AuthState {
   user: User | null
   token: string | null
-  refreshToken: string | null
+  // NOTE: state slot is named `refreshTokenValue` to avoid shadowing the
+  // `refreshToken` action below (Pinia would otherwise resolve the action
+  // when `this.refreshToken` is read, masking the stored token).
+  refreshTokenValue: string | null
   isAuthenticated: boolean
 }
 
@@ -56,7 +59,7 @@ export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
     user: null,
     token: null,
-    refreshToken: null,
+    refreshTokenValue: null,
     isAuthenticated: false
   }),
 
@@ -72,7 +75,7 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(email: string, password: string): Promise<{ success: boolean; error?: string; user?: User }> {
       const api = useApi()
-      
+
       try {
         const response = await api.post<{
           access_token: string
@@ -81,7 +84,7 @@ export const useAuthStore = defineStore('auth', {
         }>('/auth/login', { email, password })
 
         this.token = response.access_token
-        this.refreshToken = response.refresh_token
+        this.refreshTokenValue = response.refresh_token
         this.user = response.user
         this.isAuthenticated = true
 
@@ -89,9 +92,8 @@ export const useAuthStore = defineStore('auth', {
 
         return { success: true, user: response.user }
       } catch (error: any) {
-        console.error('Login error:', error)
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: error?.data?.detail || error?.message || 'Error al iniciar sesión'
         }
       }
@@ -104,7 +106,7 @@ export const useAuthStore = defineStore('auth', {
       phone?: string
     }): Promise<{ success: boolean; error?: string }> {
       const api = useApi()
-      
+
       try {
         const response = await api.post<{
           access_token: string
@@ -113,7 +115,7 @@ export const useAuthStore = defineStore('auth', {
         }>('/auth/register', userData)
 
         this.token = response.access_token
-        this.refreshToken = response.refresh_token
+        this.refreshTokenValue = response.refresh_token
         this.user = response.user
         this.isAuthenticated = true
 
@@ -121,10 +123,9 @@ export const useAuthStore = defineStore('auth', {
 
         return { success: true }
       } catch (error: any) {
-        console.error('Registration error:', error)
-        return { 
-          success: false, 
-          error: error?.data?.detail || error?.message || 'Error al registrar' 
+        return {
+          success: false,
+          error: error?.data?.detail || error?.message || 'Error al registrar'
         }
       }
     },
@@ -138,7 +139,7 @@ export const useAuthStore = defineStore('auth', {
       business_type: string
     }): Promise<{ success: boolean; error?: string }> {
       const api = useApi()
-      
+
       try {
         const response = await api.post<{
           access_token: string
@@ -154,7 +155,7 @@ export const useAuthStore = defineStore('auth', {
         })
 
         this.token = response.access_token
-        this.refreshToken = response.refresh_token
+        this.refreshTokenValue = response.refresh_token
         this.user = response.user
         this.isAuthenticated = true
 
@@ -162,10 +163,9 @@ export const useAuthStore = defineStore('auth', {
 
         return { success: true }
       } catch (error: any) {
-        console.error('Vendor registration error:', error)
-        return { 
-          success: false, 
-          error: error?.data?.detail || error?.message || 'Error al registrar vendor' 
+        return {
+          success: false,
+          error: error?.data?.detail || error?.message || 'Error al registrar vendor'
         }
       }
     },
@@ -173,7 +173,7 @@ export const useAuthStore = defineStore('auth', {
     async logout() {
       this.user = null
       this.token = null
-      this.refreshToken = null
+      this.refreshTokenValue = null
       this.isAuthenticated = false
 
       clearAuthFromSession()
@@ -181,36 +181,36 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async refreshToken() {
-      if (!this.refreshToken) return false
+      if (!this.refreshTokenValue) return false
 
       const api = useApi()
-      
+
       try {
         const response = await api.post<{
           access_token: string
           refresh_token: string
           user: User
-        }>('/auth/refresh', { refresh_token: this.refreshToken })
+        }>('/auth/refresh', { refresh_token: this.refreshTokenValue })
 
         this.token = response.access_token
-        this.refreshToken = response.refresh_token
+        this.refreshTokenValue = response.refresh_token
         this.user = response.user
 
         persistAuthToSession(response.access_token, response.refresh_token, response.user)
 
         return true
       } catch {
-        this.logout()
+        await this.logout()
         return false
       }
     },
 
     initAuth() {
       const { token, refreshToken, user } = loadAuthFromSession()
-      
+
       if (token && user) {
         this.token = token
-        this.refreshToken = refreshToken
+        this.refreshTokenValue = refreshToken
         this.user = user
         this.isAuthenticated = true
       }

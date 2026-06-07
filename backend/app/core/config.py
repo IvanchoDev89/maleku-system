@@ -52,6 +52,14 @@ class Settings(BaseSettings):
     EMAIL_FROM: str = "noreply@costaricatravel.dev"
     EMAIL_FROM_NAME: str = "Costa Rica Travel"
 
+    # SMTP transport (used when RESEND_API_KEY is empty and USE_SMTP_IN_DEV is true)
+    USE_SMTP_IN_DEV: bool = False
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 1025
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_USE_TLS: bool = False
+
     BILLIONMAIL_URL: str = ""
     BILLIONMAIL_API_KEY: str = ""
 

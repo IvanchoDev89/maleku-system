@@ -12,6 +12,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from app.core.database import get_async_session
+from app.core.config import settings
 from app.core.security import (
     verify_password, get_password_hash, 
     create_access_token, create_refresh_token, decode_token,
@@ -20,6 +21,7 @@ from app.core.security import (
 from app.models.user import User
 from app.models.base import UserRole
 from app.services.base import BaseService
+from app.services.email_service import email_service
 from app.core.logging import get_logger
 from app.api.deps import get_current_user
 from app.core.token_blacklist import token_blacklist
@@ -330,19 +332,38 @@ async def forgot_password(
     if user:
         # Generate secure reset token
         reset_token = create_password_reset_token(user.email)
-        
+
         # Store in user record
         user.password_reset_token = reset_token
         user.password_reset_expires = datetime.now(timezone.utc) + timedelta(hours=1)
         await db.commit()
-        
+
         logger.info(f"Password reset requested for {user.email} from IP: {client_ip}")
-        
-        # TODO: Send email with reset link containing token
-        # send_password_reset_email(user.email, reset_token)
+
+        # Send reset email (MailHog in dev, Resend in prod)
+        try:
+            site_url = getattr(settings, "SITE_URL", "http://localhost:3000")
+            reset_link = f"{site_url}/reset-password?token={reset_token}"
+            content = f"""
+                <p>Hi {user.full_name},</p>
+                <p>We received a request to reset your password. Click the link below to set a new password:</p>
+                <p><a href="{reset_link}"
+                      style="background:#1e7a67;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">
+                      Reset Password
+                   </a></p>
+                <p>This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>
+            """
+            await email_service.send_email(
+                to=user.email,
+                subject="Reset your Costa Rica Travel password",
+                html=email_service._build_email_template("Password Reset", content),
+            )
+        except Exception as e:  # noqa: BLE001
+            # Never let email failure leak user existence or break the flow.
+            logger.error(f"Failed to send password reset email: {e}")
     else:
         logger.warning(f"Password reset attempted for non-existent email: {forgot_in.email} from IP: {client_ip}")
-    
+
     # Always return success to prevent email enumeration
     return {"message": "If email exists, reset instructions sent"}
 
@@ -515,10 +536,28 @@ async def resend_verification(
     user.email_verification_token = verification_token
     user.email_verification_expires = datetime.now(timezone.utc) + timedelta(hours=24)
     await db.commit()
-    
+
     logger.info(f"Verification email resent for {user.email} from IP: {client_ip}")
-    
-    # TODO: Send email with verification link
-    # send_verification_email(user.email, verification_token)
-    
+
+    # Send verification email
+    try:
+        site_url = getattr(settings, "SITE_URL", "http://localhost:3000")
+        verify_link = f"{site_url}/verify-email?token={verification_token}"
+        content = f"""
+            <p>Hi {user.full_name},</p>
+            <p>Please confirm your email address by clicking the link below:</p>
+            <p><a href="{verify_link}"
+                  style="background:#1e7a67;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">
+                  Verify Email
+               </a></p>
+            <p>This link expires in 24 hours.</p>
+        """
+        await email_service.send_email(
+            to=user.email,
+            subject="Verify your Costa Rica Travel email",
+            html=email_service._build_email_template("Email Verification", content),
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Failed to send verification email: {e}")
+
     return {"message": "Verification email sent"}

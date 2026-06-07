@@ -159,8 +159,10 @@
                 <div class="space-y-4 mb-6">
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
-                    <input 
-                      type="date" 
+                    <input
+                      v-model="tourDate"
+                      type="date"
+                      :min="todayIso"
                       class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                     />
                   </div>
@@ -170,7 +172,11 @@
                   </div>
                 </div>
 
-                <button class="w-full py-4 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transition-all">
+                <button
+                  class="w-full py-4 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="!tourDate"
+                  @click="goToCheckout"
+                >
                   Reservar Ahora
                 </button>
 
@@ -217,6 +223,7 @@
 import { Clock, Users, MapPin, Check, Phone, Mail } from 'lucide-vue-next'
 
 const persons = ref('2')
+const tourDate = ref('')
 
 const personOptions = [
   { value: '1', label: '1 persona' },
@@ -225,6 +232,21 @@ const personOptions = [
   { value: '4', label: '4 personas' },
   { value: '5', label: '5+ personas' },
 ]
+
+const todayIso = computed(() => new Date().toISOString().slice(0, 10))
+
+const goToCheckout = () => {
+  if (!tour.value || !tourDate.value) return
+  const total = Number(tour.value.price) * Number(persons.value)
+  const params = new URLSearchParams({
+    tourId: String(tour.value.id),
+    tourDate: tourDate.value,
+    travelers: persons.value,
+    total: String(total),
+    experience: tour.value.name,
+  })
+  navigateTo(`/checkout?${params.toString()}`)
+}
 
 const route = useRoute()
 const config = useRuntimeConfig()

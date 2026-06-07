@@ -35,6 +35,15 @@ services:
     networks:
       - costarica_network
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: costarica_mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI: http://localhost:8025
+    networks:
+      - costarica_network
+
   backend:
     build:
       context: ./backend
@@ -53,11 +62,21 @@ services:
       - BACKEND_CORS_ORIGINS=http://localhost:3000,http://frontend:3000
       - SITE_URL=http://localhost:3000
       - ENVIRONMENT=development
+      # Email - MailHog (points to mailhog container by service name)
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_FROM=noreply@costaricatravel.local
+      - SMTP_FROM_NAME=Costa Rica Travel
+      - SMTP_USE_TLS=false
+      - USE_SMTP_IN_DEV=true
+      - EMAIL_FROM=noreply@costaricatravel.local
+      - EMAIL_FROM_NAME=Costa Rica Travel
     ports:
       - "8000:8000"
     depends_on:
       - postgres
       - redis
+      - mailhog
     volumes:
       - ./backend:/app
       - /app/venv
