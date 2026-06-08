@@ -8,7 +8,7 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxtjs/color-mode',
     '@nuxt/content',
-    'nuxt-icon'
+    '@nuxt/icon'
   ],
   
   css: ['~/assets/css/a11y.css'],
