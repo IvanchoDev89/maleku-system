@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -193,59 +194,64 @@ async def global_search(
     # Sanitize query input
     q = q.strip()[:200]
     
-    results = {
-        "properties": [],
-        "tours": [],
-        "destinations": [],
-        "blog": []
+    # Search properties, tours, destinations, blog in parallel
+    pattern = f"%{escape_like_pattern(q)}%"
+
+    async def _search_properties():
+        result = await db.execute(
+            select(Property)
+            .where(Property.is_active)
+            .where(Property.name.ilike(pattern))
+            .limit(limit)
+        )
+        return [
+            {"id": str(p.id), "name": p.name, "slug": p.slug, "type": "property", "image": p.images[0] if p.images else None}
+            for p in result.scalars().all()
+        ]
+
+    async def _search_tours():
+        result = await db.execute(
+            select(Tour)
+            .where(Tour.is_active)
+            .where(Tour.name.ilike(pattern))
+            .limit(limit)
+        )
+        return [
+            {"id": str(t.id), "name": t.name, "slug": t.slug, "type": "tour", "image": t.cover_image}
+            for t in result.scalars().all()
+        ]
+
+    async def _search_destinations():
+        result = await db.execute(
+            select(Destination)
+            .where(Destination.is_active)
+            .where(Destination.name.ilike(pattern))
+            .limit(limit)
+        )
+        return [
+            {"id": str(d.id), "name": d.name, "slug": d.slug, "type": "destination", "image": d.image}
+            for d in result.scalars().all()
+        ]
+
+    async def _search_blog():
+        result = await db.execute(
+            select(BlogPost)
+            .where(BlogPost.status == BlogPostStatus.PUBLISHED)
+            .where(BlogPost.title.ilike(pattern))
+            .limit(limit)
+        )
+        return [
+            {"id": str(b.id), "title": b.title, "slug": b.slug, "type": "blog", "image": b.featured_image}
+            for b in result.scalars().all()
+        ]
+
+    props, tours_res, dests, blog = await asyncio.gather(
+        _search_properties(), _search_tours(), _search_destinations(), _search_blog()
+    )
+
+    return {
+        "properties": props,
+        "tours": tours_res,
+        "destinations": dests,
+        "blog": blog
     }
-    
-    # Search properties
-    prop_result = await db.execute(
-        select(Property)
-        .where(Property.is_active)
-        .where(Property.name.ilike(f"%{escape_like_pattern(q)}%"))
-        .limit(limit)
-    )
-    results["properties"] = [
-        {"id": str(p.id), "name": p.name, "slug": p.slug, "type": "property", "image": p.images[0] if p.images else None}
-        for p in prop_result.scalars().all()
-    ]
-    
-    # Search tours
-    tour_result = await db.execute(
-        select(Tour)
-        .where(Tour.is_active)
-        .where(Tour.name.ilike(f"%{escape_like_pattern(q)}%"))
-        .limit(limit)
-    )
-    results["tours"] = [
-        {"id": str(t.id), "name": t.name, "slug": t.slug, "type": "tour", "image": t.cover_image}
-        for t in tour_result.scalars().all()
-    ]
-    
-    # Search destinations
-    dest_result = await db.execute(
-        select(Destination)
-        .where(Destination.is_active)
-        .where(Destination.name.ilike(f"%{escape_like_pattern(q)}%"))
-        .limit(limit)
-    )
-    results["destinations"] = [
-        {"id": str(d.id), "name": d.name, "slug": d.slug, "type": "destination", "image": d.image}
-        for d in dest_result.scalars().all()
-    ]
-    
-    # Search blog
-    blog_result = await db.execute(
-        select(BlogPost)
-        .where(BlogPost.status == BlogPostStatus.PUBLISHED)
-        .where(BlogPost.title.ilike(f"%{escape_like_pattern(q)}%"))
-        .limit(limit)
-    )
-    results["blog"] = [
-        {"id": str(b.id), "title": b.title, "slug": b.slug, "type": "blog", "image": b.featured_image}
-        for b in blog_result.scalars().all()
-    ]
-    
-    return results

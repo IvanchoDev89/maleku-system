@@ -185,9 +185,9 @@ def test_crud_base_import():
 
 # Service tests - verify actual services used in the application
 def test_cache_service_import():
-    from app.services.cache_service import CacheService, cache_service
+    from app.services.cache_service import CacheService, cache
     assert CacheService
-    assert cache_service
+    assert cache
 
 
 def test_pricing_service_import():

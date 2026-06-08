@@ -24,6 +24,7 @@ export default defineNuxtConfig({
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://costaricatravel.dev',
+      cdnUrl: process.env.NUXT_PUBLIC_CDN_URL || '',
       siteName: 'Costa Rica Travel',
       siteDescription: 'Descubre Costa Rica: playas, volcanes, selvas y aventuras únicas. Hoteles, tours y planificador de viajes interactivo.',
       siteTitleTemplate: '%s - Costa Rica Travel',
@@ -131,7 +132,7 @@ export default defineNuxtConfig({
   },
 
   image: {
-    domains: ['images.unsplash.com', 'picsum.photos', 'randomuser.me'],
+    domains: ['images.unsplash.com', 'picsum.photos', 'randomuser.me', 'res.cloudinary.com'],
     quality: 80,
     format: ['webp', 'jpg']
   }

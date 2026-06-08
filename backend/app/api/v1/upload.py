@@ -1,3 +1,4 @@
+import asyncio
 import io
 import uuid
 from datetime import datetime, timezone
@@ -217,15 +218,16 @@ async def upload_images(
         raise HTTPException(status_code=400, detail="Maximum 10 files allowed at once")
 
     folder = validate_folder(folder)
-    results = []
-    for file in files:
+
+    async def _upload_one(file: UploadFile) -> UploadResponse:
         try:
-            result = await save_upload_file(file, folder)
-            results.append(result)
+            return await save_upload_file(file, folder)
         except HTTPException:
             raise
 
-    return results
+    results = await asyncio.gather(*[_upload_one(f) for f in files])
+
+    return list(results)
 
 
 @router.delete("/image/{file_id}")

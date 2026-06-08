@@ -1,4 +1,5 @@
 """Landing page content API."""
+import asyncio
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,29 +24,37 @@ async def get_landing_content(
     if cached:
         return cached
 
-    # Get featured destinations
-    dest_query = select(Destination).where(
-        Destination.is_active,
-        Destination.is_featured
-    ).order_by(Destination.order.asc()).limit(6)
-    dest_result = await db.execute(dest_query)
-    destinations = dest_result.scalars().all()
+    # Run 3 independent queries in parallel
+    async def _get_destinations():
+        result = await db.execute(
+            select(Destination).where(
+                Destination.is_active,
+                Destination.is_featured
+            ).order_by(Destination.order.asc()).limit(6)
+        )
+        return result.scalars().all()
 
-    # Get featured properties (hotels)
-    prop_query = select(Property).where(
-        Property.is_active,
-        Property.is_featured
-    ).order_by(Property.rating.desc()).limit(6)
-    prop_result = await db.execute(prop_query)
-    properties = prop_result.scalars().all()
+    async def _get_properties():
+        result = await db.execute(
+            select(Property).where(
+                Property.is_active,
+                Property.is_featured
+            ).order_by(Property.rating.desc()).limit(6)
+        )
+        return result.scalars().all()
 
-    # Get featured tours
-    tour_query = select(Tour).where(
-        Tour.is_active,
-        Tour.is_featured
-    ).order_by(Tour.rating.desc()).limit(6)
-    tour_result = await db.execute(tour_query)
-    tours = tour_result.scalars().all()
+    async def _get_tours():
+        result = await db.execute(
+            select(Tour).where(
+                Tour.is_active,
+                Tour.is_featured
+            ).order_by(Tour.rating.desc()).limit(6)
+        )
+        return result.scalars().all()
+
+    destinations, properties, tours = await asyncio.gather(
+        _get_destinations(), _get_properties(), _get_tours()
+    )
 
     response = {
         "destinations": [
