@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -125,6 +126,9 @@ app.add_middleware(ErrorHandlerMiddleware)
 
 # Metrics collection (Prometheus)
 app.add_middleware(MetricsMiddleware)
+
+# Compression (compress responses > 1KB for bandwidth savings)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Security: Trusted hosts (prevent host header attacks)
 app.add_middleware(

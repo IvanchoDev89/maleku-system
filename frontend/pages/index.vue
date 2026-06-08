@@ -152,6 +152,7 @@
                 width="800"
                 height="600"
                 format="webp"
+                loading="lazy"
                 :placeholder="true"
               />
               <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
@@ -218,6 +219,7 @@
                   width="800"
                   height="400"
                   format="webp"
+                  loading="lazy"
                   :placeholder="true"
                 />
                 <div class="absolute top-4 right-4">
@@ -291,6 +293,7 @@
                   width="800"
                   height="400"
                   format="webp"
+                  loading="lazy"
                   :placeholder="true"
                 />
                 <div class="absolute top-4 left-4">

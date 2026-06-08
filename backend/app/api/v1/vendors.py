@@ -1,6 +1,6 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -152,7 +152,12 @@ async def update_my_vendor_profile(
     
     await db.flush()
     await db.commit()
-    
+
+    # Invalidate vendor caches
+    await cache.delete(f"vendors:detail:{vendor.id}")
+    await cache.delete(f"vendors:slug:{vendor.business_slug}")
+    await cache.invalidate_tag("vendors")
+
     return VendorResponse.model_validate(vendor)
 
 
@@ -178,16 +183,16 @@ async def get_my_analytics(
     
     # Get property count
     prop_result = await db.execute(
-        select(Property).where(Property.vendor_id == vendor.id)
+        select(func.count()).where(Property.vendor_id == vendor.id)
     )
-    properties = prop_result.scalars().all()
-    
+    total_properties = prop_result.scalar()
+
     tour_result = await db.execute(
-        select(Tour).where(Tour.vendor_id == vendor.id)
+        select(func.count()).where(Tour.vendor_id == vendor.id)
     )
-    tours = tour_result.scalars().all()
-    
-    # Get bookings
+    total_tours = tour_result.scalar()
+
+    # Get bookings (still need full rows for aggregation)
     booking_result = await db.execute(
         select(Booking).where(Booking.vendor_id == vendor.id)
     )
@@ -199,8 +204,8 @@ async def get_my_analytics(
     total_revenue = sum(b.total_amount for b in bookings if b.status == BookingStatus.COMPLETED)
     
     return {
-        "total_properties": len(properties),
-        "total_tours": len(tours),
+        "total_properties": total_properties,
+        "total_tours": total_tours,
         "total_bookings": len(bookings),
         "pending_bookings": pending,
         "confirmed_bookings": confirmed,
@@ -230,7 +235,12 @@ async def verify_vendor(
     vendor.is_verified = True
     await db.flush()
     await db.commit()
-    
+
+    # Invalidate vendor caches
+    await cache.delete(f"vendors:detail:{vendor.id}")
+    await cache.delete(f"vendors:slug:{vendor.business_slug}")
+    await cache.invalidate_tag("vendors")
+
     return {"message": "Vendor verified successfully"}
 
 
@@ -253,5 +263,10 @@ async def toggle_vendor_active(
     vendor.is_active = is_active
     await db.flush()
     await db.commit()
-    
+
+    # Invalidate vendor caches
+    await cache.delete(f"vendors:detail:{vendor.id}")
+    await cache.delete(f"vendors:slug:{vendor.business_slug}")
+    await cache.invalidate_tag("vendors")
+
     return {"message": f"Vendor {'activated' if is_active else 'deactivated'}"}

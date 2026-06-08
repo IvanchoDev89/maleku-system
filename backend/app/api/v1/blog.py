@@ -133,16 +133,14 @@ async def get_blog_post(
         )
     
     response = BlogPostResponse.model_validate(post)
-    await cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_DETAIL, tags=["blog", f"blog:{post_id}"])
-    
-    return response
-    
-    # Increment views
+
+    # Increment views asynchronously (non-blocking)
     post.views_count += 1
     await db.flush()
     await db.commit()
-    
-    return BlogPostResponse.model_validate(post)
+
+    await cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_DETAIL, tags=["blog", f"blog:{post.id}"])
+    return response
 
 
 @router.get("/slug/{slug}", response_model=BlogPostResponse)
@@ -150,6 +148,13 @@ async def get_blog_post_by_slug(
     slug: str,
     db: AsyncSession = Depends(get_db)
 ):
+    safe_slug = _sanitize_cache_key(slug)
+    cache_key = f"blog:slug:{safe_slug}"
+
+    cached = await cache.get(cache_key)
+    if cached:
+        return BlogPostResponse(**cached)
+
     result = await db.execute(select(BlogPost).where(BlogPost.slug == slug))
     post = result.scalar_one_or_none()
     
@@ -162,8 +167,11 @@ async def get_blog_post_by_slug(
     post.views_count += 1
     await db.flush()
     await db.commit()
+
+    response = BlogPostResponse.model_validate(post)
+    await cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_DETAIL, tags=["blog", f"blog:{post.id}"])
     
-    return BlogPostResponse.model_validate(post)
+    return response
 
 
 @router.post("", response_model=BlogPostResponse)
@@ -277,7 +285,11 @@ async def delete_blog_post(
     post.status = BlogPostStatus.ARCHIVED
     await db.flush()
     await db.commit()
-    
+
+    # Invalidate blog caches
+    await cache.invalidate_tag(f"blog:{post_id}")
+    await cache.invalidate_tag("blog")
+
     return {"message": "Blog post archived"}
 
 

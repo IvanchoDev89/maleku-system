@@ -107,7 +107,9 @@ async def get_property(
             detail="Property not found"
         )
     
-    return PropertyResponse.model_validate(property_obj)
+    response = PropertyResponse.model_validate(property_obj)
+    await cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_DETAIL, tags=["properties"])
+    return response
 
 
 @router.get("/slug/{slug}", response_model=PropertyResponse)
