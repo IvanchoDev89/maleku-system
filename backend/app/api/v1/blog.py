@@ -16,7 +16,7 @@ from app.schemas import (
 )
 from app.services.cache_service import cache
 
-router = APIRouter()
+router = APIRouter(tags=["Blog"])
 limiter = Limiter(key_func=get_remote_address)
 
 
@@ -33,7 +33,9 @@ CACHE_TTL_DETAIL = 600  # 10 minutes for blog posts
 CACHE_TTL_FEATURED = 180  # 3 minutes for featured posts
 
 
-@router.get("", response_model=PaginatedResponse)
+@router.get("", response_model=PaginatedResponse,
+            summary="List blog posts",
+            description="Paginated list of blog posts with optional filters by category and status.")
 async def get_blog_posts(
     params: PaginationParams = Depends(),
     category: str = None,
@@ -83,7 +85,9 @@ async def get_blog_posts(
     return response
 
 
-@router.get("/featured")
+@router.get("/featured",
+            summary="Get featured posts",
+            description="Returns featured blog posts, ordered by published date. Default limit is 3.")
 async def get_featured_posts(
     db: AsyncSession = Depends(get_db),
     limit: int = 3
@@ -111,7 +115,9 @@ async def get_featured_posts(
     return response
 
 
-@router.get("/{post_id}", response_model=BlogPostResponse)
+@router.get("/{post_id}", response_model=BlogPostResponse,
+            summary="Get blog post by ID",
+            description="Returns a single blog post by UUID. Increments the view counter.")
 async def get_blog_post(
     post_id: uuid.UUID,
     db: AsyncSession = Depends(get_db)
@@ -143,7 +149,9 @@ async def get_blog_post(
     return response
 
 
-@router.get("/slug/{slug}", response_model=BlogPostResponse)
+@router.get("/slug/{slug}", response_model=BlogPostResponse,
+            summary="Get blog post by slug",
+            description="Returns a single blog post by URL-friendly slug. Increments the view counter.")
 async def get_blog_post_by_slug(
     slug: str,
     db: AsyncSession = Depends(get_db)
@@ -174,7 +182,9 @@ async def get_blog_post_by_slug(
     return response
 
 
-@router.post("", response_model=BlogPostResponse)
+@router.post("", response_model=BlogPostResponse,
+             summary="Create blog post",
+             description="Creates a new blog post as DRAFT. SUPER_ADMIN or VENDOR role required. Rate limited to 30/minute.")
 @limiter.limit("30/minute")  # Rate limiting: 30 posts por minuto
 async def create_blog_post(
     request: Request,
@@ -224,7 +234,9 @@ async def create_blog_post(
     return BlogPostResponse.model_validate(post)
 
 
-@router.put("/{post_id}", response_model=BlogPostResponse)
+@router.put("/{post_id}", response_model=BlogPostResponse,
+            summary="Update blog post",
+            description="Updates a blog post. SUPER_ADMIN role required. Rate limited to 30/minute. Logs blocked mass-assignment attempts.")
 @limiter.limit("30/minute")  # Rate limiting: 30 updates por minuto
 async def update_blog_post(
     request: Request,
@@ -267,7 +279,9 @@ async def update_blog_post(
     return BlogPostResponse.model_validate(post)
 
 
-@router.delete("/{post_id}")
+@router.delete("/{post_id}",
+               summary="Archive blog post",
+               description="Archives (soft-deletes) a blog post by setting status to ARCHIVED. SUPER_ADMIN role required.")
 async def delete_blog_post(
     post_id: uuid.UUID,
     current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
@@ -293,7 +307,9 @@ async def delete_blog_post(
     return {"message": "Blog post archived"}
 
 
-@router.get("/categories")
+@router.get("/categories",
+            summary="List blog categories",
+            description="Returns a distinct list of categories from published blog posts.")
 async def get_blog_categories(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(BlogPost.category)

@@ -13,14 +13,16 @@ from app.schemas import (
 )
 from app.services.cache_service import cache
 
-router = APIRouter()
+router = APIRouter(tags=["Properties"])
 
 CACHE_TTL_LIST = 300  # 5 minutes for property lists
 CACHE_TTL_DETAIL = 600  # 10 minutes for property details
 CACHE_TTL_FEATURED = 180  # 3 minutes for featured properties
 
 
-@router.get("", response_model=PaginatedResponse)
+@router.get("", response_model=PaginatedResponse,
+            summary="List properties",
+            description="Paginated list of active properties with optional filters by region, type, price range, rating, and featured status.")
 async def get_properties(
     params: PaginationParams = Depends(),
     region: str = None,
@@ -78,7 +80,9 @@ async def get_properties(
     return response
 
 
-@router.get("/{property_id}", response_model=PropertyResponse)
+@router.get("/{property_id}", response_model=PropertyResponse,
+            summary="Get property by ID",
+            description="Returns a single property with all rooms, vendor info and reviews by its UUID.")
 async def get_property(
     property_id: uuid.UUID,
     db: AsyncSession = Depends(get_db)
@@ -112,7 +116,9 @@ async def get_property(
     return response
 
 
-@router.get("/slug/{slug}", response_model=PropertyResponse)
+@router.get("/slug/{slug}", response_model=PropertyResponse,
+            summary="Get property by slug",
+            description="Returns a single property by its URL-friendly slug with full details.")
 async def get_property_by_slug(
     slug: str,
     db: AsyncSession = Depends(get_db)
@@ -149,7 +155,9 @@ async def get_property_by_slug(
     return response
 
 
-@router.post("", response_model=PropertyResponse)
+@router.post("", response_model=PropertyResponse,
+             summary="Create property",
+             description="Creates a new property listing. Vendor or SUPER_ADMIN role required.")
 async def create_property(
     data: PropertyCreate,
     current_user: User = Depends(get_current_user),
@@ -199,7 +207,9 @@ async def create_property(
     return PropertyResponse.model_validate(property_obj)
 
 
-@router.put("/{property_id}", response_model=PropertyResponse)
+@router.put("/{property_id}", response_model=PropertyResponse,
+            summary="Update property",
+            description="Updates a property. Only the owning vendor or SUPER_ADMIN can update.")
 async def update_property(
     property_id: uuid.UUID,
     data: PropertyUpdate,
@@ -259,7 +269,9 @@ async def update_property(
     return response
 
 
-@router.delete("/{property_id}")
+@router.delete("/{property_id}",
+               summary="Delete property (soft)",
+               description="Soft-deletes a property by setting is_active=False. Only the owning vendor or SUPER_ADMIN.")
 async def delete_property(
     property_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
@@ -302,7 +314,9 @@ async def delete_property(
     return {"message": "Property deleted successfully"}
 
 
-@router.get("/vendor/my", response_model=PaginatedResponse)
+@router.get("/vendor/my", response_model=PaginatedResponse,
+            summary="Get my properties (vendor)",
+            description="Returns the authenticated vendor's own properties with pagination.")
 async def get_my_properties(
     params: PaginationParams = Depends(),
     current_user: User = Depends(get_current_user),
@@ -344,7 +358,9 @@ async def get_my_properties(
     )
 
 
-@router.get("/regions")
+@router.get("/regions",
+            summary="List property regions",
+            description="Returns a distinct list of all regions where active properties are located.")
 async def get_regions(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Property.region)

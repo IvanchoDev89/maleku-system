@@ -18,7 +18,7 @@ from app.services.cloudinary_service import cloudinary_service, CloudinaryError
 
 logger = get_logger(__name__)
 
-router = APIRouter()
+router = APIRouter(tags=["Upload"])
 
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
 ALLOWED_MIME_TYPES = {
@@ -190,7 +190,9 @@ async def upload_to_cloudinary(file: UploadFile, folder: str) -> UploadResponse:
     )
 
 
-@router.post("/image", response_model=UploadResponse)
+@router.post("/image", response_model=UploadResponse,
+             summary="Upload single image",
+             description="Uploads a single image file (JPG, PNG, GIF, WebP). Max 10MB. Validates MIME type and image integrity.")
 async def upload_image(
     file: UploadFile = File(...),
     folder: str = Form(default="general"),
@@ -208,7 +210,9 @@ async def upload_image(
     return await save_upload_file(file, folder)
 
 
-@router.post("/images", response_model=List[UploadResponse])
+@router.post("/images", response_model=List[UploadResponse],
+             summary="Upload multiple images",
+             description="Uploads up to 10 images in parallel. Each file is validated and saved independently. Max total: 10 files.")
 async def upload_images(
     files: List[UploadFile] = File(...),
     folder: str = Form(default="gallery"),
@@ -230,7 +234,9 @@ async def upload_images(
     return list(results)
 
 
-@router.delete("/image/{file_id}")
+@router.delete("/image/{file_id}",
+               summary="Delete image",
+               description="Deletes an image from Cloudinary (if provider=cloudinary with public_id) or from local storage. ADMIN/SUPER_ADMIN role required.")
 async def delete_image(
     file_id: str,
     path: str,
@@ -265,7 +271,9 @@ async def delete_image(
         raise HTTPException(status_code=500, detail="Failed to delete image. Please try again later.") from e
 
 
-@router.get("/presigned-url")
+@router.get("/presigned-url",
+            summary="Get presigned upload URL",
+            description="Returns upload URL and metadata for a client-side upload. Validates file extension against allowed types.")
 async def get_presigned_url(
     filename: str,
     folder: str = "general",

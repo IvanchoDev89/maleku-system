@@ -14,14 +14,16 @@ from app.schemas import (
 )
 from app.services.cache_service import cache
 
-router = APIRouter()
+router = APIRouter(tags=["Tours"])
 
 CACHE_TTL_LIST = 300  # 5 minutes for tour lists
 CACHE_TTL_DETAIL = 600  # 10 minutes for tour details
 CACHE_TTL_FEATURED = 180  # 3 minutes for featured tours
 
 
-@router.get("", response_model=PaginatedResponse)
+@router.get("", response_model=PaginatedResponse,
+            summary="List tours",
+            description="Paginated list of active tours with optional filters by category, difficulty, location, price range, rating, and featured status.")
 async def get_tours(
     params: PaginationParams = Depends(),
     category: str = None,
@@ -83,7 +85,9 @@ async def get_tours(
     return response
 
 
-@router.get("/{tour_id}", response_model=TourResponse)
+@router.get("/{tour_id}", response_model=TourResponse,
+            summary="Get tour by ID",
+            description="Returns a single tour with vendor details by its UUID.")
 async def get_tour(
     tour_id: uuid.UUID,
     db: AsyncSession = Depends(get_db)
@@ -113,7 +117,9 @@ async def get_tour(
     return response
 
 
-@router.get("/slug/{slug}", response_model=TourResponse)
+@router.get("/slug/{slug}", response_model=TourResponse,
+            summary="Get tour by slug",
+            description="Returns a single tour by its URL-friendly slug.")
 async def get_tour_by_slug(
     slug: str,
     db: AsyncSession = Depends(get_db)
@@ -143,7 +149,9 @@ async def get_tour_by_slug(
     return response
 
 
-@router.post("", response_model=TourResponse)
+@router.post("", response_model=TourResponse,
+             summary="Create tour",
+             description="Creates a new tour listing. Vendor or SUPER_ADMIN role required.")
 async def create_tour(
     data: TourCreate,
     current_user: User = Depends(get_current_user),
@@ -191,7 +199,9 @@ async def create_tour(
     return TourResponse.model_validate(tour)
 
 
-@router.put("/{tour_id}", response_model=TourResponse)
+@router.put("/{tour_id}", response_model=TourResponse,
+            summary="Update tour",
+            description="Updates a tour. Only the owning vendor or SUPER_ADMIN can update.")
 async def update_tour(
     tour_id: uuid.UUID,
     data: TourUpdate,
@@ -246,7 +256,9 @@ async def update_tour(
     return TourResponse.model_validate(tour)
 
 
-@router.delete("/{tour_id}")
+@router.delete("/{tour_id}",
+               summary="Delete tour (soft)",
+               description="Soft-deletes a tour by setting is_active=False. Only the owning vendor or SUPER_ADMIN.")
 async def delete_tour(
     tour_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
@@ -289,7 +301,9 @@ async def delete_tour(
     return {"message": "Tour deleted successfully"}
 
 
-@router.get("/vendor/my", response_model=PaginatedResponse)
+@router.get("/vendor/my", response_model=PaginatedResponse,
+            summary="Get my tours (vendor)",
+            description="Returns the authenticated vendor's own tours with pagination.")
 async def get_my_tours(
     params: PaginationParams = Depends(),
     current_user: User = Depends(get_current_user),
@@ -331,7 +345,9 @@ async def get_my_tours(
     )
 
 
-@router.get("/categories")
+@router.get("/categories",
+            summary="List tour categories",
+            description="Returns a distinct list of all categories from active tours.")
 async def get_categories(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Tour.category)

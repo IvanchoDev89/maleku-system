@@ -9,13 +9,15 @@ from app.models import User, UserRole, Vendor, Property, Tour, Booking, BookingS
 from app.schemas import VendorResponse, VendorUpdate, VendorPublicResponse
 from app.services.cache_service import cache
 
-router = APIRouter()
+router = APIRouter(tags=["Vendors"])
 
 CACHE_TTL_LIST = 300  # 5 minutes for vendor lists
 CACHE_TTL_DETAIL = 600  # 10 minutes for vendor details
 
 
-@router.get("", response_model=list[VendorPublicResponse])
+@router.get("", response_model=list[VendorPublicResponse],
+            summary="List vendors",
+            description="Returns a list of active vendors sorted by rating. Supports limit and offset for pagination.")
 async def get_vendors(
     db: AsyncSession = Depends(get_db),
     limit: int = 20,
@@ -44,7 +46,9 @@ async def get_vendors(
     return response
 
 
-@router.get("/{vendor_id}", response_model=VendorResponse)
+@router.get("/{vendor_id}", response_model=VendorResponse,
+            summary="Get vendor by ID",
+            description="Returns a single vendor by UUID with full details including reviews and commission rate.")
 async def get_vendor(
     vendor_id: uuid.UUID,
     db: AsyncSession = Depends(get_db)
@@ -71,7 +75,9 @@ async def get_vendor(
     return response
 
 
-@router.get("/slug/{slug}", response_model=VendorResponse)
+@router.get("/slug/{slug}", response_model=VendorResponse,
+            summary="Get vendor by slug",
+            description="Returns a single vendor by their business URL-friendly slug.")
 async def get_vendor_by_slug(
     slug: str,
     db: AsyncSession = Depends(get_db)
@@ -98,7 +104,9 @@ async def get_vendor_by_slug(
     return response
 
 
-@router.get("/me/profile", response_model=VendorResponse)
+@router.get("/me/profile", response_model=VendorResponse,
+            summary="Get my vendor profile",
+            description="Returns the authenticated vendor's own profile.")
 async def get_my_vendor_profile(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -121,7 +129,9 @@ async def get_my_vendor_profile(
     return VendorResponse.model_validate(vendor)
 
 
-@router.put("/me/profile", response_model=VendorResponse)
+@router.put("/me/profile", response_model=VendorResponse,
+            summary="Update vendor profile",
+            description="Updates the authenticated vendor's profile. Only allows specific fields (business_name, description, phone, address, etc.) to prevent mass assignment.")
 async def update_my_vendor_profile(
     data: VendorUpdate,
     current_user: User = Depends(get_current_user),
@@ -161,7 +171,9 @@ async def update_my_vendor_profile(
     return VendorResponse.model_validate(vendor)
 
 
-@router.get("/me/analytics")
+@router.get("/me/analytics",
+            summary="Vendor analytics dashboard",
+            description="Returns key metrics for the authenticated vendor: property count, tour count, booking stats (pending/confirmed/completed), revenue, rating, and commission rate.")
 async def get_my_analytics(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -217,7 +229,9 @@ async def get_my_analytics(
     }
 
 
-@router.put("/{vendor_id}/verify")
+@router.put("/{vendor_id}/verify",
+            summary="Verify vendor",
+            description="Marks a vendor as verified. SUPER_ADMIN role required.")
 async def verify_vendor(
     vendor_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -244,7 +258,9 @@ async def verify_vendor(
     return {"message": "Vendor verified successfully"}
 
 
-@router.put("/{vendor_id}/activate")
+@router.put("/{vendor_id}/activate",
+            summary="Toggle vendor active status",
+            description="Activates or deactivates a vendor account. SUPER_ADMIN role required.")
 async def toggle_vendor_active(
     vendor_id: uuid.UUID,
     is_active: bool,

@@ -12,6 +12,7 @@
   <a href="#features">Features</a> •
   <a href="#demo">Demo</a> •
   <a href="#quick-start">Quick Start</a> •
+  <a href="DOCS/index.md">Docs</a> •
   <a href="#api">API</a> •
   <a href="#deployment">Deployment</a>
 </p>
@@ -437,6 +438,23 @@ npm run test:coverage # Run with coverage report
 - Firefox (last 2 versions)
 - Safari (last 2 versions)
 - Mobile browsers (iOS Safari, Chrome Android)
+
+---
+
+## 📚 Documentación
+
+La documentación completa está disponible en la carpeta [`DOCS/`](DOCS/index.md):
+
+| Documento | Descripción |
+|-----------|-------------|
+| [`DOCS/index.md`](DOCS/index.md) | Hub de documentación con índice, stack y enlaces rápidos |
+| [`API.md`](API.md) | API REST completa con schemas, ejemplos y autenticación |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Stack tecnológico, estructura y diseño del sistema |
+| [`DEPLOYMENT.md`](DEPLOYMENT.md) | Guía de deploy para Railway y Vercel |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Guía para contribuir al proyecto |
+
+**Swagger UI:** `http://localhost:8000/docs` (disponible en modo debug)
+**ReDoc:** `http://localhost:8000/redoc`
 
 ---
 

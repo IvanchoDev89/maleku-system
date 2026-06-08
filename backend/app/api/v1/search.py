@@ -7,10 +7,12 @@ from app.core.database import get_db
 from app.core.utils import escape_like_pattern
 from app.models import Property, Tour
 
-router = APIRouter()
+router = APIRouter(tags=["Search"])
 
 
-@router.get("/map")
+@router.get("/map",
+            summary="Get map data",
+            description="Returns properties and tours with coordinates for map display. Supports filters by type, category, region, and price range with pagination.")
 async def get_map_data(
     db: AsyncSession = Depends(get_db),
     property_type: str = None,
@@ -128,7 +130,9 @@ async def get_map_data(
     }
 
 
-@router.get("/map/count")
+@router.get("/map/count",
+            summary="Get map counts",
+            description="Returns aggregate counts for map markers: total properties/tours, grouped by region and category.")
 async def get_map_counts(
     db: AsyncSession = Depends(get_db)
 ):
@@ -180,7 +184,9 @@ async def get_map_counts(
     }
 
 
-@router.get("/search")
+@router.get("/search",
+            summary="Global search",
+            description="Searches properties, tours, destinations, and blog in parallel using ILIKE pattern matching on names/titles.")
 async def global_search(
     q: str = Query(..., min_length=1, max_length=200),
     db: AsyncSession = Depends(get_db),

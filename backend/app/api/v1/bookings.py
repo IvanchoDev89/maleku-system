@@ -23,7 +23,7 @@ from app.services.availability_service import check_room_availability, check_tou
 from app.services.email_service import email_service
 from app.core.logging import get_logger
 
-router = APIRouter()
+router = APIRouter(tags=["Bookings"])
 logger = get_logger(__name__)
 limiter = Limiter(key_func=get_remote_address)
 
@@ -41,7 +41,9 @@ def _generate_room_lock_key(room_id: uuid.UUID, check_in: datetime, check_out: d
     return int(hashlib.md5(key_string.encode()).hexdigest()[:8], 16) & 0x7FFFFFFF
 
 
-@router.post("/property", response_model=BookingResponse)
+@router.post("/property", response_model=BookingResponse,
+             summary="Create property booking",
+             description="Creates a new property/room booking with advisory lock to prevent race conditions. Calculates pricing with weekend rates, extra guests, and weekly discounts.")
 async def create_property_booking(
     data: BookingPropertyRequest,
     current_user: User = Depends(get_current_user),
@@ -223,7 +225,9 @@ async def _send_booking_confirmation_emails(
             logger.info(f"Booking notification email sent to vendor: {vendor.email}")
 
 
-@router.post("/tour", response_model=BookingResponse)
+@router.post("/tour", response_model=BookingResponse,
+             summary="Create tour booking",
+             description="Creates a new tour booking with advisory lock to prevent overbooking. Validates participants against max group size.")
 async def create_tour_booking(
     data: BookingTourRequest,
     current_user: User = Depends(get_current_user),
@@ -384,7 +388,9 @@ async def _send_tour_booking_emails(
             logger.info(f"Tour booking notification sent to vendor: {vendor.email}")
 
 
-@router.get("", response_model=PaginatedResponse)
+@router.get("", response_model=PaginatedResponse,
+            summary="List bookings",
+            description="Returns paginated bookings scoped to the authenticated user/role: CLIENT sees own, VENDOR sees their property/tour bookings, ADMIN/SUPER_ADMIN sees all.")
 async def get_bookings(
     params: PaginationParams = Depends(),
     status: str = None,
@@ -537,7 +543,9 @@ async def preview_price(
     )
 
 
-@router.get("/{booking_id}", response_model=BookingResponse)
+@router.get("/{booking_id}", response_model=BookingResponse,
+            summary="Get booking by ID",
+            description="Returns a single booking with all relations (user, vendor, property, room, tour). Access scoped by role.")
 async def get_booking(
     booking_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
@@ -581,7 +589,9 @@ async def get_booking(
     return BookingResponse.model_validate(booking)
 
 
-@router.put("/{booking_id}/status", response_model=BookingResponse)
+@router.put("/{booking_id}/status", response_model=BookingResponse,
+            summary="Update booking status",
+            description="Updates booking status. VENDOR can confirm/cancel. CLIENT can only cancel their own bookings.")
 async def update_booking_status(
     booking_id: uuid.UUID,
     data: BookingUpdateStatus,
@@ -648,7 +658,9 @@ async def update_booking_status(
     return BookingResponse.model_validate(booking)
 
 
-@router.get("/vendor/stats")
+@router.get("/vendor/stats",
+            summary="Vendor booking statistics",
+            description="Returns aggregated booking stats for the authenticated vendor: total, pending, confirmed, completed, cancelled counts plus revenue and commission totals.")
 async def get_vendor_booking_stats(
     current_user: User = Depends(require_role(UserRole.VENDOR)),
     db: AsyncSession = Depends(get_db)
@@ -684,7 +696,9 @@ async def get_vendor_booking_stats(
     }
 
 
-@router.get("/vendor/my-bookings", response_model=PaginatedResponse)
+@router.get("/vendor/my-bookings", response_model=PaginatedResponse,
+            summary="Vendor my bookings",
+            description="Returns the authenticated vendor's bookings with optional status filter and pagination.")
 async def get_vendor_my_bookings(
     params: PaginationParams = Depends(),
     status: str = None,

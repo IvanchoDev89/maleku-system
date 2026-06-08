@@ -11,13 +11,15 @@ from app.schemas import (
 from app.models import User, UserRole, Destination
 from app.services.cache_service import cache
 
-router = APIRouter()
+router = APIRouter(tags=["Destinations"])
 
 CACHE_TTL_LIST = 600  # 10 minutes for destination lists
 CACHE_TTL_DETAIL = 900  # 15 minutes for destination details (rarely change)
 
 
-@router.get("", response_model=list[DestinationResponse])
+@router.get("", response_model=list[DestinationResponse],
+            summary="List destinations",
+            description="Returns all active destinations sorted by order. Optional filters by region and featured status.")
 async def get_destinations(
     db: AsyncSession = Depends(get_db),
     region: str = None,
@@ -50,7 +52,9 @@ async def get_destinations(
     return response
 
 
-@router.get("/{destination_id}", response_model=DestinationResponse)
+@router.get("/{destination_id}", response_model=DestinationResponse,
+            summary="Get destination by ID",
+            description="Returns a single destination by UUID.")
 async def get_destination(
     destination_id: uuid.UUID,
     db: AsyncSession = Depends(get_db)
@@ -77,7 +81,9 @@ async def get_destination(
     return response
 
 
-@router.get("/slug/{slug}", response_model=DestinationResponse)
+@router.get("/slug/{slug}", response_model=DestinationResponse,
+            summary="Get destination by slug",
+            description="Returns a single destination by URL-friendly slug.")
 async def get_destination_by_slug(
     slug: str,
     db: AsyncSession = Depends(get_db)
@@ -104,7 +110,9 @@ async def get_destination_by_slug(
     return response
 
 
-@router.post("", response_model=DestinationResponse)
+@router.post("", response_model=DestinationResponse,
+             summary="Create destination",
+             description="Creates a new destination. SUPER_ADMIN role required. Auto-generates slug from name.")
 async def create_destination(
     data: DestinationCreate,
     current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
@@ -133,7 +141,9 @@ async def create_destination(
     return DestinationResponse.model_validate(destination)
 
 
-@router.put("/{destination_id}", response_model=DestinationResponse)
+@router.put("/{destination_id}", response_model=DestinationResponse,
+            summary="Update destination",
+            description="Updates a destination. SUPER_ADMIN role required.")
 async def update_destination(
     destination_id: uuid.UUID,
     data: DestinationUpdate,
@@ -171,7 +181,9 @@ async def update_destination(
     return DestinationResponse.model_validate(destination)
 
 
-@router.delete("/{destination_id}")
+@router.delete("/{destination_id}",
+               summary="Delete destination (soft)",
+               description="Soft-deletes a destination by setting is_active=False. SUPER_ADMIN role required.")
 async def delete_destination(
     destination_id: uuid.UUID,
     current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
@@ -199,7 +211,9 @@ async def delete_destination(
     return {"message": "Destination deleted successfully"}
 
 
-@router.put("/{destination_id}/order")
+@router.put("/{destination_id}/order",
+            summary="Reorder destination",
+            description="Updates the display order of a destination. SUPER_ADMIN role required.")
 async def reorder_destination(
     destination_id: uuid.UUID,
     order: int,
