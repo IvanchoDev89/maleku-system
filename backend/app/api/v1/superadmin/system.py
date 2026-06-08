@@ -300,7 +300,10 @@ async def get_system_metrics(
         select(func.count(User.id)).where(User.last_login >= day_ago)
     )
     active_users_24h = active_users_result.scalar() or 0
-    
+
+    # DB connection count
+    connections_count = await _get_db_connection_count(db)
+
     return {
         "timestamp": now,
         "users": {
@@ -309,16 +312,28 @@ async def get_system_metrics(
             "active_24h": active_users_24h,
         },
         "api": {
-            "requests_24h": None,  # Would need request tracking
+            "requests_24h": None,
             "average_response_time_ms": None,
             "error_rate": None,
+            "prometheus_endpoint": "/metrics",
         },
         "database": {
-            "connections": None,  # Would query actual connections
+            "connections": connections_count,
             "slow_queries_24h": None,
         },
-        "note": "Some metrics require additional monitoring setup (Prometheus, Datadog, etc.)",
+        "note": "Real-time request metrics available via GET /metrics (Prometheus format).",
     }
+
+
+async def _get_db_connection_count(db: AsyncSession) -> Optional[int]:
+    """Query active database connection count."""
+    try:
+        result = await db.execute(
+            text("SELECT count(*) FROM pg_stat_activity WHERE datname = current_database()")
+        )
+        return result.scalar()
+    except Exception:
+        return None
 
 
 @router.post("/maintenance-mode")

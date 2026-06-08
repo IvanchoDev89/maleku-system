@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from slowapi import Limiter
@@ -38,6 +38,8 @@ from app.api.v1.newsletter import router as newsletter_router
 from app.api.v1.superadmin import router as superadmin_router
 from app.core.logging import setup_logging, get_logger
 from app.middleware.error_handler import ErrorHandlerMiddleware
+from app.middleware.request_id import RequestIDMiddleware
+from app.middleware.metrics import MetricsMiddleware
 
 # Setup Sentry monitoring
 if settings.SENTRY_DSN:
@@ -50,8 +52,9 @@ if settings.SENTRY_DSN:
         send_default_pii=False
     )
 
-# Setup logging
-setup_logging(level="INFO", json_format=False)
+# Setup logging (env-driven: LOG_FORMAT=json|text, default: text en dev, json en prod)
+_json_format = settings.LOG_FORMAT == "json" if settings.LOG_FORMAT else settings.is_production
+setup_logging(level=settings.LOG_LEVEL, json_format=_json_format)
 logger = get_logger(__name__)
 
 # Rate limiter (Redis-backed, configured in app.core.rate_limiter)
@@ -114,8 +117,14 @@ app.add_middleware(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
+# Security: Request ID (generates UUID if absent)
+app.add_middleware(RequestIDMiddleware)
+
 # Security: Global error handler (prevents info leakage)
 app.add_middleware(ErrorHandlerMiddleware)
+
+# Metrics collection (Prometheus)
+app.add_middleware(MetricsMiddleware)
 
 # Security: Trusted hosts (prevent host header attacks)
 app.add_middleware(
@@ -303,25 +312,55 @@ async def health_check():
 
 @app.get("/health/ready")
 async def health_ready():
-    """Readiness check - verifies database connection"""
+    """Readiness check - verifies database, Redis, and configured external services."""
     from app.core.database import engine
     from sqlalchemy import text
+    import redis.asyncio as redis_asyncio
 
-    db_status = "unknown"
+    services = {}
+
+    # Database
     try:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
-            db_status = "connected"
-    except (OSError, RuntimeError) as e:
-        # SECURITY: do not leak internal error details to client (OWASP API8)
-        # Full error is logged server-side; client gets a generic status
+            services["database"] = "connected"
+    except Exception as e:
         logger.error(f"Database readiness check failed: {e}")
-        db_status = "unavailable"
+        services["database"] = "unavailable"
+
+    # Redis
+    try:
+        r = redis_asyncio.from_url(
+            settings.REDIS_URL,
+            socket_connect_timeout=2,
+            socket_timeout=2,
+        )
+        await r.ping()
+        await r.aclose()
+        services["redis"] = "connected"
+    except Exception as e:
+        logger.warning(f"Redis readiness check failed: {e}")
+        services["redis"] = "unavailable"
+
+    # Stripe (config check)
+    services["stripe"] = "configured" if settings.is_stripe_configured else "not_configured"
+
+    # Cloudinary (config check)
+    services["cloudinary"] = (
+        "configured"
+        if settings.CLOUDINARY_CLOUD_NAME and settings.CLOUDINARY_API_KEY
+        else "not_configured"
+    )
+
+    critical_ok = (
+        services["database"] == "connected"
+        and services["redis"] == "connected"
+    )
 
     return {
-        "status": "ready" if db_status == "connected" else "degraded",
-        "database": db_status,
-        "environment": settings.ENVIRONMENT
+        "status": "ready" if critical_ok else "degraded",
+        "environment": settings.ENVIRONMENT,
+        **services,
     }
 
 
@@ -333,3 +372,10 @@ async def health_live():
         "status": "alive",
         "pid": os.getpid()
     }
+
+
+# Prometheus metrics endpoint (no auth — intended for internal scraping)
+@app.get("/metrics", include_in_schema=False)
+async def metrics():
+    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)

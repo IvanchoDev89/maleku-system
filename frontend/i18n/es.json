@@ -57,7 +57,9 @@
       },
       "button": "Buscar Experiencias",
       "searching": "Buscando...",
-      "popular": "Populares:"
+      "popular": "Populares:",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out"
     },
     "destinations": {
       "guanacaste": {
@@ -84,7 +86,9 @@
     },
     "scrollIndicator": {
       "label": "Desplazar hacia abajo"
-    }
+    },
+    "badge": "Descubre el Paraíso de Centro América",
+    "action": "Vive la Aventura en"
   },
   "stats": {
     "territory": "de la biodiversidad mundial",
@@ -313,7 +317,8 @@
     "search": "Buscar",
     "filter": "Filtrar",
     "noResults": "No se encontraron resultados",
-    "seeAll": "Ver todos"
+    "seeAll": "Ver todos",
+    "back": "Volver"
   },
   "blog": {
     "title": "Blog de Viajes",
@@ -435,5 +440,11 @@
   },
   "properties": {
     "title": "Encuentra tu Estadía Perfecta"
+  },
+  "errors": {
+    "dashboard": {
+      "load": "Error al cargar el dashboard",
+      "dismiss": "Error al descartar alerta"
+    }
   }
 }

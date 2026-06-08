@@ -172,8 +172,9 @@ class AuditService:
         # User agent
         info["user_agent"] = headers.get("user-agent")
         
-        # Request/Correlation IDs
-        info["request_id"] = headers.get("x-request-id")
+        # Request/Correlation IDs (prefer request.state set by RequestIDMiddleware)
+        state_id = getattr(request.state, "request_id", None) if hasattr(request, "state") else None
+        info["request_id"] = state_id or headers.get("x-request-id")
         info["correlation_id"] = headers.get("x-correlation-id")
         
         # Session ID (could come from cookie or header)

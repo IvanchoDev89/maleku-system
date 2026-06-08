@@ -26,6 +26,7 @@ cloudinary==1.38.0
 # Monitoring
 sentry-sdk==2.0.1
 psutil==6.1.0
+prometheus-client==0.20.0
 
 # Testing
 pytest==8.0.0
