@@ -14,16 +14,16 @@ from slowapi.util import get_remote_address
 from app.core.database import get_async_session
 from app.core.config import settings
 from app.core.security import (
-    verify_password, get_password_hash, 
+    verify_password, get_password_hash,
     create_access_token, create_refresh_token, decode_token,
-    create_verification_token, create_password_reset_token, verify_token
+    create_verification_token, create_password_reset_token, verify_token,
+    get_current_user,
 )
 from app.models.user import User
 from app.models.base import UserRole
 from app.services.base import BaseService
 from app.services.email_service import email_service
 from app.core.logging import get_logger
-from app.api.deps import get_current_user
 from app.core.token_blacklist import token_blacklist
 
 logger = get_logger(__name__)
@@ -121,6 +121,7 @@ class VerifyEmailRequest(BaseModel):
 
 # Endpoints
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
 async def register(
     user_in: RegisterRequest,
     request: Request,
@@ -513,18 +514,18 @@ async def verify_email(
 @router.post("/resend-verification")
 async def resend_verification(
     request: Request,
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session)
 ):
     """Resend verification email."""
     client_ip = request.client.host if request.client else "unknown"
     
-    user_id = UUID(current_user.get('sub'))
+    user_id = current_user.id
     user = await user_service.get(db, id=user_id)
-    
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     if user.is_verified:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

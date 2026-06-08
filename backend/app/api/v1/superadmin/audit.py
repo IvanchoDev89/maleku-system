@@ -5,6 +5,7 @@ Provides access to comprehensive audit trails and security logs.
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from uuid import UUID
+import json
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select, desc, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -468,9 +469,17 @@ async def export_logs(
 ):
     """
     Export logs for external analysis or compliance.
+
+    Supports JSON and CSV output. The response is streamed to avoid OOM
+    on large datasets. The audit log entry is recorded, then data is
+    fetched and returned inline (no temporary file).
     """
-    # Log this export action
     from app.services.audit_service import AuditService
+    import csv
+    import io
+    from fastapi.responses import StreamingResponse
+    from app.models.audit import AuditLog, SecurityLog
+
     await AuditService.log_action(
         db=db,
         user=current_user,
@@ -479,14 +488,61 @@ async def export_logs(
         entity_id=None,
         entity_name=f"{log_type}_logs",
         changes_summary=f"Exported {log_type} logs from {date_from} to {date_to}",
-        metadata={"format": format, "date_from": date_from.isoformat() if date_from else None, "date_to": date_to.isoformat() if date_to else None},
+        extra_data={"format": format, "date_from": date_from.isoformat() if date_from else None, "date_to": date_to.isoformat() if date_to else None},
     )
     await db.commit()
-    
-    # This is a placeholder - actual implementation would generate file
-    return {
-        "message": f"Export of {log_type} logs initiated",
-        "format": format,
-        "status": "processing",
-        "download_url": f"/api/v1/superadmin/audit/export/download?type={log_type}&format={format}",
-    }
+
+    model_cls = AuditLog if log_type == "audit" else SecurityLog
+    stmt = select(model_cls).order_by(model_cls.created_at.desc())
+    if date_from:
+        stmt = stmt.where(model_cls.created_at >= date_from)
+    if date_to:
+        stmt = stmt.where(model_cls.created_at <= date_to)
+    stmt = stmt.limit(5000)
+    result = await db.execute(stmt)
+    rows = result.scalars().all()
+
+    if format == "csv":
+        columns = [c.name for c in model_cls.__table__.columns]
+
+        async def csv_stream():
+            buf = io.StringIO()
+            writer = csv.DictWriter(buf, fieldnames=columns)
+            writer.writeheader()
+            yield buf.getvalue()
+            buf.seek(0)
+            buf.truncate()
+            for row in rows:
+                writer.writerow({c: getattr(row, c, "") for c in columns})
+                yield buf.getvalue()
+                buf.seek(0)
+                buf.truncate()
+
+        return StreamingResponse(
+            csv_stream(),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={log_type}_export.csv"},
+        )
+
+    # JSON streaming
+    async def json_stream():
+        yield "["
+        for i, row in enumerate(rows):
+            d = {c.name: getattr(row, c.name, None) for c in model_cls.__table__.columns}
+            for col in ("old_values", "new_values", "extra_data"):
+                if col in d and isinstance(d[col], (dict, list)):
+                    d[col] = json.dumps(d[col], default=str, ensure_ascii=False)
+            if isinstance(d.get("created_at"), datetime):
+                d["created_at"] = d["created_at"].isoformat()
+            yield json.dumps(d, default=str, ensure_ascii=False)
+            if i < len(rows) - 1:
+                yield ","
+        yield "]"
+
+    return StreamingResponse(
+        json_stream(),
+        media_type="application/json",
+        headers={"Content-Disposition": f"attachment; filename={log_type}_export.json"},
+    )
+
+

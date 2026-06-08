@@ -8,10 +8,10 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
 
 from app.core.config import settings
 from app.core.database import init_db
+from app.core.rate_limiter import limiter, rate_limit_exceeded_handler
 from app.api.v1.endpoints import auth
 from app.api.v1 import users, vendors, properties, tours, bookings, blog, destinations
 try:
@@ -37,7 +37,6 @@ from app.api.v1.marketing import router as marketing_router
 from app.api.v1.newsletter import router as newsletter_router
 from app.api.v1.superadmin import router as superadmin_router
 from app.core.logging import setup_logging, get_logger
-from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.error_handler import ErrorHandlerMiddleware
 
 # Setup Sentry monitoring
@@ -55,8 +54,8 @@ if settings.SENTRY_DSN:
 setup_logging(level="INFO", json_format=False)
 logger = get_logger(__name__)
 
-# Rate limiter
-limiter = Limiter(key_func=get_remote_address)
+# Rate limiter (Redis-backed, configured in app.core.rate_limiter)
+from app.core.rate_limiter import limiter  # noqa: F401
 
 # Global rate limits
 DEFAULT_RATE_LIMIT = "100/minute"
@@ -111,12 +110,9 @@ app.add_middleware(
     max_age=600,  # Cache preflight for 10 minutes
 )
 
-# Security: Rate limiting (after CORS to allow preflight)
+# Security: Rate limiting (Redis-backed, applied per-endpoint via @limiter.limit)
 app.state.limiter = limiter
-app.add_middleware(SlowAPIMiddleware)
-
-# Security: Custom rate limiting middleware (60 req/min per IP)
-app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 # Security: Global error handler (prevents info leakage)
 app.add_middleware(ErrorHandlerMiddleware)
@@ -193,13 +189,7 @@ async def logging_middleware(request: Request, call_next):
     
     return response
 
-# Exception handlers
-@app.exception_handler(RateLimitExceeded)
-async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-    return JSONResponse(
-        status_code=429,
-        content={"detail": "Rate limit exceeded. Please try again later."}
-    )
+# Exception handlers (SLOWAPI uses the handler registered in app.core.rate_limiter)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

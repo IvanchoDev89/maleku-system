@@ -3,13 +3,16 @@ Seed script to populate Costa Rica Travel database with realistic sample data.
 Run with: python -m app.scripts.seed_costa_rica
 """
 import asyncio
+import os
+import secrets
 from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy import select, func
 
 from app.core.config import settings
-from app.models.base import VendorStatus
+from app.core.security import get_password_hash
+from app.models.base import VendorStatus, UserRole
 from app.models.property import PropertyType, PropertyCategory
 from app.models import (
     Destination, Property, Tour, BlogPost,
@@ -23,6 +26,26 @@ AsyncSessionLocal = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False
 )
+
+
+def _get_default_password() -> str:
+    """Read SEED_DEFAULT_PASSWORD env var, or generate a random one and print it.
+
+    Never use a hardcoded password. Operators in non-dev environments MUST
+    set SEED_DEFAULT_PASSWORD explicitly. In dev/CI, a random password is
+    generated and printed so it doesn't leak into git history.
+    """
+    pwd = os.environ.get("SEED_DEFAULT_PASSWORD")
+    if pwd:
+        return pwd
+    if not settings.DEBUG:
+        raise RuntimeError(
+            "SEED_DEFAULT_PASSWORD env var is required when DEBUG=False. "
+            "Refusing to seed with a random password in production."
+        )
+    generated = secrets.token_urlsafe(16)
+    print(f"[seed] SEED_DEFAULT_PASSWORD not set; generated random dev password: {generated}")
+    return generated
 
 
 def slugify(text: str) -> str:
@@ -184,6 +207,7 @@ async def seed_destinations(db: AsyncSession):
 async def seed_vendor(db: AsyncSession) -> Vendor:
     """Create or get a vendor for the properties and tours."""
     vendor_email = "vendor@costaricatravel.dev"
+    default_password = _get_default_password()
 
     result = await db.execute(select(User).where(User.email == vendor_email))
     existing_user = result.scalar_one_or_none()
@@ -191,15 +215,15 @@ async def seed_vendor(db: AsyncSession) -> Vendor:
         user = User(
             email=vendor_email,
             full_name="Costa Rica Travel Vendor",
-            hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyY8pJ8KzK3u",
-            role="vendor",
+            password_hash=get_password_hash(default_password),
+            role=UserRole.VENDOR,
             is_verified=True,
             is_active=True
         )
         db.add(user)
         await db.commit()
         await db.refresh(user)
-        print(f"  Created user: {vendor_email}")
+        print(f"  Created user: {vendor_email} (password: {default_password})")
     else:
         user = existing_user
 
@@ -964,17 +988,47 @@ async def seed_blog_posts(db: AsyncSession):
     print(f"  Total blog posts: {result.scalar()}")
 
 
+async def seed_admin_users(db: AsyncSession, default_password: str) -> None:
+    """Create superadmin and admin accounts for the superadmin dashboard.
+
+    Idempotent: skips creation if the email already exists.
+    """
+    for email, role, full_name in [
+        ("superadmin@costaricatravel.dev", UserRole.SUPER_ADMIN, "Super Admin"),
+        ("admin@costaricatravel.dev", UserRole.ADMIN, "Admin User"),
+    ]:
+        result = await db.execute(select(User).where(User.email == email))
+        if result.scalar_one_or_none():
+            print(f"  Already exists: {email}")
+            continue
+        user = User(
+            email=email,
+            full_name=full_name,
+            password_hash=get_password_hash(default_password),
+            role=role,
+            is_verified=True,
+            is_active=True,
+        )
+        db.add(user)
+        print(f"  Created: {email} (role={role.value})")
+    await db.commit()
+
+
 async def main():
     """Main function to seed all data."""
     print("=" * 60)
     print("COSTA RICA TRAVEL - SEED DATA")
     print("=" * 60)
 
+    default_password = _get_default_password()
+    print(f"[seed] default password for all seeded accounts: {default_password}")
+
     async with AsyncSessionLocal() as db:
         try:
             print("\nStarting seed process...")
 
             await seed_destinations(db)
+            await seed_admin_users(db, default_password)
             vendor = await seed_vendor(db)
             await seed_properties(db, vendor)
             await seed_tours(db, vendor)
