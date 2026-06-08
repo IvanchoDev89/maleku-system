@@ -75,7 +75,9 @@
       "searching": "Searching...",
       "travelers": {
         "label": "Travelers"
-      }
+      },
+      "checkIn": "Check-in",
+      "checkOut": "Check-out"
     },
     "trust": {
       "bestPrice": "Best price guaranteed",
@@ -84,7 +86,9 @@
     },
     "video": {
       "fallbackAlt": "Costa Rica beach"
-    }
+    },
+    "badge": "Découvrez le paradis en Amérique centrale",
+    "action": "Vivez l'aventure au"
   },
   "stats": {
     "territory": "de la biodiversité mondiale",
@@ -306,7 +310,8 @@
     "search": "Rechercher",
     "filter": "Filtrer",
     "noResults": "Aucun résultat trouvé",
-    "seeAll": "Voir tout"
+    "seeAll": "Voir tout",
+    "back": "Retour"
   },
   "footer": {
     "brand": "Costa Rica Travel",
@@ -373,5 +378,73 @@
     "multiple": "Up to {count} images",
     "single": "One image",
     "uploading": "Téléversement en cours..."
+  },
+  "blog": {
+    "title": "Blog de Voyage",
+    "featured": "En vedette",
+    "latest": "Derniers articles",
+    "readMore": "Lire plus",
+    "categories": "Catégories",
+    "tags": "Étiquettes",
+    "share": "Partager",
+    "author": "Auteur",
+    "published": "Publié",
+    "related": "Articles connexes"
+  },
+  "superadmin": {
+    "dashboard": {
+      "welcome": "Bienvenue, {name}",
+      "subtitle": "Panneau de contrôle - Costa Rica Travel",
+      "refresh": "Actualiser",
+      "system": {
+        "operational": "Système opérationnel",
+        "dbConnected": "BDD: Connecté",
+        "backup": "Sauvegarde - il y a 2h"
+      }
+    },
+    "users": {
+      "title": "Blog de Voyage",
+      "subtitle": "Panneau de contrôle - Costa Rica Travel",
+      "newUser": "Nouvel utilisateur",
+      "impersonate": "Usurper",
+      "view": "Voir détails",
+      "block": "Bloquer",
+      "activate": "Activer",
+      "never": "Jamais",
+      "status": {
+        "active": "Actif",
+        "inactive": "Inactif",
+        "unverified": "Non vérifié"
+      },
+      "noUsers": "Aucun utilisateur trouvé",
+      "noUsersDescription": "Essayez d'ajuster vos filtres de recherche",
+      "showing": "Affichage de {count} sur {total} utilisateurs",
+      "page": "Page {page}"
+    },
+    "vendors": {
+      "title": "Blog de Voyage",
+      "subtitle": "Panneau de contrôle - Costa Rica Travel",
+      "analytics": "Analytique",
+      "pending": "En attente",
+      "featured": "En vedette",
+      "approve": "Approuver",
+      "unfeature": "Retirer la mise en avant",
+      "feature": "Mettre en avant",
+      "view": "Voir détails",
+      "noVendors": "Aucun prestataire trouvé",
+      "noVendorsDescription": "Essayez d'ajuster vos filtres de recherche",
+      "status": {
+        "pending": "En attente",
+        "active": "Actif",
+        "suspended": "Suspendu",
+        "rejected": "Rejeté"
+      }
+    }
+  },
+  "errors": {
+    "dashboard": {
+      "load": "Erreur lors du chargement du tableau de bord",
+      "dismiss": "Erreur lors de la suppression de l'alerte"
+    }
   }
 }

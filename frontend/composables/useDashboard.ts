@@ -1,4 +1,5 @@
 import type { Ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const iconMap: Record<string, { name: string; bg: string }> = {
   user_created: { name: 'lucide:user-plus', bg: 'bg-green-100 text-green-600' },
@@ -32,6 +33,7 @@ export function formatTimeAgo(timestamp: string): string {
 
 export function useDashboard(revenuePeriod: Ref<string>) {
   const api = useApi()
+  const { t } = useI18n()
 
   const stats = ref({
     total_users: 0,
@@ -98,7 +100,7 @@ export function useDashboard(revenuePeriod: Ref<string>) {
       }
     } catch (error) {
       console.error('Error loading dashboard:', error)
-      useToast().add('Error loading dashboard', 'error')
+      useToast().add(t('errors.dashboard.load'), 'error')
     } finally {
       loading.value = false
     }
@@ -109,7 +111,7 @@ export function useDashboard(revenuePeriod: Ref<string>) {
       await api.post(`/superadmin/dashboard/alerts/${alertId}/dismiss`)
     } catch (error) {
       console.error('Error dismissing alert:', error)
-      useToast().add('Error dismissing alert', 'error')
+      useToast().add(t('errors.dashboard.dismiss'), 'error')
     }
     alerts.value = alerts.value.filter(a => a.id !== alertId)
   }

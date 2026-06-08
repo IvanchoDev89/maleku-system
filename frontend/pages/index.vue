@@ -25,32 +25,32 @@
         <div class="max-w-4xl mx-auto text-center">
           <span class="inline-flex items-center gap-2 px-5 py-2 bg-white/10 backdrop-blur-sm text-white text-sm font-medium rounded-full mb-8 border border-white/20">
             <MapPin class="w-4 h-4 text-teal-300" />
-            Descubre el Paraíso de Centro América
+            {{ $t('hero.badge') }}
           </span>
           
           <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight tracking-tight">
-            Vive la Aventura en
+            {{ $t('hero.action') }}
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-emerald-300">Costa Rica</span>
           </h1>
           
           <p class="text-xl md:text-2xl text-white/90 mb-12 max-w-2xl mx-auto leading-relaxed">
-            Playas pristine, volcanes activos, selvas tropicales y experiencias únicas te esperan.
+            {{ $t('hero.subtitle.main') }}
           </p>
 
           <!-- Search Box -->
           <div class="bg-white/95 backdrop-blur-xl rounded-2xl p-3 shadow-2xl max-w-4xl mx-auto border border-white/20">
             <div class="grid md:grid-cols-5 gap-3">
               <div class="md:col-span-2 p-4">
-                <label class="text-xs text-gray-700 font-semibold block mb-2 uppercase tracking-wide">Destino</label>
+                <label class="text-xs text-gray-700 font-semibold block mb-2 uppercase tracking-wide">{{ $t('hero.search.destination.label') }}</label>
                 <input 
                   v-model="search.destino" 
                   type="text" 
-                  placeholder="¿A dónde vas?" 
+                  placeholder="{{ $t('hero.search.destination.placeholder') }}" 
                   class="w-full text-gray-800 placeholder-gray-400 outline-none font-medium bg-transparent text-base"
                 />
               </div>
               <div class="p-4 border-l border-gray-100">
-                <label class="text-xs text-gray-700 font-semibold block mb-2 uppercase tracking-wide">Check-in</label>
+                <label class="text-xs text-gray-700 font-semibold block mb-2 uppercase tracking-wide">{{ $t('hero.search.checkIn') }}</label>
                 <input 
                   v-model="search.checkin" 
                   type="date" 
@@ -58,7 +58,7 @@
                 />
               </div>
               <div class="p-4 border-l border-gray-100">
-                <label class="text-xs text-gray-700 font-semibold block mb-2 uppercase tracking-wide">Check-out</label>
+                <label class="text-xs text-gray-700 font-semibold block mb-2 uppercase tracking-wide">{{ $t('hero.search.checkOut') }}</label>
                 <input 
                   v-model="search.checkout" 
                   type="date" 
@@ -70,7 +70,7 @@
                 class="bg-teal-600 text-white font-bold py-4 px-8 rounded-xl hover:bg-teal-700 active:bg-teal-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
               >
                 <Search class="w-5 h-5" />
-                <span>Buscar</span>
+                <span>{{ $t('common.search') }}</span>
               </button>
             </div>
           </div>
@@ -79,19 +79,19 @@
           <div class="mt-10 flex flex-wrap justify-center gap-4">
             <NuxtLink to="/destinos" class="group flex items-center gap-2 px-5 py-3 bg-white/10 backdrop-blur-sm text-white rounded-full text-sm font-medium hover:bg-white/20 transition-all border border-white/10 hover:border-white/30">
               <Mountain class="w-4 h-4" />
-              <span>Destinos</span>
+              <span>{{ $t('nav.destinations') }}</span>
             </NuxtLink>
             <NuxtLink to="/hoteles" class="group flex items-center gap-2 px-5 py-3 bg-white/10 backdrop-blur-sm text-white rounded-full text-sm font-medium hover:bg-white/20 transition-all border border-white/10 hover:border-white/30">
               <Building2 class="w-4 h-4" />
-              <span>Hoteles</span>
+              <span>{{ $t('nav.hotels') }}</span>
             </NuxtLink>
             <NuxtLink to="/tours" class="group flex items-center gap-2 px-5 py-3 bg-white/10 backdrop-blur-sm text-white rounded-full text-sm font-medium hover:bg-white/20 transition-all border border-white/10 hover:border-white/30">
               <Compass class="w-4 h-4" />
-              <span>Tours</span>
+              <span>{{ $t('nav.tours') }}</span>
             </NuxtLink>
             <NuxtLink to="/planificador" class="group flex items-center gap-2 px-5 py-3 bg-white/10 backdrop-blur-sm text-white rounded-full text-sm font-medium hover:bg-white/20 transition-all border border-white/10 hover:border-white/30">
               <FileText class="w-4 h-4" />
-              <span>Planificador</span>
+              <span>{{ $t('nav.planner') }}</span>
             </NuxtLink>
           </div>
         </div>

@@ -57,7 +57,9 @@
       },
       "button": "Search Experiences",
       "searching": "Searching...",
-      "popular": "Popular:"
+      "popular": "Popular:",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out"
     },
     "destinations": {
       "guanacaste": {
@@ -84,7 +86,9 @@
     },
     "scrollIndicator": {
       "label": "Scroll down"
-    }
+    },
+    "badge": "Discover Paradise in Central America",
+    "action": "Live the Adventure in"
   },
   "stats": {
     "territory": "of world's biodiversity",
@@ -313,7 +317,8 @@
     "search": "Search",
     "filter": "Filter",
     "noResults": "No results found",
-    "seeAll": "See all"
+    "seeAll": "See all",
+    "back": "Back"
   },
   "footer": {
     "brand": "Costa Rica Travel",
@@ -373,5 +378,73 @@
   },
   "properties": {
     "title": "Find Your Perfect Stay"
+  },
+  "blog": {
+    "title": "Travel Blog",
+    "featured": "Featured",
+    "latest": "Latest Posts",
+    "readMore": "Read More",
+    "categories": "Categories",
+    "tags": "Tags",
+    "share": "Share",
+    "author": "Author",
+    "published": "Published",
+    "related": "Related Articles"
+  },
+  "superadmin": {
+    "dashboard": {
+      "welcome": "Welcome, {name}",
+      "subtitle": "Full Control Panel - Costa Rica Travel",
+      "refresh": "Refresh Dashboard",
+      "system": {
+        "operational": "System Operational",
+        "dbConnected": "DB: Connected",
+        "backup": "Backup - 2h ago"
+      }
+    },
+    "users": {
+      "title": "Travel Blog",
+      "subtitle": "Full Control Panel - Costa Rica Travel",
+      "newUser": "New User",
+      "impersonate": "Impersonate",
+      "view": "View Details",
+      "block": "Block",
+      "activate": "Activate",
+      "never": "Never",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "unverified": "Unverified"
+      },
+      "noUsers": "No users found",
+      "noUsersDescription": "Try adjusting your search filters",
+      "showing": "Showing {count} of {total} users",
+      "page": "Page {page}"
+    },
+    "vendors": {
+      "title": "Travel Blog",
+      "subtitle": "Full Control Panel - Costa Rica Travel",
+      "analytics": "Analytics",
+      "pending": "Pending",
+      "featured": "Featured",
+      "approve": "Approve",
+      "unfeature": "Unfeature",
+      "feature": "Feature",
+      "view": "View Details",
+      "noVendors": "No vendors found",
+      "noVendorsDescription": "Try adjusting your search filters",
+      "status": {
+        "pending": "Pending",
+        "active": "Active",
+        "suspended": "Suspended",
+        "rejected": "Rejected"
+      }
+    }
+  },
+  "errors": {
+    "dashboard": {
+      "load": "Error loading dashboard",
+      "dismiss": "Error dismissing alert"
+    }
   }
 }
