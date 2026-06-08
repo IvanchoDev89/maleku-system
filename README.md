@@ -413,12 +413,10 @@ NUXT_PUBLIC_SITE_URL=https://costaricatravel.dev
 cd backend
 pytest
 
-# Frontend tests
+# Frontend tests (vitest)
 cd frontend
-npm run test
-
-# E2E tests
-npm run test:e2e
+npm run test          # Run unit tests
+npm run test:coverage # Run with coverage report
 ```
 
 ---
