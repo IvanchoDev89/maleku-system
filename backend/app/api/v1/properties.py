@@ -5,6 +5,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.pagination import paginate_flat
 from app.core.security import get_current_user
 from app.models import User, UserRole, Vendor, Property
 from app.schemas import (
@@ -54,30 +55,16 @@ async def get_properties(
     if featured:
         query = query.where(Property.is_featured)
     
-    # Count total
-    count_query = select(func.count()).select_from(query.subquery())
-    total = (await db.execute(count_query)).scalar()
-    
-    # Get with pagination
-    offset = (params.page - 1) * params.page_size
-    query = query.order_by(Property.created_at.desc()).offset(offset).limit(params.page_size)
-    result = await db.execute(query)
-    properties = result.scalars().all()
-    
-    response = PaginatedResponse(
-        items=[PropertyListResponse.model_validate(p) for p in properties],
-        total=total,
-        page=params.page,
-        page_size=params.page_size,
-        total_pages=(total + params.page_size - 1) // params.page_size,
-        has_next=params.page * params.page_size < total,
-        has_prev=params.page > 1
+    response = await paginate_flat(
+        db, query, params,
+        transform_func=PropertyListResponse.model_validate,
+        order_by=Property.created_at.desc()
     )
     
     # Cache the response
-    await cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_LIST, tags=["properties"])
+    await cache.set(cache_key, response, ttl=CACHE_TTL_LIST, tags=["properties"])
     
-    return response
+    return PaginatedResponse(**response)
 
 
 @router.get("/{property_id}", response_model=PropertyResponse,
@@ -338,24 +325,15 @@ async def get_my_properties(
         )
     
     query = select(Property).where(Property.vendor_id == vendor.id)
+    query = query.options(selectinload(Property.rooms))
     
-    count_query = select(func.count()).select_from(query.subquery())
-    total = (await db.execute(count_query)).scalar()
-    
-    offset = (params.page - 1) * params.page_size
-    query = query.options(selectinload(Property.rooms)).order_by(Property.created_at.desc()).offset(offset).limit(params.page_size)
-    result = await db.execute(query)
-    properties = result.scalars().all()
-    
-    return PaginatedResponse(
-        items=[PropertyListResponse.model_validate(p) for p in properties],
-        total=total,
-        page=params.page,
-        page_size=params.page_size,
-        total_pages=(total + params.page_size - 1) // params.page_size,
-        has_next=params.page * params.page_size < total,
-        has_prev=params.page > 1
+    response = await paginate_flat(
+        db, query, params,
+        transform_func=PropertyListResponse.model_validate,
+        order_by=Property.created_at.desc()
     )
+    
+    return PaginatedResponse(**response)
 
 
 @router.get("/regions",

@@ -1,7 +1,7 @@
 """
 Pagination utilities for consistent API responses
 """
-from typing import TypeVar, Generic, List, Optional
+from typing import TypeVar, Generic, List, Optional, Any
 from math import ceil
 from fastapi import Query
 from pydantic import BaseModel
@@ -127,3 +127,50 @@ async def paginate_list(
         items=paginated_items,
         pagination=metadata
     )
+
+
+async def paginate_flat(
+    session: AsyncSession,
+    query,
+    params: PaginationParams,
+    transform_func: Optional[callable] = None,
+    order_by=None,
+) -> dict[str, Any]:
+    """
+    Execute a query with pagination and return a flat dict matching PaginatedResponse.
+
+    Args:
+        session: Database session
+        query: SQLAlchemy select query
+        params: Pagination parameters
+        transform_func: Optional function to transform each result item
+        order_by: Optional SQLAlchemy order_by clause
+
+    Returns:
+        dict with items, total, page, page_size, total_pages, has_next, has_prev
+    """
+    count_query = select(func.count()).select_from(query.subquery())
+    total_result = await session.execute(count_query)
+    total = total_result.scalar() or 0
+
+    if order_by is not None:
+        query = query.order_by(order_by)
+
+    paginated_query = query.offset(params.offset).limit(params.page_size)
+    result = await session.execute(paginated_query)
+    items = result.scalars().all()
+
+    if transform_func:
+        items = [transform_func(item) for item in items]
+
+    total_pages = ceil(total / params.page_size) if total > 0 else 0
+
+    return {
+        "items": items,
+        "total": total,
+        "page": params.page,
+        "page_size": params.page_size,
+        "total_pages": total_pages,
+        "has_next": params.page < total_pages,
+        "has_prev": params.page > 1,
+    }

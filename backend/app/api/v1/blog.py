@@ -8,6 +8,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from app.core.database import get_db
+from app.core.pagination import paginate_flat
 from app.core.security import require_role
 from app.models import User, UserRole, BlogPost, BlogPostStatus
 from app.schemas import (
@@ -59,30 +60,16 @@ async def get_blog_posts(
     if category:
         query = query.where(BlogPost.category == category)
     
-    # Count
-    count_query = select(func.count()).select_from(query.subquery())
-    total = (await db.execute(count_query)).scalar()
-    
-    # Paginate
-    offset = (params.page - 1) * params.page_size
-    query = query.order_by(BlogPost.published_at.desc().nulls_last()).offset(offset).limit(params.page_size)
-    result = await db.execute(query)
-    posts = result.scalars().all()
-    
-    response = PaginatedResponse(
-        items=[BlogPostListResponse.model_validate(p) for p in posts],
-        total=total,
-        page=params.page,
-        page_size=params.page_size,
-        total_pages=(total + params.page_size - 1) // params.page_size,
-        has_next=params.page * params.page_size < total,
-        has_prev=params.page > 1
+    response = await paginate_flat(
+        db, query, params,
+        transform_func=BlogPostListResponse.model_validate,
+        order_by=BlogPost.published_at.desc().nulls_last()
     )
     
     # Cache the response
-    await cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_LIST, tags=["blog"])
+    await cache.set(cache_key, response, ttl=CACHE_TTL_LIST, tags=["blog"])
     
-    return response
+    return PaginatedResponse(**response)
 
 
 @router.get("/featured",

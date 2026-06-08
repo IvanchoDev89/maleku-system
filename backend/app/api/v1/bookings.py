@@ -10,6 +10,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from app.core.database import get_db
+from app.core.pagination import paginate_flat
 from app.core.security import get_current_user, require_role
 from app.core.config import settings
 from app.models import User, UserRole, Vendor, Property, Room, Tour, Booking, BookingStatus
@@ -427,25 +428,13 @@ async def get_bookings(
         selectinload(Booking.tour)
     )
     
-    # Count
-    count_query = select(func.count()).select_from(query.subquery())
-    total = (await db.execute(count_query)).scalar()
-    
-    # Paginate
-    offset = (params.page - 1) * params.page_size
-    query = query.order_by(Booking.created_at.desc()).offset(offset).limit(params.page_size)
-    result = await db.execute(query)
-    bookings = result.scalars().all()
-    
-    return PaginatedResponse(
-        items=[BookingResponse.model_validate(b) for b in bookings],
-        total=total,
-        page=params.page,
-        page_size=params.page_size,
-        total_pages=(total + params.page_size - 1) // params.page_size,
-        has_next=params.page * params.page_size < total,
-        has_prev=params.page > 1
+    response = await paginate_flat(
+        db, query, params,
+        transform_func=BookingResponse.model_validate,
+        order_by=Booking.created_at.desc()
     )
+    
+    return PaginatedResponse(**response)
 
 
 @router.post("/preview", response_model=PricePreviewResponse)
@@ -725,20 +714,10 @@ async def get_vendor_my_bookings(
     if status:
         query = query.where(Booking.status == status)
     
-    count_query = select(func.count()).select_from(query.subquery())
-    total = (await db.execute(count_query)).scalar()
-    
-    offset = (params.page - 1) * params.page_size
-    query = query.order_by(Booking.created_at.desc()).offset(offset).limit(params.page_size)
-    result = await db.execute(query)
-    bookings = result.scalars().all()
-    
-    return PaginatedResponse(
-        items=[BookingResponse.model_validate(b) for b in bookings],
-        total=total,
-        page=params.page,
-        page_size=params.page_size,
-        total_pages=(total + params.page_size - 1) // params.page_size,
-        has_next=params.page * params.page_size < total,
-        has_prev=params.page > 1
+    response = await paginate_flat(
+        db, query, params,
+        transform_func=BookingResponse.model_validate,
+        order_by=Booking.created_at.desc()
     )
+    
+    return PaginatedResponse(**response)

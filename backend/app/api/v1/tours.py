@@ -5,6 +5,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.pagination import paginate_flat
 from app.core.security import get_current_user
 from app.core.utils import escape_like_pattern
 from app.models import User, UserRole, Vendor, Tour
@@ -58,31 +59,17 @@ async def get_tours(
     if featured:
         query = query.where(Tour.is_featured)
     
-    # Count total
-    count_query = select(func.count()).select_from(query.subquery())
-    total = (await db.execute(count_query)).scalar()
-    
-    # Get with pagination
-    offset = (params.page - 1) * params.page_size
-    query = query.order_by(Tour.created_at.desc()).offset(offset).limit(params.page_size)
-    result = await db.execute(query)
-    tours = result.scalars().all()
-    
-    response = PaginatedResponse(
-        items=[TourListResponse.model_validate(t) for t in tours],
-        total=total,
-        page=params.page,
-        page_size=params.page_size,
-        total_pages=(total + params.page_size - 1) // params.page_size,
-        has_next=params.page * params.page_size < total,
-        has_prev=params.page > 1
+    response = await paginate_flat(
+        db, query, params,
+        transform_func=TourListResponse.model_validate,
+        order_by=Tour.created_at.desc()
     )
     
     # Cache the response
     ttl = CACHE_TTL_FEATURED if featured else CACHE_TTL_LIST
-    await cache.set(cache_key, response.model_dump(), ttl=ttl, tags=["tours"])
+    await cache.set(cache_key, response, ttl=ttl, tags=["tours"])
     
-    return response
+    return PaginatedResponse(**response)
 
 
 @router.get("/{tour_id}", response_model=TourResponse,
@@ -326,23 +313,13 @@ async def get_my_tours(
     
     query = select(Tour).where(Tour.vendor_id == vendor.id)
     
-    count_query = select(func.count()).select_from(query.subquery())
-    total = (await db.execute(count_query)).scalar()
-    
-    offset = (params.page - 1) * params.page_size
-    query = query.order_by(Tour.created_at.desc()).offset(offset).limit(params.page_size)
-    result = await db.execute(query)
-    tours = result.scalars().all()
-    
-    return PaginatedResponse(
-        items=[TourListResponse.model_validate(t) for t in tours],
-        total=total,
-        page=params.page,
-        page_size=params.page_size,
-        total_pages=(total + params.page_size - 1) // params.page_size,
-        has_next=params.page * params.page_size < total,
-        has_prev=params.page > 1
+    response = await paginate_flat(
+        db, query, params,
+        transform_func=TourListResponse.model_validate,
+        order_by=Tour.created_at.desc()
     )
+    
+    return PaginatedResponse(**response)
 
 
 @router.get("/categories",
