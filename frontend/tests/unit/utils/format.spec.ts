@@ -62,3 +62,25 @@ describe('formatTimeAgo', () => {
     expect(formatTimeAgo(past)).toBe('hace 3 días')
   })
 })
+
+describe('formatNumber edge cases', () => {
+  it('handles negative numbers', () => {
+    expect(formatNumber(-5)).toBe('-5')
+  })
+
+  it('handles decimal numbers', () => {
+    expect(formatNumber(3.14)).toBe('3.14')
+  })
+
+  it('handles exactly 1000', () => {
+    expect(formatNumber(1000)).toBe('1.0K')
+  })
+
+  it('handles exactly 1000000', () => {
+    expect(formatNumber(1000000)).toBe('1.0M')
+  })
+
+  it('handles large numbers with decimal', () => {
+    expect(formatNumber(1234567)).toBe('1.2M')
+  })
+})

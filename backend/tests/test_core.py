@@ -223,5 +223,121 @@ def test_config_import():
     assert settings.SECRET_KEY
 
 
+# Pagination tests
+def test_pagination_params_defaults():
+    from app.core.pagination import PaginationParams
+    
+    params = PaginationParams(page=1, page_size=20)
+    assert params.page == 1
+    assert params.page_size == 20
+    assert params.offset == 0
+
+
+def test_pagination_params_offset():
+    from app.core.pagination import PaginationParams
+    
+    params = PaginationParams(page=3, page_size=10)
+    assert params.offset == 20
+
+
+def test_pagination_metadata():
+    from app.core.pagination import PaginationMetadata
+    
+    meta = PaginationMetadata(page=2, page_size=10, total=25, total_pages=3, has_next=True, has_prev=True)
+    assert meta.page == 2
+    assert meta.total == 25
+    assert meta.total_pages == 3
+    assert meta.has_next is True
+    assert meta.has_prev is True
+
+
+def test_pagination_metadata_last_page():
+    from app.core.pagination import PaginationMetadata
+    
+    meta = PaginationMetadata(page=3, page_size=10, total=25, total_pages=3, has_next=False, has_prev=True)
+    assert meta.has_next is False
+    assert meta.has_prev is True
+
+
+def test_paginated_result():
+    from app.core.pagination import PaginatedResult, PaginationMetadata
+    
+    meta = PaginationMetadata(page=1, page_size=10, total=3, total_pages=1, has_next=False, has_prev=False)
+    result = PaginatedResult(items=["a", "b", "c"], pagination=meta)
+    assert len(result.items) == 3
+    assert result.items == ["a", "b", "c"]
+    assert result.pagination.total == 3
+
+
+@pytest.mark.asyncio
+async def test_paginate_list():
+    from app.core.pagination import paginate_list, PaginationParams
+    
+    items = list(range(50))
+    params = PaginationParams(page=2, page_size=10)
+    
+    result = await paginate_list(items, params)
+    assert len(result.items) == 10
+    assert result.items[0] == 10
+    assert result.items[-1] == 19
+    assert result.pagination.total == 50
+    assert result.pagination.total_pages == 5
+    assert result.pagination.has_next is True
+    assert result.pagination.has_prev is True
+
+
+@pytest.mark.asyncio
+async def test_paginate_list_last_page():
+    from app.core.pagination import paginate_list, PaginationParams
+    
+    items = list(range(25))
+    params = PaginationParams(page=3, page_size=10)
+    
+    result = await paginate_list(items, params)
+    assert len(result.items) == 5
+    assert result.items[0] == 20
+    assert result.items[-1] == 24
+    assert result.pagination.has_next is False
+    assert result.pagination.has_prev is True
+
+
+@pytest.mark.asyncio
+async def test_paginate_list_empty():
+    from app.core.pagination import paginate_list, PaginationParams
+    
+    result = await paginate_list([], PaginationParams(page=1, page_size=20))
+    assert len(result.items) == 0
+    assert result.pagination.total == 0
+    assert result.pagination.total_pages == 0
+    assert result.pagination.has_next is False
+    assert result.pagination.has_prev is False
+
+
+def test_paginate_flat_dict_shape():
+    from app.core.pagination import paginate_flat
+    
+    import inspect
+    sig = inspect.signature(paginate_flat)
+    params = list(sig.parameters.keys())
+    assert "session" in params
+    assert "query" in params
+    assert "params" in params
+    assert "transform_func" in params
+    assert "order_by" in params
+
+
+def test_pagination_imports():
+    from app.core.pagination import (
+        PaginationParams, PaginationMetadata, PaginatedResult,
+        paginate_query, paginate_list, paginate_flat
+    )
+    assert PaginationParams
+    assert PaginationMetadata
+    assert PaginatedResult
+    assert paginate_query
+    assert paginate_list
+    assert paginate_flat
+
+
 # Run with: pytest -v
 # or: python -m pytest -v
