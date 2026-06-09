@@ -20,7 +20,7 @@ git pull origin main 2>&1 | tee -a "${LOG_FILE}"
 
 # Build and start containers
 echo "[INFO] Building and starting containers..."
-docker-compose up -d --build 2>&1 | tee -a "${LOG_FILE}"
+docker compose up -d --build 2>&1 | tee -a "${LOG_FILE}"
 
 # Wait for backend to be ready
 echo "[INFO] Waiting for backend health check..."
@@ -31,9 +31,9 @@ for i in $(seq 1 30); do
     fi
     if [ "$i" -eq 30 ]; then
         echo "[ERROR] Backend health check failed after 30s — rolling back"
-        docker-compose down
+        docker compose down
         git checkout HEAD~1
-        docker-compose up -d --build
+        docker compose up -d --build
         echo "[INFO] Rollback to previous commit completed"
         exit 1
     fi
@@ -42,7 +42,7 @@ done
 
 # Run migrations if backend is healthy
 echo "[INFO] Running database migrations..."
-docker-compose exec -T backend alembic upgrade head 2>&1 | tee -a "${LOG_FILE}" || \
+docker compose exec -T backend alembic upgrade head 2>&1 | tee -a "${LOG_FILE}" || \
     echo "[WARN] Migration failed — check logs"
 
 # Verify frontend is up

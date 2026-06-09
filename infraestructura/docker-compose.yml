@@ -7,8 +7,8 @@ services:
     container_name: crtravel-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USER:-crtravel}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-crtravel123}
+      POSTGRES_USER: ${DB_USER:?must be set}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?must be set}
       POSTGRES_DB: ${DB_NAME:-costaricatravel}
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -57,10 +57,10 @@ services:
     ports:
       - "${API_PORT:-8000}:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-crtravel}:${DB_PASSWORD:-crtravel123}@db:5432/${DB_NAME:-costaricatravel}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-}@redis:6379
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER:?must be set}:${DB_PASSWORD:?must be set}@db:5432/${DB_NAME:-costaricatravel}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:?must be set}@redis:6379
       - DEBUG=${DEBUG:-false}
-      - SECRET_KEY=${SECRET_KEY:-changeme-in-production}
+      - SECRET_KEY=${SECRET_KEY:?must be set}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
       - REFRESH_TOKEN_EXPIRE_DAYS=${REFRESH_TOKEN_EXPIRE_DAYS:-7}
       - ALGORITHM=${ALGORITHM:-HS256}

@@ -277,7 +277,7 @@ async def get_traffic_stats(
     if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Access denied")
     
-    # Mock traffic data - in production, integrate with analytics service
+    # TODO: implement real analytics tracking (pageviews, unique visitors)
     days = int(period)
     results = []
     
@@ -285,12 +285,10 @@ async def get_traffic_stats(
         date = datetime.now(timezone.utc) - timedelta(days=days - i - 1)
         date_str = date.strftime("%Y-%m-%d")
         
-        # Simulate traffic - replace with real analytics
-        import random
         results.append(TrafficData(
             date=date_str,
-            pageviews=random.randint(500, 2000),
-            unique_visitors=random.randint(200, 800)
+            pageviews=0,
+            unique_visitors=0
         ))
     
     return {

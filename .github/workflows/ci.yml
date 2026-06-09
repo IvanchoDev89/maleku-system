@@ -175,6 +175,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Add host to known_hosts
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          if [ -n "$DEPLOY_HOST" ]; then
+            mkdir -p ~/.ssh
+            ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          fi
+
       - name: Deploy via SSH
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -186,19 +195,18 @@ jobs:
             echo "DEPLOY_HOST not configured — skipping deploy"
             exit 0
           fi
-          mkdir -p ~/.ssh
           echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ssh -i ~/.ssh/deploy_key \
             "$DEPLOY_USER@$DEPLOY_HOST" \
             "cd $DEPLOY_PATH && \
              git pull origin main && \
-             docker-compose up -d --build && \
+             docker compose up -d --build && \
              sleep 10 && \
              curl -sf http://localhost:8000/health/ready && \
              echo 'Deploy successful'" || \
             (echo "Deploy failed — attempting rollback" && \
-             ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+             ssh -i ~/.ssh/deploy_key \
                "$DEPLOY_USER@$DEPLOY_HOST" \
-               "cd $DEPLOY_PATH && docker-compose down && git checkout HEAD~1 && docker-compose up -d --build" && \
+               "cd $DEPLOY_PATH && docker compose down && git checkout HEAD~1 && docker compose up -d --build" && \
              echo "Rollback completed")
