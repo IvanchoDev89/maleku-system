@@ -309,7 +309,7 @@ async def logout(
         exp = payload.get("exp")
         if exp:
             expires_at = datetime.fromtimestamp(exp, tz=timezone.utc)
-            token_blacklist.blacklist_token(token, expires_at)
+            await token_blacklist.blacklist_token(token, expires_at)
             logger.info("Token added to blacklist on logout")
     except Exception as e:
         logger.warning(f"Failed to blacklist token on logout: {e}")

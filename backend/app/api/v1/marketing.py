@@ -280,7 +280,7 @@ async def list_templates(
     if template_type:
         query = query.where(EmailTemplate.template_type == template_type)
     if not include_system:
-        query = query.where(not EmailTemplate.is_system)
+        query = query.where(EmailTemplate.is_system == False)
     
     query = query.order_by(desc(EmailTemplate.created_at))
     
@@ -474,7 +474,7 @@ async def get_user_inbox(
     )
     
     if unread_only:
-        query = query.where(not InboxMessage.is_read)
+        query = query.where(InboxMessage.is_read == False)
     
     query = query.order_by(desc(InboxMessage.created_at))
     
@@ -488,7 +488,7 @@ async def get_user_inbox(
     unread_count_result = await db.execute(
         select(func.count(InboxMessage.id))
         .where(InboxMessage.customer_id == current_user.id)
-        .where(not InboxMessage.is_read)
+        .where(InboxMessage.is_read == False)
     )
     unread_count = unread_count_result.scalar() or 0
     
@@ -556,7 +556,7 @@ async def get_unread_count(
     result = await db.execute(
         select(func.count(InboxMessage.id))
         .where(InboxMessage.customer_id == current_user.id)
-        .where(not InboxMessage.is_read)
+        .where(InboxMessage.is_read == False)
     )
     count = result.scalar() or 0
     

@@ -152,7 +152,7 @@ async def calculate_dynamic_price(
             PricingRule.service_type == service_type,
             PricingRule.service_id == service_id,
             PricingRule.date_from <= date,
-            or_(PricingRule.date_to is None, PricingRule.date_to >= date)
+            or_(PricingRule.date_to.is_(None), PricingRule.date_to >= date)
         )
     )
     rules = result.scalars().all()

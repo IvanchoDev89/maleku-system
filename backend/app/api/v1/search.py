@@ -140,10 +140,7 @@ async def get_map_counts(
     
     # Count properties by region
     prop_result = await db.execute(
-        select(Property.region, 
-               select(func.count()).select_from(Property).where(
-                   and_(Property.is_active, Property.region == Property.region)
-               ))
+        select(Property.region, func.count())
         .where(Property.is_active)
         .group_by(Property.region)
     )
@@ -155,10 +152,7 @@ async def get_map_counts(
     
     # Count tours by category
     tour_result = await db.execute(
-        select(Tour.category, 
-               select(func.count()).select_from(Tour).where(
-                   and_(Tour.is_active, Tour.category == Tour.category)
-               ))
+        select(Tour.category, func.count())
         .where(Tour.is_active)
         .group_by(Tour.category)
     )

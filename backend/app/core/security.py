@@ -89,7 +89,7 @@ async def get_current_user(
     token = credentials.credentials
     
     # Check if token is blacklisted
-    if token_blacklist.is_blacklisted(token):
+    if await token_blacklist.is_blacklisted(token):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has been revoked"
@@ -128,7 +128,7 @@ async def get_current_user(
     
     # Check if user's tokens are blacklisted (e.g., after password change)
     issued_at = payload.get("iat")
-    if issued_at and token_blacklist.is_user_tokens_blacklisted(user_id, datetime.fromtimestamp(issued_at, tz=timezone.utc)):
+    if issued_at and await token_blacklist.is_user_tokens_blacklisted(user_id, datetime.fromtimestamp(issued_at, tz=timezone.utc)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has been revoked"

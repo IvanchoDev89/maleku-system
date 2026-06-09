@@ -60,6 +60,7 @@ logger = get_logger(__name__)
 
 # Rate limiter (Redis-backed, configured in app.core.rate_limiter)
 from app.core.rate_limiter import limiter  # noqa: F401
+from app.core.token_blacklist import token_blacklist
 
 # Global rate limits
 DEFAULT_RATE_LIMIT = "100/minute"
@@ -69,6 +70,7 @@ WRITE_RATE_LIMIT = "30/minute"
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     await init_db()
+    await token_blacklist.connect()
     yield
 
 

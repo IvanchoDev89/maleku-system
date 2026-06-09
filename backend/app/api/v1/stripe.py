@@ -519,7 +519,8 @@ async def refund_booking(
         )
     
     try:
-        result = refund_payment(
+        result = await asyncio.to_thread(
+            refund_payment,
             payment_intent_id=booking.stripe_payment_intent_id,
             amount=refund_amount if data.amount else None,
             reason=data.reason

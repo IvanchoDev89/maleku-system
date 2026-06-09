@@ -254,7 +254,7 @@ async def mark_read(
         select(Message).where(
             Message.conversation_id == conversation_id,
             Message.sender_id != current_user.id,
-            Message.read_at is None
+            Message.read_at.is_(None)
         )
     )
     messages = result.scalars().all()

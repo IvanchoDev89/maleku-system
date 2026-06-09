@@ -4,7 +4,7 @@ Manages revoked JWT tokens using Redis for instant invalidation
 """
 from datetime import datetime, timezone
 import hashlib
-import redis
+import redis.asyncio as redis
 from app.core.config import settings
 from app.core.logging import get_logger
 
@@ -17,23 +17,26 @@ class TokenBlacklist:
     def __init__(self):
         self.redis_client = None
         self.enabled = False
-        
-        if settings.REDIS_URL:
-            try:
-                self.redis_client = redis.from_url(
-                    settings.REDIS_URL,
-                    decode_responses=True
-                )
-                self.enabled = True
-                logger.info("Token blacklist (Redis) connected")
-            except (OSError, ConnectionError, redis.RedisError) as e:
-                logger.error(f"Failed to connect to Redis for token blacklist: {e}")
+
+    async def connect(self):
+        if not settings.REDIS_URL:
+            return
+        try:
+            self.redis_client = redis.from_url(
+                settings.REDIS_URL,
+                decode_responses=True
+            )
+            await self.redis_client.ping()
+            self.enabled = True
+            logger.info("Token blacklist (Redis) connected")
+        except (OSError, ConnectionError, redis.RedisError) as e:
+            logger.error(f"Failed to connect to Redis for token blacklist: {e}")
     
     def _hash_token(self, token: str) -> str:
         """Generate SHA-256 hash of token for secure storage"""
         return hashlib.sha256(token.encode()).hexdigest()[:32]
     
-    def blacklist_token(self, token: str, expires_at: datetime) -> bool:
+    async def blacklist_token(self, token: str, expires_at: datetime) -> bool:
         """
         Add a token to the blacklist.
         
@@ -56,7 +59,7 @@ class TokenBlacklist:
             if ttl > 0:
                 # Store token hash (not the full token) with TTL for security
                 token_hash = self._hash_token(token)
-                self.redis_client.setex(
+                await self.redis_client.setex(
                     f"blacklist:token:{token_hash}",
                     ttl,
                     "revoked"
@@ -74,7 +77,7 @@ class TokenBlacklist:
             logger.critical(f"Unexpected error blacklisting token: {e}")
             raise
     
-    def is_blacklisted(self, token: str) -> bool:
+    async def is_blacklisted(self, token: str) -> bool:
         """
         Check if a token is blacklisted.
         
@@ -89,7 +92,7 @@ class TokenBlacklist:
         
         try:
             token_hash = self._hash_token(token)
-            return self.redis_client.exists(f"blacklist:token:{token_hash}") > 0
+            return await self.redis_client.exists(f"blacklist:token:{token_hash}") > 0
         except redis.RedisError as e:
             logger.error(f"Failed to check token blacklist: {e}")
             return False
@@ -97,7 +100,7 @@ class TokenBlacklist:
             logger.critical(f"Unexpected error checking blacklist: {e}")
             raise
     
-    def blacklist_user_tokens(self, user_id: str, expire_all_after: datetime) -> bool:
+    async def blacklist_user_tokens(self, user_id: str, expire_all_after: datetime) -> bool:
         """
         Blacklist all tokens for a user (useful on password change/logout all sessions).
         
@@ -113,7 +116,7 @@ class TokenBlacklist:
         
         try:
             # Store timestamp - any token issued before this is invalid
-            self.redis_client.set(
+            await self.redis_client.set(
                 f"blacklist:user:{user_id}",
                 expire_all_after.isoformat()
             )
@@ -126,7 +129,7 @@ class TokenBlacklist:
             logger.critical(f"Unexpected error blacklisting user tokens: {e}")
             raise
     
-    def is_user_tokens_blacklisted(self, user_id: str, token_issued_at: datetime) -> bool:
+    async def is_user_tokens_blacklisted(self, user_id: str, token_issued_at: datetime) -> bool:
         """
         Check if user's tokens are blacklisted and if this specific token is affected.
         
@@ -141,7 +144,7 @@ class TokenBlacklist:
             return False
         
         try:
-            blacklist_time = self.redis_client.get(f"blacklist:user:{user_id}")
+            blacklist_time = await self.redis_client.get(f"blacklist:user:{user_id}")
             if blacklist_time:
                 from datetime import datetime
                 blacklist_dt = datetime.fromisoformat(blacklist_time)
