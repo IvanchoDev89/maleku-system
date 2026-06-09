@@ -84,6 +84,7 @@ app = FastAPI(
         "url": "https://costaricatravel.dev/contact"
     },
     lifespan=_lifespan,
+    redirect_slashes=False,
 )
 
 # CORS - MUST be first middleware to handle preflight OPTIONS requests
