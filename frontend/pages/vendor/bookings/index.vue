@@ -182,7 +182,7 @@ const fetchBookings = async () => {
       page_size: pageSize.value
     }
     if (filter.value) params.status = filter.value
-    const data = await api.get('/bookings/vendor/my-bookings', params)
+    const data = await api.get<{ items: any[]; total: number }>('/bookings/vendor/my-bookings', params)
     bookings.value = data.items || []
     total.value = data.total || bookings.value.length
   } catch (e: any) {

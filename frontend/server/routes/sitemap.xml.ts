@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     const apiUrl = (apiBase as string || '').replace(/\/api\/v1$/, '')
     
     if (apiUrl) {
-      const [destinations, properties, tours, blogPosts] = await Promise.allSettled([
+      const [destinations, properties, tours, blogPosts] = await Promise.all([
         $fetch<{ items: { slug: string }[] }>(`${apiUrl}/api/v1/destinations?page_size=100`).catch(() => null),
         $fetch<{ items: { slug: string }[] }>(`${apiUrl}/api/v1/properties?page_size=100`).catch(() => null),
         $fetch<{ items: { slug: string }[] }>(`${apiUrl}/api/v1/tours?page_size=100`).catch(() => null),

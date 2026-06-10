@@ -21,6 +21,7 @@ export interface Property {
   latitude: number | null
   longitude: number | null
   base_price: number
+  price: number | null
   cover_image: string | null
   images: string[]
   rating: number | null
@@ -53,7 +54,7 @@ export interface Tour {
   region: string | null
   latitude: number | null
   longitude: number | null
-  base_price: number
+  price: number
   rating: number | null
   review_count: number
   is_active: boolean

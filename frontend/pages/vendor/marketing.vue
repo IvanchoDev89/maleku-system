@@ -204,10 +204,10 @@ import { ref, computed, onMounted } from 'vue'
 
 definePageMeta({
   layout: 'vendor',
-  middleware: ['auth', 'vendor']
+  middleware: ['auth']
 })
 
-const { $toast } = useNuxtApp()
+const { $toast } = useNuxtApp() as unknown as { $toast: any }
 const marketing = useMarketing()
 
 // State

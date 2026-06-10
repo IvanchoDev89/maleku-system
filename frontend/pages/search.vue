@@ -102,6 +102,7 @@
                     width="800"
                     height="400"
                     format="webp"
+                    loading="lazy"
                   />
                   <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-sm font-medium text-gray-700">
                     {{ prop.property_type || 'Hotel' }}
@@ -150,6 +151,7 @@
                     width="800"
                     height="400"
                     format="webp"
+                    loading="lazy"
                   />
                   <div class="absolute top-3 right-3 bg-amber-500 text-white px-2 py-1 rounded-lg text-sm font-bold">
                     {{ tour.category || 'Tour' }}
@@ -204,6 +206,7 @@
                     width="800"
                     height="400"
                     format="webp"
+                    loading="lazy"
                   />
                   <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                   <div class="absolute bottom-4 left-4 text-white">

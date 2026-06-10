@@ -148,7 +148,7 @@ const fetchProperties = async () => {
   loading.value = true
   error.value = ''
   try {
-    const data = await api.get('/properties/vendor/my', {
+    const data = await api.get<{ items: any[]; total: number }>('/properties/vendor/my', {
       page: page.value,
       page_size: pageSize.value
     })

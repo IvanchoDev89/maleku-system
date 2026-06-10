@@ -87,7 +87,7 @@
               <div class="grid sm:grid-cols-2 gap-4">
                 <div 
                   v-for="(item, index) in getIncludes()"
-                  :key="index"
+                  :key="item"
                   class="flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100"
                 >
                   <div class="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center text-teal-600">
@@ -220,6 +220,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Tour } from '~/types'
 import { Clock, Users, MapPin, Check, Phone, Mail } from 'lucide-vue-next'
 
 const persons = ref('2')
@@ -253,7 +254,7 @@ const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
 const slug = route.params.slug
 
-const { data: tour, pending, error } = useFetch(
+const { data: tour, pending, error } = useFetch<Tour | null>(
   () => `${apiBase}/tours/${slug}`,
   {
     default: () => null

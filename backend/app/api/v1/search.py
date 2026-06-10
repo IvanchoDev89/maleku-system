@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.utils import escape_like_pattern
-from app.models import Property, Tour
+from app.models import Property, Tour, Destination, BlogPost, BlogPostStatus
 
 router = APIRouter(tags=["Search"])
 
@@ -15,14 +15,14 @@ router = APIRouter(tags=["Search"])
             description="Returns properties and tours with coordinates for map display. Supports filters by type, category, region, and price range with pagination.")
 async def get_map_data(
     db: AsyncSession = Depends(get_db),
-    property_type: str = None,
-    category: str = None,
-    region: str = None,
-    min_price: float = None,
-    max_price: float = None,
+    property_type: str | None = None,
+    category: str | None = None,
+    region: str | None = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200)
-):
+) -> dict:
     """Get all properties and tours with coordinates for map display"""
     
     if page_size > 200:
@@ -135,7 +135,7 @@ async def get_map_data(
             description="Returns aggregate counts for map markers: total properties/tours, grouped by region and category.")
 async def get_map_counts(
     db: AsyncSession = Depends(get_db)
-):
+) -> dict:
     """Get counts for map markers and stats"""
     
     # Count properties by region
@@ -185,12 +185,7 @@ async def global_search(
     q: str = Query(..., min_length=1, max_length=200),
     db: AsyncSession = Depends(get_db),
     limit: int = Query(10, ge=1, le=50)
-):
-    from app.models.property import Property
-    from app.models.tour import Tour
-    from app.models.destination import Destination
-    from app.models.blog import BlogPost, BlogPostStatus
-    
+) -> dict:
     # Sanitize query input
     q = q.strip()[:200]
     

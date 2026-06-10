@@ -25,9 +25,10 @@
               </div>
               <div class="flex gap-2">
                 <UiSelect
-                  v-model="filters.sortBy"
+                  :model-value="filters.sortBy ?? ''"
                   :options="filterOptions.sortOptions"
                   placeholder="Ordenar"
+                  @update:model-value="filters.sortBy = ($event as any) || undefined"
                 />
                 <button
                   @click="searchTours"

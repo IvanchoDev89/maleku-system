@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_role
-from app.models import User, UserRole, Vendor
+from app.models import User, UserRole, Vendor, PricingType
 from app.models import Transportation, TransportServiceType
 from app.schemas import transportation as transportation_schema
 
@@ -37,7 +37,7 @@ async def list_transportation(
     Returns:
         List of transportation services matching the filters
     
-    TODO: Implementar búsqueda por ubicación con geolocalización
+    Note: Geolocation-based search not yet implemented
     """
     query = select(Transportation).where(Transportation.is_active, Transportation.is_available)
     
@@ -88,7 +88,7 @@ async def create_transportation(
     transport_data: transportation_schema.TransportationCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.VENDOR))
-):
+) -> transportation_schema.TransportationResponse:
     """Create new transportation service (Vendor only)"""
     result = await db.execute(
         select(Vendor).where(Vendor.user_id == current_user.id)
@@ -123,7 +123,7 @@ async def update_transportation(
     transport_data: transportation_schema.TransportationUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.VENDOR))
-):
+) -> transportation_schema.TransportationResponse:
     """Update transportation service (Owner only)"""
     result = await db.execute(
         select(Transportation).where(Transportation.id == transport_id)
@@ -166,7 +166,7 @@ async def delete_transportation(
     transport_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.VENDOR))
-):
+) -> dict:
     """Delete transportation service (Owner only)"""
     result = await db.execute(
         select(Transportation).where(Transportation.id == transport_id)
@@ -197,7 +197,7 @@ async def delete_transportation(
 async def get_my_transportation(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.VENDOR))
-):
+) -> list[transportation_schema.TransportationResponse]:
     """Get vendor's own transportation services"""
     result = await db.execute(
         select(Vendor).where(Vendor.user_id == current_user.id)
@@ -219,9 +219,9 @@ async def get_my_transportation(
 async def calculate_price(
     transport_id: uuid.UUID,
     distance_km: float,
-    duration_hours: float = None,
+    duration_hours: float | None = None,
     db: AsyncSession = Depends(get_db)
-):
+) -> dict:
     """Calculate transportation price"""
     result = await db.execute(
         select(Transportation).where(Transportation.id == transport_id)
@@ -230,8 +230,6 @@ async def calculate_price(
     
     if not transport:
         raise HTTPException(status_code=404, detail="Transportation service not found")
-    
-    from app.models import PricingType
     
     if transport.pricing_type == PricingType.PER_ROUTE:
         total = transport.base_price + (distance_km * transport.price_per_km)

@@ -298,7 +298,7 @@ async function executeConfirmAction() {
 
 const loadPendingVendors = async () => {
   try {
-    const response = await api.get('/superadmin/vendors/pending')
+    const response = await api.get<any[]>('/superadmin/vendors/pending')
     pendingVendors.value = response
   } catch (error) {
     console.error('Error loading pending vendors:', error)

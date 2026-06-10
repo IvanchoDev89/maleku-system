@@ -58,6 +58,7 @@
               width="400"
               height="300"
               format="webp"
+              loading="lazy"
             />
           </div>
           <div class="relative h-40 md:h-48">
@@ -68,6 +69,7 @@
               width="400"
               height="300"
               format="webp"
+              loading="lazy"
             />
           </div>
           <div class="relative h-40 md:h-48">
@@ -78,6 +80,7 @@
               width="400"
               height="300"
               format="webp"
+              loading="lazy"
             />
           </div>
           <div class="relative h-40 md:h-48 bg-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
@@ -121,7 +124,7 @@
               <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div 
                   v-for="(amenity, index) in getAmenities()"
-                  :key="index"
+                  :key="amenity"
                   class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100"
                 >
                   <span class="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center text-teal-600 text-sm">✓</span>

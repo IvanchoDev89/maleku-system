@@ -394,7 +394,7 @@ const loadVendors = async () => {
     if (filters.value.type) params.business_type = filters.value.type
     if (filters.value.featured_only) params.featured_only = 'true'
     
-    const response = await api.get('/superadmin/vendors', params)
+    const response = await api.get<{ items: any[]; total: number }>('/superadmin/vendors', params)
     vendors.value = response.items || response
     total.value = response.total || vendors.value.length
   } catch (error) {
@@ -411,7 +411,14 @@ const changePage = (p: number) => {
 
 const loadStats = async () => {
   try {
-    const response = await api.get('/superadmin/vendors/analytics/overview?days=30')
+    const response = await api.get<{
+      total_vendors: number;
+      pending_approval: number;
+      active_vendors: number;
+      suspended_vendors: number;
+      rejected_vendors: number;
+      recent_registrations?: { is_featured?: boolean }[];
+    }>('/superadmin/vendors/analytics/overview?days=30')
     analytics.value = response
     stats.value = {
       total: response.total_vendors,

@@ -44,7 +44,7 @@ export function useSearch() {
     difficulties: SEARCH_FILTERS.difficulties,
     priceRanges: SEARCH_FILTERS.priceRanges,
     durations: SEARCH_FILTERS.durations,
-    sortOptions: SEARCH_FILTERS.sortOptions,
+    sortOptions: SEARCH_FILTERS.sortOptions.map(o => ({ value: o.value, label: o.key })),
     regions: SEARCH_FILTERS.regions
   }))
   

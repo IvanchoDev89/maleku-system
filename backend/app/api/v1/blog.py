@@ -10,6 +10,7 @@ from slowapi.util import get_remote_address
 from app.core.database import get_db
 from app.core.pagination import paginate_flat
 from app.core.security import require_role
+from app.core.logging import get_logger
 from app.models import User, UserRole, BlogPost, BlogPostStatus
 from app.schemas import (
     BlogPostResponse, BlogPostCreate, BlogPostUpdate,
@@ -252,7 +253,6 @@ async def update_blog_post(
             setattr(post, field, value)
         else:
             # Log attempted mass assignment
-            from app.core.logging import get_logger
             logger = get_logger(__name__)
             logger.warning(f"Mass assignment attempt blocked: field='{field}' user={current_user.id}")
     

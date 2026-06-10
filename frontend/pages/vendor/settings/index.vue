@@ -160,7 +160,7 @@ const handleSubmit = async () => {
   }
 }
 
-const formatDate = (date: string) => {
+const formatDate = (date: string | undefined) => {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('es-CR')
 }

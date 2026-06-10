@@ -152,7 +152,7 @@ const fetchTours = async () => {
   loading.value = true
   error.value = ''
   try {
-    const data = await api.get('/tours/vendor/my', {
+    const data = await api.get<{ items: any[]; total: number }>('/tours/vendor/my', {
       page: page.value,
       page_size: pageSize.value
     })

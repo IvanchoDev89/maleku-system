@@ -4,7 +4,7 @@ Pricing API - Precios Dinámicos
 import uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -17,11 +17,11 @@ router = APIRouter()
 
 @router.get("/", response_model=list[pricing_schema.PricingRuleResponse])
 async def list_pricing_rules(
-    service_type: str = None,
-    service_id: uuid.UUID = None,
+    service_type: str | None = None,
+    service_id: uuid.UUID | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.VENDOR))
-):
+) -> list[pricing_schema.PricingRuleResponse]:
     """List pricing rules"""
     query = select(PricingRule).where(PricingRule.is_active)
     
@@ -37,7 +37,7 @@ async def list_pricing_rules(
 
 
 @router.get("/{rule_id}", response_model=pricing_schema.PricingRuleDetailResponse)
-async def get_pricing_rule(rule_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def get_pricing_rule(rule_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> dict:
     """Get pricing rule details with calculated final price"""
     result = await db.execute(
         select(PricingRule).where(PricingRule.id == rule_id)
@@ -57,7 +57,7 @@ async def create_pricing_rule(
     rule_data: pricing_schema.PricingRuleCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.VENDOR))
-):
+) -> pricing_schema.PricingRuleResponse:
     """Create pricing rule (Vendor only)"""
     rule = PricingRule(
         service_id=rule_data.service_id,
@@ -87,7 +87,7 @@ async def update_pricing_rule(
     rule_data: pricing_schema.PricingRuleUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.VENDOR))
-):
+) -> pricing_schema.PricingRuleResponse:
     """Update pricing rule (Owner only)"""
     result = await db.execute(
         select(PricingRule).where(PricingRule.id == rule_id)
@@ -119,7 +119,7 @@ async def delete_pricing_rule(
     rule_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.VENDOR))
-):
+) -> dict:
     """Delete pricing rule (Owner only)"""
     result = await db.execute(
         select(PricingRule).where(PricingRule.id == rule_id)
@@ -142,10 +142,8 @@ async def calculate_dynamic_price(
     date: datetime,
     occupancy: int = 1,
     db: AsyncSession = Depends(get_db)
-):
+) -> dict:
     """Calculate dynamic price for a service"""
-    from sqlalchemy import or_
-    
     result = await db.execute(
         select(PricingRule).where(
             PricingRule.is_active,
