@@ -13,6 +13,7 @@ export default {
       colors: {
         primary: {
           DEFAULT: '#0d9488',
+          light: '#14b8a6',
           50: '#f0fdfa',
           100: '#ccfbf1',
           200: '#99f6e4',
@@ -26,6 +27,7 @@ export default {
         },
         secondary: {
           DEFAULT: '#f59e0b',
+          light: '#fbbf24',
           50: '#fffbeb',
           100: '#fef3c7',
           200: '#fde68a',
@@ -39,6 +41,7 @@ export default {
         },
         accent: {
           DEFAULT: '#10b981',
+          light: '#34d399',
           50: '#ecfdf5',
           100: '#d1fae5',
           200: '#a7f3d0',
@@ -47,6 +50,19 @@ export default {
           500: '#10b981',
           600: '#059669',
           700: '#047857',
+        },
+        dark: {
+          DEFAULT: '#1e293b',
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
         },
       },
       fontFamily: {
@@ -59,8 +75,10 @@ export default {
         '3xl': '1.5rem',
       },
       boxShadow: {
+        'subtle': '0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
         'elevated': '0 10px 40px -10px rgba(0, 0, 0, 0.15)',
+        'floating': '0 20px 60px -15px rgba(0, 0, 0, 0.2)',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',

@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     '@nuxt/icon'
   ],
   
-  css: ['~/assets/css/a11y.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/a11y.css'],
   
   postcss: {
     plugins: {

@@ -190,8 +190,8 @@ const fetchStats = async () => {
 const fetchRecentBookings = async () => {
   loadingBookings.value = true
   try {
-    const data = await api.get<any[]>('/bookings/vendor/my-bookings')
-    recentBookings.value = data.slice(0, 5)
+    const data = await api.get<{ items: any[]; total: number }>('/bookings/vendor/my-bookings')
+    recentBookings.value = (data.items || []).slice(0, 5)
   } catch (e) {
     console.error('Error loading bookings:', e)
   } finally {
