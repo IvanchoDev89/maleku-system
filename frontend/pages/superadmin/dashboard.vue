@@ -1,14 +1,14 @@
 <template>
   <div class="space-y-6">
     <!-- Welcome Banner with System Status -->
-    <div class="bg-gradient-to-r from-teal-900 via-teal-800 to-teal-900 rounded-2xl p-6 text-white border border-teal-700">
+    <div class="bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900 rounded-2xl p-6 text-white border border-primary-700">
       <div class="flex justify-between items-start">
         <div>
           <h1 class="text-2xl font-bold flex items-center gap-2">
             {{ $t('superadmin.dashboard.welcome', { name: auth.user?.full_name?.split(' ')[0] }) }}
-            <Crown class="w-6 h-6 text-teal-300" />
+            <Crown class="w-6 h-6 text-primary-300" />
           </h1>
-          <p class="text-teal-200 mt-1">{{ $t('superadmin.dashboard.subtitle') }}</p>
+          <p class="text-primary-200 mt-1">{{ $t('superadmin.dashboard.subtitle') }}</p>
           <div class="flex items-center gap-3 mt-4">
             <div class="flex items-center gap-2 px-3 py-1.5 bg-green-500/20 rounded-lg border border-green-500/30">
               <CheckCircle class="w-4 h-4 text-green-400" />
@@ -18,22 +18,22 @@
               <Database class="w-4 h-4 text-blue-400" />
               <span class="text-sm text-blue-400 font-medium">{{ $t('superadmin.dashboard.system.dbConnected') }}</span>
             </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 bg-teal-500/20 rounded-lg border border-teal-500/30">
-              <Save class="w-4 h-4 text-teal-300" />
-              <span class="text-sm text-teal-300 font-medium">{{ $t('superadmin.dashboard.system.backup') }}</span>
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-primary-500/20 rounded-lg border border-primary-500/30">
+              <Save class="w-4 h-4 text-primary-300" />
+              <span class="text-sm text-primary-300 font-medium">{{ $t('superadmin.dashboard.system.backup') }}</span>
             </div>
           </div>
         </div>
         <div class="text-right">
-          <p class="text-sm text-teal-300">{{ currentDate }}</p>
+          <p class="text-sm text-primary-300">{{ currentDate }}</p>
           <div class="flex items-center gap-3 justify-end">
-            <p class="text-3xl font-bold text-teal-300">{{ currentTime }}</p>
+            <p class="text-3xl font-bold text-primary-300">{{ currentTime }}</p>
             <button 
               @click="refreshDashboard"
-              class="p-2 bg-teal-800 hover:bg-teal-700 rounded-lg transition-colors"
+              class="p-2 bg-primary-800 hover:bg-primary-700 rounded-lg transition-colors"
               :title="$t('superadmin.dashboard.refresh')"
             >
-              <RefreshCw class="w-5 h-5 text-teal-100" :class="{ 'animate-spin': loading }" />
+              <RefreshCw class="w-5 h-5 text-primary-100" :class="{ 'animate-spin': loading }" />
             </button>
           </div>
         </div>
@@ -154,7 +154,7 @@
               v-for="period in ['7', '30', '90']" 
               :key="period"
               @click="revenuePeriod = period"
-              :class="revenuePeriod === period ? 'bg-teal-600 text-white' : 'bg-teal-50 text-teal-700 hover:bg-teal-100'"
+              :class="revenuePeriod === period ? 'bg-primary-600 text-white' : 'bg-primary-50 text-primary-700 hover:bg-primary-100'"
               class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
             >
               {{ period === '7' ? '7D' : period === '30' ? '30D' : '90D' }}
@@ -192,23 +192,23 @@
             <span class="text-green-600 font-medium text-sm">Activo</span>
           </div>
           
-          <div class="mt-4 p-4 bg-teal-50 rounded-lg">
+          <div class="mt-4 p-4 bg-primary-50 rounded-lg">
             <div class="flex justify-between text-sm mb-2">
               <span class="text-gray-600">Uso de memoria</span>
               <span class="font-medium text-gray-700">256 MB / 512 MB</span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-teal-600 h-2 rounded-full" style="width: 50%"></div>
+              <div class="bg-primary-600 h-2 rounded-full" style="width: 50%"></div>
             </div>
           </div>
           
-          <div class="p-4 bg-teal-50 rounded-lg">
+          <div class="p-4 bg-primary-50 rounded-lg">
             <div class="flex justify-between text-sm mb-2">
               <span class="text-gray-600">Almacenamiento DB</span>
               <span class="font-medium text-gray-700">1.2 GB / 10 GB</span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-teal-600 h-2 rounded-full" style="width: 12%"></div>
+              <div class="bg-primary-600 h-2 rounded-full" style="width: 12%"></div>
             </div>
           </div>
         </div>
@@ -221,10 +221,10 @@
       <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <Trophy class="w-5 h-5 text-teal-600" />
+            <Trophy class="w-5 h-5 text-primary-600" />
             Top Proveedores
           </h3>
-          <NuxtLink to="/superadmin/vendors" class="text-teal-600 text-sm hover:underline flex items-center gap-1">
+          <NuxtLink to="/superadmin/vendors" class="text-primary-600 text-sm hover:underline flex items-center gap-1">
             Ver todos
             <ArrowRight class="w-4 h-4" />
           </NuxtLink>
@@ -243,7 +243,7 @@
               <Store v-else class="w-4 h-4" />
             </div>
             <div class="flex-1 min-w-0">
-              <p class="font-medium text-gray-900 truncate group-hover:text-teal-700 transition-colors">{{ vendor.vendor_name }}</p>
+              <p class="font-medium text-gray-900 truncate group-hover:text-primary-700 transition-colors">{{ vendor.vendor_name }}</p>
               <p class="text-gray-500 text-xs flex items-center gap-1">
                 <Calendar class="w-3 h-3" />
                 {{ vendor.total_bookings }} reservas
@@ -253,7 +253,7 @@
               <p class="font-bold text-green-600">${{ formatNumber(vendor.total_revenue) }}</p>
               <NuxtLink 
                 :to="`/superadmin/vendors/${vendor.vendor_id}`" 
-                class="text-xs text-teal-600 hover:text-teal-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                class="text-xs text-primary-600 hover:text-primary-700 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 Ver →
               </NuxtLink>
@@ -270,7 +270,7 @@
       <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-bold text-gray-900">Actividad Reciente</h3>
-          <NuxtLink to="/superadmin/audit" class="text-teal-600 text-sm hover:underline">Ver logs →</NuxtLink>
+          <NuxtLink to="/superadmin/audit" class="text-primary-600 text-sm hover:underline">Ver logs →</NuxtLink>
         </div>
         <div class="space-y-3">
           <div 
@@ -289,7 +289,7 @@
                 {{ formatTimeAgo(activity.timestamp) }}
               </p>
             </div>
-            <NuxtLink v-if="activity.link" :to="activity.link" class="text-teal-600 hover:text-teal-700">
+            <NuxtLink v-if="activity.link" :to="activity.link" class="text-primary-600 hover:text-primary-700">
               <ChevronRight class="w-5 h-5" />
             </NuxtLink>
           </div>
@@ -304,19 +304,19 @@
       <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <h3 class="text-lg font-bold text-gray-900 mb-4">Acciones Rápidas</h3>
         <div class="grid grid-cols-2 gap-3 mb-6">
-          <NuxtLink to="/superadmin/users" class="p-4 bg-teal-50 rounded-xl hover:bg-teal-100 transition-colors text-center group border border-teal-100">
-            <UserPlus class="w-8 h-8 mx-auto mb-2 text-teal-600 group-hover:scale-110 transition-transform" />
+          <NuxtLink to="/superadmin/users" class="p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors text-center group border border-primary-100">
+            <UserPlus class="w-8 h-8 mx-auto mb-2 text-primary-600 group-hover:scale-110 transition-transform" />
             <p class="font-medium text-gray-700 text-sm">Nuevo Usuario</p>
           </NuxtLink>
-          <NuxtLink to="/superadmin/vendors/pending" class="p-4 bg-teal-50 rounded-xl hover:bg-teal-100 transition-colors text-center group border border-teal-100">
+          <NuxtLink to="/superadmin/vendors/pending" class="p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors text-center group border border-primary-100">
             <CheckCircle class="w-8 h-8 mx-auto mb-2 text-green-600 group-hover:scale-110 transition-transform" />
             <p class="font-medium text-gray-700 text-sm">Aprobar Vendor</p>
           </NuxtLink>
-          <NuxtLink to="/superadmin/content/blog/new" class="p-4 bg-teal-50 rounded-xl hover:bg-teal-100 transition-colors text-center group border border-teal-100">
+          <NuxtLink to="/superadmin/content/blog/new" class="p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors text-center group border border-primary-100">
             <FileText class="w-8 h-8 mx-auto mb-2 text-blue-600 group-hover:scale-110 transition-transform" />
             <p class="font-medium text-gray-700 text-sm">Blog Post</p>
           </NuxtLink>
-          <NuxtLink to="/superadmin/system" class="p-4 bg-teal-50 rounded-xl hover:bg-teal-100 transition-colors text-center group border border-teal-100">
+          <NuxtLink to="/superadmin/system" class="p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors text-center group border border-primary-100">
             <Settings class="w-8 h-8 mx-auto mb-2 text-purple-600 group-hover:scale-110 transition-transform" />
             <p class="font-medium text-gray-700 text-sm">Sistema</p>
           </NuxtLink>
@@ -382,9 +382,9 @@ const currentTime = computed(() => new Date().toLocaleTimeString('es-CR', {
 }))
 
 const statsCards = computed(() => [
-  { label: 'Usuarios Totales', value: formatNumber(stats.value.total_users), icon: '👥', bgClass: 'bg-teal-100', trend: 12, link: '/superadmin/users' },
-  { label: 'Proveedores', value: formatNumber(stats.value.total_vendors), icon: '🏪', bgClass: 'bg-teal-100', trend: 8, link: '/superadmin/vendors' },
-  { label: 'Reservas', value: formatNumber(stats.value.total_bookings), icon: '📋', bgClass: 'bg-teal-100', trend: -3, link: '/superadmin/bookings' },
+  { label: 'Usuarios Totales', value: formatNumber(stats.value.total_users), icon: '👥', bgClass: 'bg-primary-100', trend: 12, link: '/superadmin/users' },
+  { label: 'Proveedores', value: formatNumber(stats.value.total_vendors), icon: '🏪', bgClass: 'bg-primary-100', trend: 8, link: '/superadmin/vendors' },
+  { label: 'Reservas', value: formatNumber(stats.value.total_bookings), icon: '📋', bgClass: 'bg-primary-100', trend: -3, link: '/superadmin/bookings' },
   { label: 'Ingresos Netos', value: `$${formatNumber(stats.value.net_revenue)}`, icon: '💰', bgClass: 'bg-green-100', trend: 15, link: '/superadmin/reports' },
 ])
 

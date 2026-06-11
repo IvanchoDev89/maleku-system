@@ -276,27 +276,38 @@
     }
   },
   "vendor": {
-    "dashboard": "Tableau de bord",
+    "dashboard": "Panneau Vendeur",
     "properties": "Mes Propriétés",
     "tours": "Mes Tours",
     "bookings": "Réservations",
     "analytics": "Statistiques",
-    "settings": "Configuration",
-    "addProperty": "Ajouter une propriété",
-    "addTour": "Ajouter un tour",
+    "settings": "Paramètres",
+    "addProperty": "Ajouter une Propriété",
+    "addTour": "Ajouter un Tour",
     "totalBookings": "Total Réservations",
     "totalRevenue": "Revenus Totaux",
-    "pendingBookings": "Réservations en attente"
+    "pendingBookings": "Réservations en attente",
+    "welcome": "Bienvenue",
+    "recentBookings": "Réservations Récentes",
+    "viewAll": "Voir tout",
+    "noBookings": "Pas encore de réservations",
+    "noBookingsHint": "Les réservations apparaîtront ici",
+    "totalProperties": "Propriétés",
+    "activeProperties": "Propriétés actives",
+    "pendingLabel": "En attente",
+    "pendingHint": "En attente de confirmation",
+    "revenueLabel": "Revenus Totaux",
+    "revenueHint": "Gains accumulés"
   },
   "admin": {
-    "dashboard": "Panneau d'Administration",
+    "dashboard": "Tableau de bord Admin",
     "users": "Utilisateurs",
     "vendors": "Fournisseurs",
-    "allBookings": "Toutes les Réservations",
-    "blog": "Gérer le Blog",
+    "allBookings": "Réservations",
+    "blog": "Blog",
     "destinations": "Destinations",
     "reports": "Rapports",
-    "settings": "Configuration"
+    "settings": "Paramètres"
   },
   "common": {
     "loading": "Chargement...",

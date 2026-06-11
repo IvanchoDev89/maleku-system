@@ -14,7 +14,7 @@
           </div>
           <h3 class="text-xl font-semibold text-gray-900 mb-2">Error al cargar el destino</h3>
           <p class="text-gray-600 mb-6">Por favor intenta de nuevo más tarde.</p>
-          <NuxtLink to="/destinos" class="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors inline-block">
+          <NuxtLink to="/destinos" class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors inline-block">
             Volver a destinos
           </NuxtLink>
       </div>
@@ -23,9 +23,9 @@
         <!-- Breadcrumb -->
         <nav class="mb-8">
           <ol class="flex items-center gap-2 text-sm">
-            <li><NuxtLink to="/" class="text-gray-500 hover:text-teal-600">Inicio</NuxtLink></li>
+            <li><NuxtLink to="/" class="text-gray-500 hover:text-primary-600">Inicio</NuxtLink></li>
             <li><span class="text-gray-400">/</span></li>
-            <li><NuxtLink to="/destinos" class="text-gray-500 hover:text-teal-600">Destinos</NuxtLink></li>
+            <li><NuxtLink to="/destinos" class="text-gray-500 hover:text-primary-600">Destinos</NuxtLink></li>
             <li><span class="text-gray-400">/</span></li>
             <li class="text-gray-900 font-medium">{{ destination.name }}</li>
           </ol>
@@ -68,7 +68,7 @@
                   :key="index"
                   class="flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100"
                 >
-                  <div class="w-8 h-8 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center text-sm flex-shrink-0">✓</div>
+                  <div class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm flex-shrink-0">✓</div>
                   {{ highlight }}
                 </li>
               </ul>
@@ -97,7 +97,7 @@
               <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <span>📅</span> Mejor Época para Visitar
               </h2>
-              <div class="bg-gradient-to-r from-teal-50 to-emerald-50 p-6 rounded-xl border border-teal-100">
+              <div class="bg-gradient-to-r from-primary-50 to-emerald-50 p-6 rounded-xl border border-primary-100">
                 <p class="text-gray-700 leading-relaxed">{{ getBestTime() }}</p>
               </div>
             </section>
@@ -150,7 +150,7 @@
                 </div>
                 <div class="flex justify-between items-center">
                   <span class="text-gray-500">Tipo</span>
-                  <span class="inline-flex items-center gap-1 px-2 py-1 bg-teal-100 text-teal-700 rounded-full text-sm">
+                  <span class="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-700 rounded-full text-sm">
                     {{ destination.is_featured ? '⭐ Destacado' : 'Tourístico' }}
                   </span>
                 </div>
@@ -158,12 +158,12 @@
             </div>
 
             <!-- Hotels CTA -->
-            <div class="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-xl p-6 text-white">
+            <div class="bg-gradient-to-r from-primary-600 to-emerald-600 rounded-xl p-6 text-white">
               <h3 class="font-bold text-lg mb-2 flex items-center gap-2">
                 <span>🏨</span> Hoteles en {{ destination.name }}
               </h3>
               <p class="text-white/80 text-sm mb-4">Encuentra el mejor alojamiento para tu viaje</p>
-              <NuxtLink :to="`/hoteles?region=${encodeURIComponent(destination.region)}`" class="block text-center py-3 bg-white text-teal-700 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+              <NuxtLink :to="`/hoteles?region=${encodeURIComponent(destination.region)}`" class="block text-center py-3 bg-white text-primary-700 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
                 Ver Hoteles
               </NuxtLink>
             </div>
@@ -174,7 +174,7 @@
                 <span>🗺️</span> Tours en la zona
               </h3>
               <p class="text-gray-600 text-sm mb-4">Reserva experiencias únicas</p>
-              <NuxtLink to="/tours" class="block text-center py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition-colors">
+              <NuxtLink to="/tours" class="block text-center py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors">
                 Ver Tours
               </NuxtLink>
             </div>
@@ -197,7 +197,7 @@
                 </div>
                 <div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors"></div>
               </div>
-              <h3 class="font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">{{ related.name }}</h3>
+              <h3 class="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">{{ related.name }}</h3>
               <p class="text-sm text-gray-500">{{ related.region }}</p>
             </NuxtLink>
           </div>
@@ -208,7 +208,7 @@
       <div v-else class="text-center py-16">
         <h1 class="text-3xl font-bold text-gray-900 mb-4">Destino no encontrado</h1>
         <p class="text-gray-600 mb-6">El destino que buscas no existe o ha sido eliminado.</p>
-        <NuxtLink to="/destinos" class="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700">
+        <NuxtLink to="/destinos" class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700">
           Ver todos los destinos
         </NuxtLink>
       </div>
@@ -242,11 +242,11 @@ const icons: Record<string, string> = {
 
 const gradients: Record<string, string> = {
   'Pacífico Norte': 'bg-gradient-to-br from-yellow-400 to-orange-500',
-  'Norte': 'bg-gradient-to-br from-green-500 to-teal-600',
+  'Norte': 'bg-gradient-to-br from-green-500 to-primary-600',
   'Pacífico Central': 'bg-gradient-to-br from-emerald-500 to-cyan-600',
   'Valle Central': 'bg-gradient-to-br from-amber-400 to-yellow-500',
-  'Caribe': 'bg-gradient-to-br from-teal-400 to-emerald-500',
-  'Pacífico Sur': 'bg-gradient-to-br from-green-600 to-teal-700'
+  'Caribe': 'bg-gradient-to-br from-primary-400 to-emerald-500',
+  'Pacífico Sur': 'bg-gradient-to-br from-green-600 to-primary-700'
 }
 
 const computedDestination = computed(() => {
@@ -290,7 +290,7 @@ const getBestTime = () => {
 
 const relatedDestinations = computed(() => {
   return [
-    { name: 'La Fortuna', slug: 'la-fortuna', icon: '🌋', gradient: 'bg-gradient-to-br from-green-500 to-teal-600', region: 'Norte' },
+    { name: 'La Fortuna', slug: 'la-fortuna', icon: '🌋', gradient: 'bg-gradient-to-br from-green-500 to-primary-600', region: 'Norte' },
     { name: 'Monteverde', slug: 'monteverde', icon: '☁️', gradient: 'bg-gradient-to-br from-slate-500 to-slate-700', region: 'Norte' },
     { name: 'Manuel Antonio', slug: 'manuel-antonio', icon: '🦝', gradient: 'bg-gradient-to-br from-emerald-500 to-cyan-600', region: 'Pacífico Central' }
   ]

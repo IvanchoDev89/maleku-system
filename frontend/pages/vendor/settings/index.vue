@@ -57,7 +57,7 @@
             <span class="text-sm font-medium text-gray-700">Cuenta activa</span>
           </div>
 
-          <button type="submit" :disabled="saving" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark disabled:opacity-50">
+          <button type="submit" :disabled="saving" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-700 disabled:opacity-50">
             {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
           </button>
         </form>

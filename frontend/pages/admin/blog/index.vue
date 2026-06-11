@@ -4,7 +4,7 @@
       <div class="flex gap-4">
         <UiSelect v-model="statusFilter" :options="statusOptions" placeholder="Todos los estados" @update:model-value="statusFilter = $event" />
       </div>
-      <NuxtLink to="/admin/blog/new" class="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all">
+      <NuxtLink to="/admin/blog/new" class="bg-primary hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all">
         + Nuevo Artículo
       </NuxtLink>
     </div>

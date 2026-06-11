@@ -2,7 +2,7 @@
   <section class="py-20 bg-gray-50">
     <div class="container mx-auto px-4">
       <div class="text-center mb-16">
-        <span class="inline-block px-4 py-1.5 bg-teal-100 text-teal-700 font-semibold rounded-full text-sm mb-4">
+        <span class="inline-block px-4 py-1.5 bg-primary-100 text-primary-700 font-semibold rounded-full text-sm mb-4">
           {{ $t('testimonials.badge') }}
         </span>
         <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{{ $t('testimonials.title') }}</h2>

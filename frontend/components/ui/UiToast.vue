@@ -7,7 +7,7 @@ const typeStyles: Record<ToastType, string> = {
   success: 'bg-green-600 text-white',
   error: 'bg-red-600 text-white',
   warning: 'bg-amber-500 text-white',
-  info: 'bg-teal-600 text-white'
+  info: 'bg-primary-600 text-white'
 }
 
 const typeIcons: Record<ToastType, string> = {

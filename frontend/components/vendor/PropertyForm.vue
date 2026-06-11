@@ -314,7 +314,7 @@
     <!-- Actions -->
     <div class="flex justify-end gap-4">
       <NuxtLink :to="cancelUrl" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</NuxtLink>
-      <button @click="saveProperty" :disabled="saving" class="bg-primary text-white px-8 py-2 rounded-lg hover:bg-primary-dark disabled:opacity-50">
+      <button @click="saveProperty" :disabled="saving" class="bg-primary text-white px-8 py-2 rounded-lg hover:bg-primary-700 disabled:opacity-50">
         {{ saving ? 'Guardando...' : (propertyId ? 'Guardar Cambios' : 'Guardar Propiedad') }}
       </button>
     </div>

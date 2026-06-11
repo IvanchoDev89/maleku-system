@@ -4,7 +4,7 @@
     <a href="#main-content" class="skip-link">Ir al contenido principal</a>
 
     <!-- Header Mejorado -->
-    <header class="bg-gradient-to-r from-teal-700 via-teal-600 to-emerald-600 shadow-xl sticky top-0 z-50">
+    <header class="bg-gradient-to-r from-primary-700 via-primary-600 to-emerald-600 shadow-xl sticky top-0 z-50">
       <nav class="container mx-auto px-4 py-3">
         <div class="flex items-center justify-between">
           <!-- Logo -->
@@ -24,8 +24,8 @@
                 :key="item.path"
                 :to="item.path"
                 class="flex items-center gap-2 px-4 py-2 text-white/90 hover:text-white hover:bg-white/10 font-medium rounded-lg transition-all backdrop-blur-sm"
-                :class="{ 'bg-white/20 text-white': $route.path.includes(item.path) }"
-                :aria-current="$route.path.includes(item.path) ? 'page' : undefined"
+                :class="{ 'bg-white/20 text-white': $route.path.startsWith(item.path) }"
+                :aria-current="$route.path.startsWith(item.path) ? 'page' : undefined"
               >
               <component :is="item.icon" class="w-4 h-4" />
               <span>{{ item.label }}</span>
@@ -56,7 +56,7 @@
             </button>
 
             <!-- Language Dropdown -->
-            <div class="relative">
+            <div class="relative" ref="langMenuRef">
               <button 
                 @click="langMenuOpen = !langMenuOpen"
                 class="flex items-center gap-1 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all backdrop-blur-sm"
@@ -73,7 +73,7 @@
                     :key="lang.code"
                     @click="changeLocale(lang.code)"
                     class="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors"
-                    :class="locale === lang.code ? 'bg-teal-50 text-teal-700' : 'text-gray-700'"
+                    :class="locale === lang.code ? 'bg-primary-50 text-primary-700' : 'text-gray-700'"
                   >
                     <span class="text-lg">{{ lang.flag }}</span>
                     <span class="text-sm font-medium">{{ lang.name }}</span>
@@ -87,7 +87,7 @@
               <NuxtLink 
                 v-if="isVendor" 
                 to="/vendor/dashboard"
-                class="hidden sm:flex items-center gap-2 px-4 py-2 bg-white text-teal-700 font-semibold rounded-lg hover:bg-gray-100 transition-all text-sm shadow"
+                class="hidden sm:flex items-center gap-2 px-4 py-2 bg-white text-primary-700 font-semibold rounded-lg hover:bg-gray-100 transition-all text-sm shadow"
               >
                 <LayoutDashboard class="w-4 h-4" />
                 Mi Panel
@@ -95,7 +95,7 @@
               <NuxtLink 
                 v-else 
                 to="/dashboard"
-                class="hidden sm:flex items-center gap-2 px-4 py-2 bg-white text-teal-700 font-semibold rounded-lg hover:bg-gray-100 transition-all text-sm shadow"
+                class="hidden sm:flex items-center gap-2 px-4 py-2 bg-white text-primary-700 font-semibold rounded-lg hover:bg-gray-100 transition-all text-sm shadow"
               >
                 <LayoutDashboard class="w-4 h-4" />
                 Dashboard
@@ -118,7 +118,7 @@
               </NuxtLink>
               <NuxtLink 
                 to="/register" 
-                class="flex items-center gap-2 px-4 py-2 bg-white text-teal-700 font-bold rounded-lg hover:bg-gray-100 transition-all text-sm shadow"
+                class="flex items-center gap-2 px-4 py-2 bg-white text-primary-700 font-bold rounded-lg hover:bg-gray-100 transition-all text-sm shadow"
               >
                 <UserPlus class="w-4 h-4" />
                 <span class="hidden sm:inline">Registrarse</span>
@@ -149,12 +149,12 @@
                     v-model="searchQuery"
                     type="text" 
                     placeholder="¿Qué estás buscando?"
-                    class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-0 outline-none transition-all text-gray-800 placeholder-gray-400 font-medium"
+                    class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:ring-0 outline-none transition-all text-gray-800 placeholder-gray-400 font-medium"
                   />
                 </div>
                 <button 
                   type="submit" 
-                  class="px-8 py-3.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                  class="px-8 py-3.5 bg-gradient-to-r from-primary-600 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   <Search class="w-5 h-5" />
                   <span>Buscar</span>
@@ -166,7 +166,7 @@
                   v-for="tag in popularSearches" 
                   :key="tag"
                   @click="searchQuery = tag; handleSearch()"
-                  class="text-xs px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-full transition-colors font-medium border border-teal-200"
+                  class="text-xs px-3 py-1.5 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-full transition-colors font-medium border border-primary-200"
                 >
                   {{ tag }}
                 </button>
@@ -178,7 +178,7 @@
 
       <!-- Mobile Menu -->
       <Transition name="slide-down">
-        <div v-if="mobileMenuOpen" class="lg:hidden bg-teal-800 border-t border-white/10">
+        <div v-if="mobileMenuOpen" class="lg:hidden bg-primary-800 border-t border-white/10">
           <div class="container mx-auto px-4 py-4 space-y-1">
             <NuxtLink 
               v-for="item in navItems" 
@@ -186,7 +186,7 @@
               :to="item.path"
               @click="mobileMenuOpen = false"
               class="flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 rounded-lg font-medium transition-colors"
-              :class="{ 'bg-white/15': $route.path.includes(item.path) }"
+              :class="{ 'bg-white/15': $route.path.startsWith(item.path) }"
             >
               <component :is="item.icon" class="w-5 h-5" />
               {{ item.label }}
@@ -203,7 +203,7 @@
               <NuxtLink 
                 to="/register" 
                 @click="mobileMenuOpen = false"
-                class="flex items-center justify-center gap-2 px-4 py-3 bg-white text-teal-700 rounded-lg font-bold"
+                class="flex items-center justify-center gap-2 px-4 py-3 bg-white text-primary-700 rounded-lg font-bold"
               >
                 <UserPlus class="w-5 h-5" />
                 Registrarse
@@ -225,7 +225,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { 
   Search, 
   MapPin, 
@@ -298,8 +298,21 @@ const changeLocale = (code: string) => {
   langMenuOpen.value = false
 }
 
+const langMenuRef = ref<HTMLElement | null>(null)
+
+const closeLangMenu = (event: MouseEvent) => {
+  if (langMenuRef.value && !langMenuRef.value.contains(event.target as Node)) {
+    langMenuOpen.value = false
+  }
+}
+
 onMounted(() => {
   auth.initAuth()
+  document.addEventListener('click', closeLangMenu)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', closeLangMenu)
 })
 </script>
 

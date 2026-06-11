@@ -66,7 +66,7 @@
       <div class="mt-6 pt-6 border-t border-gray-100 text-center">
         <p class="text-gray-600 text-sm">
           {{ t('auth.register.hasAccount') }}
-          <NuxtLink to="/login" class="text-teal-600 font-semibold hover:text-teal-700">
+          <NuxtLink to="/login" class="text-primary-600 font-semibold hover:text-primary-700">
             {{ t('auth.register.login') }}
           </NuxtLink>
         </p>
@@ -77,7 +77,7 @@
     <div class="mt-6 text-center">
       <p class="text-gray-600 text-sm">
         ¿Quieres ofrecer tus servicios?
-        <NuxtLink to="/vendor/register" class="text-teal-600 hover:text-teal-700 font-medium">
+        <NuxtLink to="/vendor/register" class="text-primary-600 hover:text-primary-700 font-medium">
           Regístrate como proveedor
         </NuxtLink>
       </p>

@@ -16,13 +16,13 @@
               v-model="searchQuery"
               type="text"
               placeholder="Buscar hoteles..."
-              class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-gray-900"
+              class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-gray-900"
               @keyup.enter="performSearch"
             />
           </div>
           <button
             @click="performSearch"
-            class="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors flex items-center justify-center gap-2"
+            class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
           >
             <Search class="w-5 h-5" />
             <span>Buscar</span>
@@ -79,7 +79,7 @@
         </div>
         <h3 class="text-xl font-semibold text-gray-900 mb-2">Error al cargar propiedades</h3>
         <p class="text-gray-600 mb-6">Por favor intenta de nuevo más tarde.</p>
-        <button @click="refreshPage" class="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors">
+        <button @click="refreshPage" class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors">
           Reintentar
         </button>
       </div>
@@ -102,14 +102,14 @@
               format="webp"
               loading="lazy"
             />
-            <span class="absolute top-4 left-4 px-3 py-1 bg-teal-600 text-white text-xs font-bold rounded-full">
+            <span class="absolute top-4 left-4 px-3 py-1 bg-primary-600 text-white text-xs font-bold rounded-full">
               {{ formatPropertyType(property.property_type) }}
             </span>
           </div>
           <div class="p-6">
             <div class="flex items-start justify-between gap-2">
               <div class="flex-1">
-                <h3 class="font-bold text-gray-900 text-lg group-hover:text-teal-600 transition-colors">{{ property.name }}</h3>
+                <h3 class="font-bold text-gray-900 text-lg group-hover:text-primary-600 transition-colors">{{ property.name }}</h3>
                 <p class="text-gray-500 text-sm mt-1 flex items-center gap-1">
                   <MapPin class="w-3 h-3" />
                   {{ property.city }}, {{ property.region }}
@@ -123,7 +123,7 @@
             <p class="mt-3 text-gray-600 text-sm line-clamp-2">{{ property.short_description }}</p>
             <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
               <div>
-                <span class="text-2xl font-bold text-teal-600">${{ property.base_price }}</span>
+                <span class="text-2xl font-bold text-primary-600">${{ property.base_price }}</span>
                 <span class="text-gray-500 text-sm">/noche</span>
               </div>
               <span class="text-gray-500 text-sm">{{ property.total_reviews }} reseñas</span>
@@ -149,7 +149,7 @@
         </div>
         <h2 class="text-2xl font-bold text-gray-900 mb-2">No hay hoteles disponibles</h2>
         <p class="text-gray-600 mb-6">Intenta con otros filtros de búsqueda</p>
-        <button @click="clearFilters" class="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700">
+        <button @click="clearFilters" class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700">
           Limpiar filtros
         </button>
       </div>

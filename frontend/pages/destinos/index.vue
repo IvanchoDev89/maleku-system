@@ -14,7 +14,7 @@
           :key="region"
           @click="selectedRegion = selectedRegion === region ? '' : region"
           class="px-5 py-2.5 rounded-full transition-all font-medium text-sm"
-          :class="selectedRegion === region ? 'bg-teal-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-teal-50 border border-gray-200'"
+          :class="selectedRegion === region ? 'bg-primary-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-primary-50 border border-gray-200'"
         >
           {{ region }}
         </button>
@@ -47,13 +47,13 @@
               {{ dest.icon }}
             </div>
             <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-            <div class="absolute inset-0 bg-teal-600/0 group-hover:bg-teal-600/10 transition-colors duration-300"></div>
+            <div class="absolute inset-0 bg-primary-600/0 group-hover:bg-primary-600/10 transition-colors duration-300"></div>
             <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
               <span class="inline-flex items-center gap-1 text-white/80 text-sm mb-2">
                 <MapPin class="w-4 h-4" />
                 {{ dest.region }}
               </span>
-              <h3 class="text-2xl font-bold group-hover:text-teal-300 transition-colors">
+              <h3 class="text-2xl font-bold group-hover:text-primary-300 transition-colors">
                 {{ dest.name }}
               </h3>
               <p class="mt-2 text-white/90 text-sm line-clamp-2">{{ dest.shortDesc }}</p>
@@ -77,7 +77,7 @@
           <MapPin class="w-12 h-12 text-gray-400" />
         </div>
         <h2 class="text-2xl font-bold text-gray-900 mb-2">No hay destinos en esta región</h2>
-        <button @click="selectedRegion = ''" class="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 mt-4">
+        <button @click="selectedRegion = ''" class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 mt-4">
           Ver todos
         </button>
       </div>
@@ -87,7 +87,7 @@
         <h2 class="text-2xl font-bold mb-6 text-gray-900">¿Por qué visitar Costa Rica?</h2>
         <div class="grid md:grid-cols-3 gap-8">
           <div class="text-center">
-            <div class="w-20 h-20 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-4xl">
+            <div class="w-20 h-20 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-4xl">
               🏔️
             </div>
             <h3 class="font-semibold mb-2 text-gray-900">Biodiversidad</h3>
@@ -139,11 +139,11 @@ const destinations = computed(() => {
   }
   const gradients: Record<string, string> = {
     'Pacífico Norte': 'bg-gradient-to-br from-yellow-400 to-orange-500',
-    'Norte': 'bg-gradient-to-br from-green-500 to-teal-600',
+    'Norte': 'bg-gradient-to-br from-green-500 to-primary-600',
     'Pacífico Central': 'bg-gradient-to-br from-emerald-500 to-cyan-600',
     'Valle Central': 'bg-gradient-to-br from-amber-400 to-yellow-500',
-    'Caribe': 'bg-gradient-to-br from-teal-400 to-emerald-500',
-    'Pacífico Sur': 'bg-gradient-to-br from-green-600 to-teal-700'
+    'Caribe': 'bg-gradient-to-br from-primary-400 to-emerald-500',
+    'Pacífico Sur': 'bg-gradient-to-br from-green-600 to-primary-700'
   }
   
   return (apiData.value || []).map((d: any) => ({

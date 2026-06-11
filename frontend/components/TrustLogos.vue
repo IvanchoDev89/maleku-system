@@ -30,15 +30,18 @@ const certifications = [
       </div>
       
       <!-- Logos Grid -->
-      <div class="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-60">
-        <!-- Using text placeholders until real logos available -->
-        <div class="flex items-center gap-8">
-          <span class="text-xl font-bold text-blue-600">Booking.com</span>
-          <span class="text-xl font-bold text-green-600">TripAdvisor</span>
-          <span class="text-xl font-bold text-yellow-600">Expedia</span>
-          <span class="text-xl font-bold text-red-500">Airbnb</span>
-          <span class="text-xl font-bold text-blue-800">ICT Costa Rica</span>
-          <span class="text-xl font-bold text-teal-600">Canatur</span>
+      <div class="flex flex-wrap items-center justify-center gap-6 md:gap-10">
+        <div 
+          v-for="partner in partners" 
+          :key="partner.name"
+          class="flex items-center justify-center px-6 py-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50/30 transition-all duration-300"
+        >
+          <img 
+            :src="partner.logo" 
+            :alt="partner.name"
+            class="h-8 md:h-10 w-auto object-contain grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
+          />
+          <span class="sr-only">{{ partner.name }}</span>
         </div>
       </div>
 

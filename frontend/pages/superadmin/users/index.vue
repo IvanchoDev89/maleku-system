@@ -326,7 +326,7 @@ const getRoleBadgeClass = (role: string) => {
     super_admin: 'bg-amber-100 text-amber-800',
     admin: 'bg-purple-100 text-purple-800',
     agent: 'bg-blue-100 text-blue-800',
-    customer_service: 'bg-teal-100 text-teal-800',
+    customer_service: 'bg-primary-100 text-primary-800',
     vendor: 'bg-orange-100 text-orange-800',
     client: 'bg-gray-100 text-gray-800',
   }

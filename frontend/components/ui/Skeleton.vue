@@ -32,7 +32,7 @@ const getWidthClass = () => {
 </script>
 
 <template>
-  <div :class="['animate-pulse', wrapperClass]">
+  <div aria-hidden="true" :class="['animate-pulse', wrapperClass]">
     <div
       v-for="i in count"
       :key="i"

@@ -21,7 +21,7 @@
           </div>
           <h3 class="text-xl font-semibold text-gray-900 mb-2">Error al cargar la propiedad</h3>
           <p class="text-gray-600 mb-6">Por favor intenta de nuevo más tarde.</p>
-          <NuxtLink to="/hoteles" class="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors inline-block">
+          <NuxtLink to="/hoteles" class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors inline-block">
             Volver a hoteles
           </NuxtLink>
         </div>
@@ -30,9 +30,9 @@
         <!-- Breadcrumb -->
         <nav class="mb-8">
           <ol class="flex items-center gap-2 text-sm">
-            <li><NuxtLink to="/" class="text-gray-500 hover:text-teal-600">Inicio</NuxtLink></li>
+            <li><NuxtLink to="/" class="text-gray-500 hover:text-primary-600">Inicio</NuxtLink></li>
             <li><span class="text-gray-400">/</span></li>
-            <li><NuxtLink to="/hoteles" class="text-gray-500 hover:text-teal-600">Hoteles</NuxtLink></li>
+            <li><NuxtLink to="/hoteles" class="text-gray-500 hover:text-primary-600">Hoteles</NuxtLink></li>
             <li><span class="text-gray-400">/</span></li>
             <li class="text-gray-900 font-medium">{{ property.name }}</li>
           </ol>
@@ -94,7 +94,7 @@
             <!-- Header -->
             <div class="flex items-start justify-between mb-6">
               <div>
-                <span class="inline-block px-3 py-1 bg-teal-100 text-teal-700 text-sm font-semibold rounded-full">
+                <span class="inline-block px-3 py-1 bg-primary-100 text-primary-700 text-sm font-semibold rounded-full">
                   {{ formatPropertyType(property.property_type) }}
                 </span>
                 <h1 class="text-4xl font-bold text-gray-900 mt-2">{{ property.name }}</h1>
@@ -127,7 +127,7 @@
                   :key="amenity"
                   class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100"
                 >
-                  <span class="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center text-teal-600 text-sm">✓</span>
+                  <span class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 text-sm">✓</span>
                   <span class="text-gray-700">{{ amenity }}</span>
                 </div>
               </div>
@@ -149,8 +149,8 @@
               <h2 class="text-2xl font-bold text-gray-900 mb-4">Reseñas Destacadas</h2>
               <div class="bg-white rounded-xl p-6 border border-gray-100">
                 <div class="flex items-center gap-4 mb-4">
-                  <div class="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
-                    <span class="font-bold text-teal-700">MG</span>
+                  <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                    <span class="font-bold text-primary-700">MG</span>
                   </div>
                   <div>
                     <p class="font-semibold text-gray-900">María García</p>
@@ -175,7 +175,7 @@
               <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                 <div class="flex justify-between items-end mb-6">
                   <div>
-                    <span class="text-4xl font-bold text-teal-600">${{ property.base_price }}</span>
+                    <span class="text-4xl font-bold text-primary-600">${{ property.base_price }}</span>
                     <span class="text-gray-500">/noche</span>
                   </div>
                   <div class="text-right text-sm">
@@ -190,7 +190,7 @@
                     <input 
                       v-model="checkin" 
                       type="date" 
-                      class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                      class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                     />
                   </div>
                   <div>
@@ -198,7 +198,7 @@
                     <input 
                       v-model="checkout" 
                       type="date" 
-                      class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                      class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                     />
                   </div>
                   <div>
@@ -207,7 +207,7 @@
                   </div>
                 </div>
 
-                <button class="w-full py-4 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transition-all">
+                <button class="w-full py-4 bg-gradient-to-r from-primary-600 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transition-all">
                   Reservar Ahora
                 </button>
 
@@ -219,11 +219,11 @@
                 <h3 class="font-semibold text-gray-900 mb-2">¿Necesitas ayuda?</h3>
                 <p class="text-gray-600 text-sm mb-4">Contáctanos directamente</p>
                 <div class="space-y-2">
-                  <a href="tel:+50688888888" class="flex items-center gap-2 text-teal-600 hover:text-teal-700">
+                  <a href="tel:+50688888888" class="flex items-center gap-2 text-primary-600 hover:text-primary-700">
                     <Phone class="w-4 h-4" />
                     +506 8888 8888
                   </a>
-                  <a href="mailto:info@costaricatravel.dev" class="flex items-center gap-2 text-teal-600 hover:text-teal-700">
+                  <a href="mailto:info@costaricatravel.dev" class="flex items-center gap-2 text-primary-600 hover:text-primary-700">
                     <Mail class="w-4 h-4" />
                     info@costaricatravel.dev
                   </a>
@@ -239,7 +239,7 @@
       <div v-else class="text-center py-16">
         <h1 class="text-3xl font-bold text-gray-900 mb-4">Hotel no encontrado</h1>
         <p class="text-gray-600 mb-6">El hotel que buscas no existe o ha sido eliminado.</p>
-        <NuxtLink to="/hoteles" class="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700">
+        <NuxtLink to="/hoteles" class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700">
           Ver todos los hoteles
         </NuxtLink>
       </div>

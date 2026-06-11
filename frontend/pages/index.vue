@@ -3,7 +3,7 @@
     <!-- Hero Section -->
     <section class="relative min-h-[85vh] flex items-center overflow-hidden">
       <!-- Background -->
-      <div class="absolute inset-0 bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-900"></div>
+      <div class="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-800 to-emerald-900"></div>
       <div class="absolute inset-0">
         <NuxtImg 
           src="https://images.unsplash.com/photo-1518638150340-f706e86654de?w=1920&q=80" 
@@ -14,23 +14,23 @@
           format="webp"
         />
       </div>
-      <div class="absolute inset-0 bg-gradient-to-t from-teal-950/90 via-teal-900/60 to-transparent"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-primary-950/90 via-primary-900/60 to-transparent"></div>
       
       <!-- Decorative Elements -->
-      <div class="absolute top-20 left-10 w-72 h-72 bg-teal-400/10 rounded-full blur-3xl"></div>
+      <div class="absolute top-20 left-10 w-72 h-72 bg-primary-400/10 rounded-full blur-3xl"></div>
       <div class="absolute bottom-20 right-10 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl"></div>
       
       <!-- Content -->
       <div class="relative z-10 container mx-auto px-4 py-20">
         <div class="max-w-4xl mx-auto text-center">
           <span class="inline-flex items-center gap-2 px-5 py-2 bg-white/10 backdrop-blur-sm text-white text-sm font-medium rounded-full mb-8 border border-white/20">
-            <MapPin class="w-4 h-4 text-teal-300" />
+            <MapPin class="w-4 h-4 text-primary-300" />
             {{ $t('hero.badge') }}
           </span>
           
           <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight tracking-tight">
             {{ $t('hero.action') }}
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-emerald-300">Costa Rica</span>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-300 to-emerald-300">Costa Rica</span>
           </h1>
           
           <p class="text-xl md:text-2xl text-white/90 mb-12 max-w-2xl mx-auto leading-relaxed">
@@ -45,7 +45,7 @@
                 <input 
                   v-model="search.destino" 
                   type="text" 
-                  placeholder="{{ $t('hero.search.destination.placeholder') }}" 
+                  placeholder="¿A dónde quieres ir?"
                   class="w-full text-gray-800 placeholder-gray-400 outline-none font-medium bg-transparent text-base"
                 />
               </div>
@@ -67,7 +67,7 @@
               </div>
               <button 
                 @click="buscar" 
-                class="bg-teal-600 text-white font-bold py-4 px-8 rounded-xl hover:bg-teal-700 active:bg-teal-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                class="bg-primary-600 text-white font-bold py-4 px-8 rounded-xl hover:bg-primary-700 active:bg-primary-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
               >
                 <Search class="w-5 h-5" />
                 <span>{{ $t('common.search') }}</span>
@@ -129,7 +129,7 @@
       <section class="py-24 bg-white">
         <div class="container mx-auto px-4">
           <div class="text-center mb-16">
-            <span class="inline-block px-4 py-1.5 bg-teal-100 text-teal-700 text-sm font-semibold rounded-full mb-4">Explora Costa Rica</span>
+            <span class="inline-block px-4 py-1.5 bg-primary-100 text-primary-700 text-sm font-semibold rounded-full mb-4">Explora Costa Rica</span>
             <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               Destinos Populares
             </h2>
@@ -173,17 +173,17 @@
                   </span>
                 </div>
               </div>
-              <div class="absolute inset-0 bg-teal-600/0 group-hover:bg-teal-600/10 transition-colors duration-500"></div>
+              <div class="absolute inset-0 bg-primary-600/0 group-hover:bg-primary-600/10 transition-colors duration-500"></div>
             </NuxtLink>
           </div>
 
           <div v-if="!landingData?.destinations?.length" class="text-center py-16 bg-gray-50 rounded-2xl">
             <p class="text-gray-600 mb-4">No hay destinos destacados</p>
-            <NuxtLink to="/destinos" class="text-teal-600 hover:underline font-medium">Explorar todos los destinos →</NuxtLink>
+            <NuxtLink to="/destinos" class="text-primary-600 hover:underline font-medium">Explorar todos los destinos →</NuxtLink>
           </div>
 
           <div class="text-center mt-12">
-            <NuxtLink to="/destinos" class="inline-flex items-center gap-2 px-8 py-4 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 active:bg-teal-800 transition-all shadow-lg hover:shadow-xl">
+            <NuxtLink to="/destinos" class="inline-flex items-center gap-2 px-8 py-4 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 active:bg-primary-800 transition-all shadow-lg hover:shadow-xl">
               <span>Ver todos los destinos</span>
               <ArrowRight class="w-5 h-5" />
             </NuxtLink>
@@ -223,14 +223,14 @@
                   :placeholder="true"
                 />
                 <div class="absolute top-4 right-4">
-                  <span class="px-4 py-1.5 bg-teal-600 text-white text-xs font-bold rounded-full uppercase tracking-wide">
+                  <span class="px-4 py-1.5 bg-primary-600 text-white text-xs font-bold rounded-full uppercase tracking-wide">
                     {{ prop.property_type || 'Hotel' }}
                   </span>
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </div>
               <div class="p-6">
-                <h3 class="font-bold text-gray-900 text-xl mb-2 group-hover:text-teal-600 transition-colors">
+                <h3 class="font-bold text-gray-900 text-xl mb-2 group-hover:text-primary-600 transition-colors">
                   {{ prop.name }}
                 </h3>
                 <p class="text-gray-600 text-sm mb-4 flex items-center gap-1">
@@ -239,7 +239,7 @@
                 </p>
                 <div class="flex items-center justify-between pt-4 border-t border-gray-100">
                   <div>
-                    <span class="text-2xl font-bold text-teal-600">${{ prop.base_price || prop.price || 89 }}</span>
+                    <span class="text-2xl font-bold text-primary-600">${{ prop.base_price || prop.price || 89 }}</span>
                     <span class="text-gray-500 text-sm">/noche</span>
                   </div>
                   <div class="flex items-center gap-1">
@@ -253,11 +253,11 @@
 
           <div v-if="!landingData?.properties?.length" class="text-center py-16 bg-white rounded-2xl">
             <p class="text-gray-600 mb-4">No hay hoteles disponibles</p>
-            <NuxtLink to="/hoteles" class="text-teal-600 hover:underline font-medium">Ver todos los hoteles →</NuxtLink>
+            <NuxtLink to="/hoteles" class="text-primary-600 hover:underline font-medium">Ver todos los hoteles →</NuxtLink>
           </div>
 
           <div class="text-center mt-12">
-            <NuxtLink to="/hoteles" class="inline-flex items-center gap-2 px-8 py-4 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 active:bg-teal-800 transition-all shadow-lg hover:shadow-xl">
+            <NuxtLink to="/hoteles" class="inline-flex items-center gap-2 px-8 py-4 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 active:bg-primary-800 transition-all shadow-lg hover:shadow-xl">
               <span>Ver todos los hoteles</span>
               <ArrowRight class="w-5 h-5" />
             </NuxtLink>
@@ -303,7 +303,7 @@
                 </div>
               </div>
               <div class="p-6">
-                <h3 class="font-bold text-gray-900 text-xl mb-2 group-hover:text-teal-600 transition-colors">
+                <h3 class="font-bold text-gray-900 text-xl mb-2 group-hover:text-primary-600 transition-colors">
                   {{ tour.name }}
                 </h3>
                 <p class="text-gray-600 text-sm mb-4 flex items-center gap-1">
@@ -312,7 +312,7 @@
                 </p>
                 <div class="flex items-center justify-between pt-4 border-t border-gray-100">
                   <div>
-                    <span class="text-2xl font-bold text-teal-600">${{ tour.price || 65 }}</span>
+                    <span class="text-2xl font-bold text-primary-600">${{ tour.price || 65 }}</span>
                     <span class="text-gray-500 text-sm">/persona</span>
                   </div>
                   <div class="flex items-center gap-3">
@@ -332,11 +332,11 @@
 
           <div v-if="!landingData?.tours?.length" class="text-center py-16 bg-gray-50 rounded-2xl">
             <p class="text-gray-600 mb-4">No hay tours disponibles</p>
-            <NuxtLink to="/tours" class="text-teal-600 hover:underline font-medium">Ver todos los tours →</NuxtLink>
+            <NuxtLink to="/tours" class="text-primary-600 hover:underline font-medium">Ver todos los tours →</NuxtLink>
           </div>
 
           <div class="text-center mt-12">
-            <NuxtLink to="/tours" class="inline-flex items-center gap-2 px-8 py-4 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 active:bg-teal-800 transition-all shadow-lg hover:shadow-xl">
+            <NuxtLink to="/tours" class="inline-flex items-center gap-2 px-8 py-4 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 active:bg-primary-800 transition-all shadow-lg hover:shadow-xl">
               <span>Ver todos los tours</span>
               <ArrowRight class="w-5 h-5" />
             </NuxtLink>
@@ -345,9 +345,9 @@
       </section>
 
       <!-- Why Costa Rica -->
-      <section class="py-24 bg-gradient-to-br from-teal-800 via-teal-700 to-emerald-800 relative overflow-hidden">
+      <section class="py-24 bg-gradient-to-br from-primary-800 via-primary-700 to-emerald-800 relative overflow-hidden">
         <div class="absolute inset-0">
-          <div class="absolute top-0 left-1/4 w-96 h-96 bg-teal-400/10 rounded-full blur-3xl"></div>
+          <div class="absolute top-0 left-1/4 w-96 h-96 bg-primary-400/10 rounded-full blur-3xl"></div>
           <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl"></div>
         </div>
         <div class="container mx-auto px-4 relative z-10">
@@ -404,7 +404,7 @@
 
       <!-- CTA Section -->
       <section class="py-24 bg-gray-900 relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-teal-900/20 to-gray-900"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-primary-900/20 to-gray-900"></div>
         <div class="container mx-auto px-4 relative z-10 text-center">
           <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
             ¿Listo para tu aventura?
@@ -413,7 +413,7 @@
             Crea una cuenta para planificar tu viaje, guardar favoritos y obtener ofertas exclusivas.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <NuxtLink to="/register" class="inline-flex items-center gap-2 px-10 py-5 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 active:bg-teal-800 transition-all shadow-lg hover:shadow-xl text-lg">
+            <NuxtLink to="/register" class="inline-flex items-center gap-2 px-10 py-5 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 active:bg-primary-800 transition-all shadow-lg hover:shadow-xl text-lg">
               <span>Crear Cuenta Gratis</span>
               <ArrowRight class="w-5 h-5" />
             </NuxtLink>

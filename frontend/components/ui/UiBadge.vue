@@ -25,6 +25,7 @@ const sizeClasses: Record<string, string> = {
 
 <template>
   <span
+    role="status"
     :class="['inline-flex items-center font-medium rounded-full', variantClasses[variant], sizeClasses[size]]"
   >
     <slot />

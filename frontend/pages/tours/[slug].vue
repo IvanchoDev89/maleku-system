@@ -15,7 +15,7 @@
           </div>
           <h3 class="text-xl font-semibold text-gray-900 mb-2">Error al cargar el tour</h3>
           <p class="text-gray-600 mb-6">Por favor intenta de nuevo más tarde.</p>
-          <NuxtLink to="/tours" class="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors inline-block">
+          <NuxtLink to="/tours" class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors inline-block">
             Volver a tours
           </NuxtLink>
         </div>
@@ -24,9 +24,9 @@
         <!-- Breadcrumb -->
         <nav class="mb-8">
           <ol class="flex items-center gap-2 text-sm">
-            <li><NuxtLink to="/" class="text-gray-500 hover:text-teal-600">Inicio</NuxtLink></li>
+            <li><NuxtLink to="/" class="text-gray-500 hover:text-primary-600">Inicio</NuxtLink></li>
             <li><span class="text-gray-400">/</span></li>
-            <li><NuxtLink to="/tours" class="text-gray-500 hover:text-teal-600">Tours</NuxtLink></li>
+            <li><NuxtLink to="/tours" class="text-gray-500 hover:text-primary-600">Tours</NuxtLink></li>
             <li><span class="text-gray-400">/</span></li>
             <li class="text-gray-900 font-medium">{{ tour.name }}</li>
           </ol>
@@ -57,11 +57,11 @@
             <!-- Info Row -->
             <div class="flex flex-wrap items-center gap-4 mb-6 text-gray-600">
               <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200">
-                <Clock class="w-5 h-5 text-teal-600" />
+                <Clock class="w-5 h-5 text-primary-600" />
                 <span class="font-medium">{{ tour.duration_hours }}h</span>
               </div>
               <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200">
-                <Users class="w-5 h-5 text-teal-600" />
+                <Users class="w-5 h-5 text-primary-600" />
                 <span class="font-medium">Max {{ tour.max_group_size || 15 }} personas</span>
               </div>
               <div 
@@ -71,7 +71,7 @@
                 <span>{{ difficultyLabel }}</span>
               </div>
               <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200">
-                <MapPin class="w-5 h-5 text-teal-600" />
+                <MapPin class="w-5 h-5 text-primary-600" />
                 <span class="font-medium">{{ tour.location }}</span>
               </div>
             </div>
@@ -90,7 +90,7 @@
                   :key="item"
                   class="flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100"
                 >
-                  <div class="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center text-teal-600">
+                  <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600">
                     <Check class="w-4 h-4" />
                   </div>
                   <span class="text-gray-700">{{ item }}</span>
@@ -107,7 +107,7 @@
                   :key="index"
                   class="flex gap-4 bg-white p-4 rounded-xl border border-gray-100"
                 >
-                  <div class="w-10 h-10 bg-teal-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                  <div class="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
                     {{ index + 1 }}
                   </div>
                   <div>
@@ -137,7 +137,7 @@
               <h2 class="text-2xl font-bold text-gray-900 mb-4">Punto de Encuentro</h2>
               <div class="bg-white p-6 rounded-xl border border-gray-100">
                 <div class="flex items-start gap-4">
-                  <MapPin class="w-6 h-6 text-teal-600 flex-shrink-0 mt-1" />
+                  <MapPin class="w-6 h-6 text-primary-600 flex-shrink-0 mt-1" />
                   <div>
                     <p class="font-semibold text-gray-900">{{ tour.location }}</p>
                     <p class="text-gray-600 text-sm mt-1">Te recogemos en tu hotel o punto de encuentro. Confirmación 24h antes.</p>
@@ -152,7 +152,7 @@
             <div class="sticky top-24">
               <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                 <div class="text-center mb-6">
-                  <span class="text-4xl font-bold text-teal-600">${{ tour.price }}</span>
+                  <span class="text-4xl font-bold text-primary-600">${{ tour.price }}</span>
                   <span class="text-gray-500">/persona</span>
                 </div>
 
@@ -163,7 +163,7 @@
                       v-model="tourDate"
                       type="date"
                       :min="todayIso"
-                      class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                      class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                     />
                   </div>
                   <div>
@@ -173,7 +173,7 @@
                 </div>
 
                 <button
-                  class="w-full py-4 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="w-full py-4 bg-gradient-to-r from-primary-600 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   :disabled="!tourDate"
                   @click="goToCheckout"
                 >
@@ -191,11 +191,11 @@
                 <h3 class="font-semibold text-gray-900 mb-2">¿Tienes preguntas?</h3>
                 <p class="text-gray-600 text-sm mb-4">Contáctanos directamente</p>
                 <div class="space-y-2">
-                  <a href="tel:+50688888888" class="flex items-center gap-2 text-teal-600 hover:text-teal-700">
+                  <a href="tel:+50688888888" class="flex items-center gap-2 text-primary-600 hover:text-primary-700">
                     <Phone class="w-4 h-4" />
                     +506 8888 8888
                   </a>
-                  <a href="mailto:info@costaricatravel.dev" class="flex items-center gap-2 text-teal-600 hover:text-teal-700">
+                  <a href="mailto:info@costaricatravel.dev" class="flex items-center gap-2 text-primary-600 hover:text-primary-700">
                     <Mail class="w-4 h-4" />
                     info@costaricatravel.dev
                   </a>
@@ -211,7 +211,7 @@
       <div v-else class="text-center py-16">
         <h1 class="text-3xl font-bold text-gray-900 mb-4">Tour no encontrado</h1>
         <p class="text-gray-600 mb-6">El tour que buscas no existe o ha sido eliminado.</p>
-        <NuxtLink to="/tours" class="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700">
+        <NuxtLink to="/tours" class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700">
           Ver todos los tours
         </NuxtLink>
       </div>

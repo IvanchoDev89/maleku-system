@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <div class="container py-8">
-      <NuxtLink to="/" class="inline-flex items-center gap-2 text-gray-600 hover:text-teal-600 mb-6 transition-colors">
+      <NuxtLink to="/" class="inline-flex items-center gap-2 text-gray-600 hover:text-primary-600 mb-6 transition-colors">
         <ArrowLeft class="w-4 h-4" />
         <span>Volver al inicio</span>
       </NuxtLink>
@@ -21,13 +21,13 @@
               v-model="searchInput"
               type="text"
               placeholder="Buscar hoteles, tours, destinos..."
-              class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-gray-900"
+              class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-gray-900"
               @keyup.enter="performSearch"
             />
           </div>
           <button
             @click="performSearch"
-            class="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors flex items-center gap-2"
+            class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors flex items-center gap-2"
           >
             <Search class="w-5 h-5" />
             <span>Buscar</span>
@@ -53,7 +53,7 @@
           </div>
           <h3 class="text-xl font-semibold text-gray-900 mb-2">Error en la búsqueda</h3>
           <p class="text-gray-600 mb-6">Por favor intenta de nuevo más tarde.</p>
-          <NuxtLink to="/" class="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors inline-block">
+          <NuxtLink to="/" class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors inline-block">
             Volver al inicio
           </NuxtLink>
         </div>
@@ -64,7 +64,7 @@
           </div>
           <h2 class="text-2xl font-bold text-gray-900 mb-2">No se encontraron resultados</h2>
           <p class="text-gray-600 mb-6">Intenta con otros términos de búsqueda</p>
-          <NuxtLink to="/" class="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700">
+          <NuxtLink to="/" class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700">
             <ArrowLeft class="w-4 h-4" />
             Volver al inicio
           </NuxtLink>
@@ -80,10 +80,10 @@
           <section v-if="results.properties?.length">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Building2 class="w-6 h-6 text-teal-600" />
+                <Building2 class="w-6 h-6 text-primary-600" />
                 Hoteles ({{ results.properties.length }})
               </h2>
-              <NuxtLink to="/hoteles" class="text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1">
+              <NuxtLink to="/hoteles" class="text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
                 Ver todos <ArrowRight class="w-4 h-4" />
               </NuxtLink>
             </div>
@@ -109,13 +109,13 @@
                   </div>
                 </div>
                 <div class="p-4">
-                  <h3 class="font-bold text-gray-900 text-lg group-hover:text-teal-600 transition-colors">{{ prop.name }}</h3>
+                  <h3 class="font-bold text-gray-900 text-lg group-hover:text-primary-600 transition-colors">{{ prop.name }}</h3>
                   <p class="text-gray-500 text-sm mt-1 flex items-center gap-1">
                     <MapPin class="w-3 h-3" />
                     {{ prop.region || 'Costa Rica' }}
                   </p>
                   <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                    <span class="text-xl font-bold text-teal-600">${{ prop.base_price || prop.price }} <span class="text-sm font-normal text-gray-500">/noche</span></span>
+                    <span class="text-xl font-bold text-primary-600">${{ prop.base_price || prop.price }} <span class="text-sm font-normal text-gray-500">/noche</span></span>
                     <div class="flex items-center gap-1">
                       <Star class="w-4 h-4 text-amber-400 fill-amber-400" />
                       <span class="text-gray-700 font-medium">{{ prop.rating?.toFixed(1) || '4.5' }}</span>
@@ -129,10 +129,10 @@
           <section v-if="results.tours?.length">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Compass class="w-6 h-6 text-teal-600" />
+                <Compass class="w-6 h-6 text-primary-600" />
                 Tours ({{ results.tours.length }})
               </h2>
-              <NuxtLink to="/tours" class="text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1">
+              <NuxtLink to="/tours" class="text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
                 Ver todos <ArrowRight class="w-4 h-4" />
               </NuxtLink>
             </div>
@@ -158,13 +158,13 @@
                   </div>
                 </div>
                 <div class="p-4">
-                  <h3 class="font-bold text-gray-900 text-lg group-hover:text-teal-600 transition-colors">{{ tour.name }}</h3>
+                  <h3 class="font-bold text-gray-900 text-lg group-hover:text-primary-600 transition-colors">{{ tour.name }}</h3>
                   <p class="text-gray-500 text-sm mt-1 flex items-center gap-1">
                     <MapPin class="w-3 h-3" />
                     {{ tour.location || 'Costa Rica' }}
                   </p>
                   <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                    <span class="text-xl font-bold text-teal-600">${{ tour.price }} <span class="text-sm font-normal text-gray-500">/persona</span></span>
+                    <span class="text-xl font-bold text-primary-600">${{ tour.price }} <span class="text-sm font-normal text-gray-500">/persona</span></span>
                     <div class="flex items-center gap-2">
                       <div class="flex items-center gap-1">
                         <Star class="w-4 h-4 text-amber-400 fill-amber-400" />
@@ -184,10 +184,10 @@
           <section v-if="results.destinations?.length">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <MapPin class="w-6 h-6 text-teal-600" />
+                <MapPin class="w-6 h-6 text-primary-600" />
                 Destinos ({{ results.destinations.length }})
               </h2>
-              <NuxtLink to="/destinos" class="text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1">
+              <NuxtLink to="/destinos" class="text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
                 Ver todos <ArrowRight class="w-4 h-4" />
               </NuxtLink>
             </div>

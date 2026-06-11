@@ -37,14 +37,10 @@ export default defineNuxtConfig({
   
   app: {
     head: {
-      viewport: 'width=device-width, initial-scale=1',
       htmlAttrs: {
         dir: 'ltr'
       },
-      titleTemplate: '%s - Costa Rica Travel',
       meta: [
-        { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=5' },
         { name: 'description', content: 'Costa Rica Travel - Tu guía completa para descubrir Costa Rica: hoteles, tours, destinos y planificador de viajes interactivo.' },
         { name: 'keywords', content: 'Costa Rica, viaje, turismo, hoteles, tours, Playa, Volcán, Arenal, Monteverde, Guanacaste, Manuel Antonio, ecoturismo, aventura' },
         { name: 'author', content: 'Costa Rica Travel' },
@@ -53,9 +49,7 @@ export default defineNuxtConfig({
         { property: 'og:type', content: 'website' },
         { property: 'og:site_name', content: 'Costa Rica Travel' },
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:site', content: '@costaricatravel' },
-        { name: 'msapplication-TileColor', content: '#1e7a67' },
-        { name: 'theme-color', content: '#1e7a67' }
+        { name: 'twitter:site', content: '@costaricatravel' }
       ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },

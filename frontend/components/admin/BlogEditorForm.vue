@@ -93,7 +93,7 @@
         <button @click="saveDraft" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium transition-colors">
           💾 Guardar Borrador
         </button>
-        <button @click="publishPost" :disabled="saving" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors disabled:opacity-50">
+        <button @click="publishPost" :disabled="saving" class="px-5 py-2.5 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors disabled:opacity-50">
           {{ saving ? 'Publicando...' : '🚀 Publicar' }}
         </button>
       </slot>

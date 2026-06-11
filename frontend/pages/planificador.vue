@@ -151,7 +151,7 @@
               v-model="form.notes" 
               rows="3" 
               class="w-full p-3 border border-gray-200 rounded-lg"
-              placeholder="Ej: Viajo con niños, soy摄影师, tengo limitaciones..."
+              placeholder="Ej: Viajo con niños, soy vegetariano, tengo limitaciones..."
             ></textarea>
           </div>
 
@@ -226,7 +226,7 @@
             <button @click="shareItinerary" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
               📤 Compartir
             </button>
-            <button @click="resetPlanner" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark flex items-center gap-2">
+            <button @click="resetPlanner" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-700 flex items-center gap-2">
               🔄 {{ $t('step5.reset') }}
             </button>
           </div>
@@ -247,7 +247,7 @@
             v-if="currentStep < 5"
             @click="nextStep"
             :disabled="!canProceed"
-            class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {{ $t('nav.next') }} →
           </button>

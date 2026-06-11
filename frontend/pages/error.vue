@@ -7,10 +7,10 @@
         Ha ocurrido un error inesperado. Nuestro equipo ha sido notificado.
       </p>
       <div class="flex items-center justify-center gap-4">
-        <NuxtLink to="/" class="px-6 py-3 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors">
+        <NuxtLink to="/" class="px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors">
           Volver al inicio
         </NuxtLink>
-        <button @click="handleRefresh" class="px-6 py-3 bg-white text-teal-600 rounded-xl font-medium border border-teal-200 hover:bg-teal-50 transition-colors">
+        <button @click="handleRefresh" class="px-6 py-3 bg-white text-primary-600 rounded-xl font-medium border border-primary-200 hover:bg-primary-50 transition-colors">
           Intentar de nuevo
         </button>
       </div>

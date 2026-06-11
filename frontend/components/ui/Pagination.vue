@@ -59,6 +59,7 @@ const goToPage = (page: number | string) => {
     <div class="flex items-center gap-1">
       <button
         :disabled="currentPage === 1"
+        aria-label="Página anterior"
         class="px-3 py-2 text-sm rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
         :class="currentPage === 1 ? 'text-gray-400 border-gray-200' : 'text-gray-700 border-gray-300'"
         @click="goToPage(currentPage - 1)"
@@ -69,9 +70,10 @@ const goToPage = (page: number | string) => {
       <template v-for="(page, i) in visiblePages" :key="i">
         <button
           v-if="page !== '...'"
+          :aria-current="page === currentPage ? 'page' : undefined"
           class="w-10 h-10 text-sm rounded-lg border transition-colors"
           :class="page === currentPage
-            ? 'bg-teal-600 text-white border-teal-600'
+            ? 'bg-primary-600 text-white border-primary-600'
             : 'text-gray-700 border-gray-300 hover:bg-gray-50'"
           @click="goToPage(page)"
         >
@@ -82,6 +84,7 @@ const goToPage = (page: number | string) => {
 
       <button
         :disabled="currentPage === totalPages"
+        aria-label="Página siguiente"
         class="px-3 py-2 text-sm rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
         :class="currentPage === totalPages ? 'text-gray-400 border-gray-200' : 'text-gray-700 border-gray-300'"
         @click="goToPage(currentPage + 1)"

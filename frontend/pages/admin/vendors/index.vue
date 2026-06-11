@@ -249,7 +249,7 @@
         <button 
           @click="saveVendor"
           :disabled="saving"
-          class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
+          class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
         >
           {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
         </button>

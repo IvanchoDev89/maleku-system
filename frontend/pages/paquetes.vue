@@ -50,7 +50,7 @@ onMounted(async () => {
       </div>
 
       <div v-if="pending" class="text-center py-16">
-        <div class="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <div class="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
         <p class="text-gray-500">Cargando paquetes...</p>
       </div>
 
@@ -79,7 +79,7 @@ onMounted(async () => {
               loading="lazy"
             />
             <div class="absolute top-4 left-4">
-              <span class="px-3 py-1 bg-teal-600 text-white text-xs font-bold rounded-full">
+              <span class="px-3 py-1 bg-primary-600 text-white text-xs font-bold rounded-full">
                 {{ pkg.badge }}
               </span>
             </div>
@@ -115,7 +115,7 @@ onMounted(async () => {
             <div class="flex items-end justify-between mb-4">
               <div>
                 <div class="text-sm text-gray-700 line-through">${{ pkg.originalPrice }}</div>
-                <div class="text-3xl font-bold text-teal-600">${{ pkg.price }}</div>
+                <div class="text-3xl font-bold text-primary-600">${{ pkg.price }}</div>
                 <div class="text-xs text-gray-600">por persona</div>
               </div>
               <div class="text-right text-sm text-green-600 font-medium">
@@ -123,7 +123,7 @@ onMounted(async () => {
               </div>
             </div>
 
-            <button class="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl transition-colors">
+            <button class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl transition-colors">
               {{ $t('packages.viewDetails') }}
             </button>
           </div>

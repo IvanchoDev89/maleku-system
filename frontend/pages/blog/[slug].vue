@@ -43,7 +43,7 @@
       </header>
 
       <!-- Featured Image -->
-      <div class="aspect-video bg-gradient-to-br from-primary to-primary-dark rounded-2xl mb-8 flex items-center justify-center">
+      <div class="aspect-video bg-gradient-to-br from-primary to-primary-700 rounded-2xl mb-8 flex items-center justify-center">
         <span class="text-8xl">📝</span>
       </div>
 

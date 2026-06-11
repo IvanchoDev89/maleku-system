@@ -74,7 +74,7 @@ onMounted(async () => {
     <div class="container mx-auto px-4">
       <!-- Header -->
       <div class="text-center mb-12">
-        <span class="inline-block px-4 py-1.5 bg-teal-100 text-teal-700 font-semibold rounded-full text-sm mb-4">
+        <span class="inline-block px-4 py-1.5 bg-primary-100 text-primary-700 font-semibold rounded-full text-sm mb-4">
           {{ $t('packages.badge') }}
         </span>
         <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
@@ -104,7 +104,7 @@ onMounted(async () => {
               loading="lazy"
             />
             <div class="absolute top-4 left-4">
-              <span class="px-3 py-1 bg-teal-600 text-white text-xs font-bold rounded-full">
+              <span class="px-3 py-1 bg-primary-600 text-white text-xs font-bold rounded-full">
                 {{ pkg.badge }}
               </span>
             </div>
@@ -144,7 +144,7 @@ onMounted(async () => {
             <div class="flex items-end justify-between mb-4">
               <div>
                 <div class="text-sm text-gray-700 line-through">${{ pkg.originalPrice }}</div>
-                <div class="text-3xl font-bold text-teal-600">${{ pkg.price }}</div>
+                <div class="text-3xl font-bold text-primary-600">${{ pkg.price }}</div>
                 <div class="text-xs text-gray-600">por persona</div>
               </div>
               <div class="text-right text-sm text-green-600 font-medium">
@@ -153,7 +153,7 @@ onMounted(async () => {
             </div>
 
             <!-- CTA -->
-            <button class="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl transition-colors">
+            <button class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl transition-colors">
               {{ $t('packages.viewDetails') }}
             </button>
           </div>
@@ -164,7 +164,7 @@ onMounted(async () => {
       <div class="text-center mt-12">
         <NuxtLink 
           to="/paquetes" 
-          class="inline-flex items-center gap-2 px-8 py-4 border-2 border-teal-600 text-teal-600 font-bold rounded-full hover:bg-teal-600 hover:text-white transition-all"
+          class="inline-flex items-center gap-2 px-8 py-4 border-2 border-primary-600 text-primary-600 font-bold rounded-full hover:bg-primary-600 hover:text-white transition-all"
         >
           {{ $t('packages.viewAll') }}
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

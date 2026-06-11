@@ -174,7 +174,7 @@
       <div class="flex justify-end">
         <button 
           @click="saveSettings" 
-          class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl font-bold shadow-md hover:shadow-lg transition-all"
+          class="bg-primary hover:bg-primary-700 text-white px-6 py-3 rounded-xl font-bold shadow-md hover:shadow-lg transition-all"
           :disabled="saving"
         >
           {{ saving ? '💾 Guardando...' : '💾 Guardar Cambios' }}

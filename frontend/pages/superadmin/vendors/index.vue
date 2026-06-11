@@ -184,7 +184,7 @@
           <button
             v-for="p in totalPages"
             :key="p"
-            :class="['px-3 py-1.5 text-sm rounded-lg transition-colors', p === page ? 'bg-teal-600 text-white' : 'border border-gray-200 hover:bg-gray-50']"
+            :class="['px-3 py-1.5 text-sm rounded-lg transition-colors', p === page ? 'bg-primary-600 text-white' : 'border border-gray-200 hover:bg-gray-50']"
             @click="changePage(p)"
           >{{ p }}</button>
           <button

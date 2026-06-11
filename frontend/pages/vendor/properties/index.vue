@@ -5,7 +5,7 @@
         <h1 class="text-2xl font-bold">Mis Propiedades</h1>
         <p class="text-gray-500">Gestiona tus hoteles y villas</p>
       </div>
-      <NuxtLink to="/vendor/properties/new" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark">
+      <NuxtLink to="/vendor/properties/new" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-700">
         + Nueva Propiedad
       </NuxtLink>
     </div>
@@ -30,59 +30,61 @@
     </div>
 
     <div v-else class="bg-white rounded-xl shadow-sm overflow-hidden">
-      <table class="w-full">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Nombre</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Tipo</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Ubicación</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Habitaciones</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Estado</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="properties.length === 0">
-            <td colspan="6" class="text-center py-12 text-gray-500">
-              No tienes propiedades aún.
-              <NuxtLink to="/vendor/properties/new" class="text-primary hover:underline">Crear primera propiedad</NuxtLink>
-            </td>
-          </tr>
-          <tr 
-            v-for="property in properties" 
-            :key="property.id"
-            class="border-t hover:bg-gray-50"
-          >
-            <td class="py-3 px-4">
-              <div class="font-medium">{{ property.name }}</div>
-              <div class="text-sm text-gray-500">{{ property.slug }}</div>
-            </td>
-            <td class="py-3 px-4">
-              <span class="px-2 py-1 bg-gray-100 rounded text-sm">{{ property.property_type }}</span>
-            </td>
-            <td class="py-3 px-4 text-sm">
-              <div>{{ property.city }}</div>
-              <div class="text-gray-500">{{ property.region }}</div>
-            </td>
-            <td class="py-3 px-4">
-              {{ property.rooms?.length || 0 }}
-            </td>
-            <td class="py-3 px-4">
-              <UiBadge :variant="property.is_active ? 'success' : 'danger'">
-                {{ property.is_active ? 'Activo' : 'Inactivo' }}
-              </UiBadge>
-            </td>
-            <td class="py-3 px-4">
-              <NuxtLink :to="`/vendor/properties/${property.id}`" class="text-primary hover:underline mr-3">
-                Editar
-              </NuxtLink>
-              <button @click="openDeleteDialog(property)" class="text-red-600 hover:underline">
-                Eliminar
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left py-3 px-4 font-semibold text-gray-600">Nombre</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-600 hidden sm:table-cell">Tipo</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-600 hidden md:table-cell">Ubicación</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-600 hidden sm:table-cell">Habitaciones</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-600">Estado</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-600">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="properties.length === 0">
+              <td colspan="6" class="text-center py-12 text-gray-500">
+                No tienes propiedades aún.
+                <NuxtLink to="/vendor/properties/new" class="text-primary hover:underline">Crear primera propiedad</NuxtLink>
+              </td>
+            </tr>
+            <tr 
+              v-for="property in properties" 
+              :key="property.id"
+              class="border-t hover:bg-gray-50"
+            >
+              <td class="py-3 px-4">
+                <div class="font-medium">{{ property.name }}</div>
+                <div class="text-sm text-gray-500">{{ property.slug }}</div>
+              </td>
+              <td class="py-3 px-4 hidden sm:table-cell">
+                <span class="px-2 py-1 bg-gray-100 rounded text-sm">{{ property.property_type }}</span>
+              </td>
+              <td class="py-3 px-4 text-sm hidden md:table-cell">
+                <div>{{ property.city }}</div>
+                <div class="text-gray-500">{{ property.region }}</div>
+              </td>
+              <td class="py-3 px-4 hidden sm:table-cell">
+                {{ property.rooms?.length || 0 }}
+              </td>
+              <td class="py-3 px-4">
+                <UiBadge :variant="property.is_active ? 'success' : 'danger'">
+                  {{ property.is_active ? 'Activo' : 'Inactivo' }}
+                </UiBadge>
+              </td>
+              <td class="py-3 px-4">
+                <NuxtLink :to="`/vendor/properties/${property.id}`" class="text-primary hover:underline mr-3">
+                  Editar
+                </NuxtLink>
+                <button @click="openDeleteDialog(property)" class="text-red-600 hover:underline">
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Pagination -->
@@ -99,7 +101,7 @@
         <button
           v-for="p in totalPages"
           :key="p"
-          :class="['px-3 py-1.5 text-sm rounded-lg transition-colors', p === page ? 'bg-teal-600 text-white' : 'border border-gray-200 hover:bg-gray-50']"
+          :class="['px-3 py-1.5 text-sm rounded-lg transition-colors', p === page ? 'bg-primary-600 text-white' : 'border border-gray-200 hover:bg-gray-50']"
           @click="changePage(p)"
         >{{ p }}</button>
         <button

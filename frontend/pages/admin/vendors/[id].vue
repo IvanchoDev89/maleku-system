@@ -17,7 +17,7 @@
     </div>
     <h2 class="text-xl font-bold text-gray-900 mb-2">Proveedor no encontrado</h2>
     <p class="text-gray-500 mb-6">El proveedor que buscas no existe o ha sido eliminado.</p>
-    <NuxtLink to="/admin/vendors" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark">
+    <NuxtLink to="/admin/vendors" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-700">
       Volver a Proveedores
     </NuxtLink>
   </div>

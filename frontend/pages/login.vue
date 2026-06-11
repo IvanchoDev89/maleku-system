@@ -10,7 +10,7 @@
         height="800"
         format="webp"
       />
-      <div class="absolute inset-0 bg-gradient-to-br from-teal-900/80 to-emerald-900/80"></div>
+      <div class="absolute inset-0 bg-gradient-to-br from-primary-900/80 to-emerald-900/80"></div>
       <div class="relative z-10 flex flex-col justify-center px-12 text-white">
         <span class="text-5xl mb-4">🌴</span>
         <h1 class="text-3xl font-bold mb-2">Costa Rica Travel</h1>
@@ -62,7 +62,7 @@
           <div class="mt-6 pt-6 border-t border-gray-100 text-center">
             <p class="text-gray-600 text-sm">
               {{ t('auth.login.noAccount') }}
-              <NuxtLink to="/register" class="text-teal-600 font-semibold hover:text-teal-700">
+              <NuxtLink to="/register" class="text-primary-600 font-semibold hover:text-primary-700">
                 {{ t('auth.login.register') }}
               </NuxtLink>
             </p>
@@ -73,7 +73,7 @@
         <div class="mt-6 text-center">
           <p class="text-gray-600 text-sm">
             ¿Eres proveedor?
-            <NuxtLink to="/vendor/login" class="text-teal-600 hover:text-teal-700 font-medium">
+            <NuxtLink to="/vendor/login" class="text-primary-600 hover:text-primary-700 font-medium">
               Ingresa aquí
             </NuxtLink>
           </p>

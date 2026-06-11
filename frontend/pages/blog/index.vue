@@ -17,7 +17,7 @@
         <div v-if="featuredPost" class="mb-12">
           <NuxtLink :to="`/blog/${featuredPost.slug}`" class="group">
             <div class="relative rounded-2xl overflow-hidden shadow-lg">
-              <div class="aspect-video bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
+              <div class="aspect-video bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center">
                 <span class="text-8xl">📝</span>
               </div>
               <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>

@@ -84,7 +84,7 @@
       </div>
 
       <div class="mt-6 flex gap-4">
-        <button type="submit" :disabled="saving" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark disabled:opacity-50">
+        <button type="submit" :disabled="saving" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-700 disabled:opacity-50">
           {{ saving ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Guardar Tour' }}
         </button>
         <NuxtLink :to="cancelUrl || '/vendor/tours'" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">

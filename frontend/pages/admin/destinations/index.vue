@@ -22,7 +22,7 @@
       
       <button 
         @click="showCreateModal = true"
-        class="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all"
+        class="bg-primary hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all"
       >
         + Nuevo Destino
       </button>

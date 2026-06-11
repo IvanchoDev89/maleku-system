@@ -161,7 +161,7 @@
           <button
             v-for="p in totalPages"
             :key="p"
-            :class="['px-3 py-1.5 text-sm rounded-lg transition-colors', p === page ? 'bg-teal-600 text-white' : 'border border-gray-200 hover:bg-gray-50']"
+            :class="['px-3 py-1.5 text-sm rounded-lg transition-colors', p === page ? 'bg-primary-600 text-white' : 'border border-gray-200 hover:bg-gray-50']"
             @click="changePage(p)"
           >{{ p }}</button>
           <button
@@ -175,7 +175,7 @@
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center py-8">
         <div class="flex flex-col items-center gap-2">
-          <div class="w-8 h-8 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
+          <div class="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
           <span class="text-sm text-gray-500">Cargando...</span>
         </div>
       </div>

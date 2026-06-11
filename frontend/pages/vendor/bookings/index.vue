@@ -31,78 +31,80 @@
     </div>
 
     <div v-else class="bg-white rounded-xl shadow-sm overflow-hidden">
-      <table class="w-full">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Código</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Servicio</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Cliente</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Fechas</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Estado</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Monto</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="bookings.length === 0">
-            <td colspan="7" class="text-center py-12 text-gray-500">
-              No tienes reservas aún.
-            </td>
-          </tr>
-          <tr 
-            v-for="booking in bookings" 
-            :key="booking.id"
-            class="border-t hover:bg-gray-50"
-          >
-            <td class="py-3 px-4 font-mono text-sm">
-              {{ booking.confirmation_code || booking.id.slice(0, 8).toUpperCase() }}
-            </td>
-            <td class="py-3 px-4">
-              <div class="font-medium">{{ booking.property_name || booking.tour_name || 'N/A' }}</div>
-              <div class="text-xs text-gray-500">{{ booking.booking_type }}</div>
-            </td>
-            <td class="py-3 px-4">
-              <div>{{ booking.guest_name }}</div>
-              <div class="text-sm text-gray-500">{{ booking.guest_email }}</div>
-            </td>
-            <td class="py-3 px-4 text-sm">
-              <div v-if="booking.check_in && booking.check_out">
-                {{ formatDate(booking.check_in) }} - {{ formatDate(booking.check_out) }}
-              </div>
-              <div v-else-if="booking.created_at">
-                {{ formatDate(booking.created_at) }}
-              </div>
-            </td>
-            <td class="py-3 px-4">
-              <UiBadge :variant="statusBadgeVariant(booking.status)">
-                {{ getStatusLabel(booking.status) }}
-              </UiBadge>
-            </td>
-            <td class="py-3 px-4 font-semibold">
-              ${{ booking.total_amount }}
-            </td>
-            <td class="py-3 px-4">
-              <div v-if="booking.status === 'pending'" class="flex gap-2">
-                <button @click="updateStatus(booking.id, 'confirmed')" class="text-green-600 hover:underline text-sm">
-                  Confirmar
-                </button>
-                <button @click="openCancelDialog(booking)" class="text-red-600 hover:underline text-sm">
-                  Cancelar
-                </button>
-              </div>
-              <div v-else-if="booking.status === 'confirmed'" class="flex gap-2">
-                <button @click="updateStatus(booking.id, 'completed')" class="text-blue-600 hover:underline text-sm">
-                  Completar
-                </button>
-                <button @click="openCancelDialog(booking)" class="text-red-600 hover:underline text-sm">
-                  Cancelar
-                </button>
-              </div>
-              <span v-else class="text-gray-400 text-sm">-</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left py-3 px-4 font-semibold text-gray-600">Código</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-600 hidden sm:table-cell">Servicio</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-600">Cliente</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-600 hidden md:table-cell">Fechas</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-600">Estado</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-600 hidden sm:table-cell">Monto</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-600">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="bookings.length === 0">
+              <td colspan="7" class="text-center py-12 text-gray-500">
+                No tienes reservas aún.
+              </td>
+            </tr>
+            <tr 
+              v-for="booking in bookings" 
+              :key="booking.id"
+              class="border-t hover:bg-gray-50"
+            >
+              <td class="py-3 px-4 font-mono text-sm">
+                {{ booking.confirmation_code || booking.id.slice(0, 8).toUpperCase() }}
+              </td>
+              <td class="py-3 px-4 hidden sm:table-cell">
+                <div class="font-medium">{{ booking.property_name || booking.tour_name || 'N/A' }}</div>
+                <div class="text-xs text-gray-500">{{ booking.booking_type }}</div>
+              </td>
+              <td class="py-3 px-4">
+                <div>{{ booking.guest_name }}</div>
+                <div class="text-sm text-gray-500">{{ booking.guest_email }}</div>
+              </td>
+              <td class="py-3 px-4 text-sm hidden md:table-cell">
+                <div v-if="booking.check_in && booking.check_out">
+                  {{ formatDate(booking.check_in) }} - {{ formatDate(booking.check_out) }}
+                </div>
+                <div v-else-if="booking.created_at">
+                  {{ formatDate(booking.created_at) }}
+                </div>
+              </td>
+              <td class="py-3 px-4">
+                <UiBadge :variant="statusBadgeVariant(booking.status)">
+                  {{ getStatusLabel(booking.status) }}
+                </UiBadge>
+              </td>
+              <td class="py-3 px-4 font-semibold hidden sm:table-cell">
+                ${{ booking.total_amount }}
+              </td>
+              <td class="py-3 px-4">
+                <div v-if="booking.status === 'pending'" class="flex gap-2">
+                  <button @click="updateStatus(booking.id, 'confirmed')" class="text-green-600 hover:underline text-sm">
+                    Confirmar
+                  </button>
+                  <button @click="openCancelDialog(booking)" class="text-red-600 hover:underline text-sm">
+                    Cancelar
+                  </button>
+                </div>
+                <div v-else-if="booking.status === 'confirmed'" class="flex gap-2">
+                  <button @click="updateStatus(booking.id, 'completed')" class="text-blue-600 hover:underline text-sm">
+                    Completar
+                  </button>
+                  <button @click="openCancelDialog(booking)" class="text-red-600 hover:underline text-sm">
+                    Cancelar
+                  </button>
+                </div>
+                <span v-else class="text-gray-400 text-sm">-</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Pagination -->
@@ -119,7 +121,7 @@
         <button
           v-for="p in totalPages"
           :key="p"
-          :class="['px-3 py-1.5 text-sm rounded-lg transition-colors', p === page ? 'bg-teal-600 text-white' : 'border border-gray-200 hover:bg-gray-50']"
+          :class="['px-3 py-1.5 text-sm rounded-lg transition-colors', p === page ? 'bg-primary-600 text-white' : 'border border-gray-200 hover:bg-gray-50']"
           @click="changePage(p)"
         >{{ p }}</button>
         <button

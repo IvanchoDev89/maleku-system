@@ -23,7 +23,7 @@
       </div>
       <button
         @click="openCreateModal"
-        class="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all"
+        class="bg-primary hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all"
       >
         + Nuevo Usuario
       </button>
@@ -117,7 +117,7 @@
       </p>
       <div class="flex gap-1">
         <button :disabled="page <= 1" class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors" @click="changePage(page - 1)">Anterior</button>
-        <button v-for="p in totalPages" :key="p" :class="['px-3 py-1.5 text-sm rounded-lg transition-colors', p === page ? 'bg-teal-600 text-white' : 'border border-gray-200 hover:bg-gray-50']" @click="changePage(p)">{{ p }}</button>
+        <button v-for="p in totalPages" :key="p" :class="['px-3 py-1.5 text-sm rounded-lg transition-colors', p === page ? 'bg-primary-600 text-white' : 'border border-gray-200 hover:bg-gray-50']" @click="changePage(p)">{{ p }}</button>
         <button :disabled="page >= totalPages" class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors" @click="changePage(page + 1)">Siguiente</button>
       </div>
     </div>
@@ -148,7 +148,7 @@
       </form>
       <template #footer>
         <button type="button" @click="closeModal" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors">Cancelar</button>
-        <button type="submit" @click="saveUser" :disabled="saving" class="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50 transition-colors">
+        <button type="submit" @click="saveUser" :disabled="saving" class="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-colors">
           {{ saving ? 'Guardando...' : editingUser ? 'Actualizar' : 'Crear' }}
         </button>
       </template>
