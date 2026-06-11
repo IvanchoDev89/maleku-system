@@ -258,6 +258,7 @@
   "auth": {
     "login": {
       "title": "Bon retour",
+      "subtitle": "Connectez-vous pour continuer",
       "email": "E-mail",
       "password": "Mot de passe",
       "submit": "Se connecter",

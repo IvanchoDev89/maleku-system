@@ -265,6 +265,7 @@
   "auth": {
     "login": {
       "title": "Bienvenido de nuevo",
+      "subtitle": "Ingresa para continuar",
       "email": "Correo electrónico",
       "password": "Contraseña",
       "submit": "Iniciar sesión",

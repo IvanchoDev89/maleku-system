@@ -265,6 +265,7 @@
   "auth": {
     "login": {
       "title": "Welcome back",
+      "subtitle": "Sign in to continue",
       "email": "Email address",
       "password": "Password",
       "submit": "Sign in",
