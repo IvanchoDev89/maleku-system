@@ -1,111 +1,118 @@
 <script setup lang="ts">
-/**
- * Fleet Management - Main Page
- * Gestión de vehículos, botes, vuelos y equipos
- */
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-
 definePageMeta({
   layout: 'superadmin',
   middleware: ['superadmin']
 })
 
+const api = useApi()
 const router = useRouter()
-const activeTab = ref<'vehicles' | 'boats' | 'flights' | 'equipment'>('vehicles')
+
+const activeTab = ref<'vehicles' | 'boats'>('vehicles')
 
 const tabs = [
-  { key: 'vehicles', label: 'Vehículos', icon: 'car' },
-  { key: 'boats', label: 'Botes', icon: 'ship' },
-  { key: 'flights', label: 'Vuelos', icon: 'plane' },
-  { key: 'equipment', label: 'Equipos', icon: 'tools' }
+  { key: 'vehicles', label: 'Vehiculos' },
+  { key: 'boats', label: 'Botes' },
 ]
 
-const stats = ref({
-  vehicles: { total: 45, active: 38, maintenance: 5, unavailable: 2 },
-  boats: { total: 23, active: 20, maintenance: 2, unavailable: 1 },
-  flights: { total: 8, active: 7, maintenance: 1, unavailable: 0 },
-  equipment: { total: 156, available: 134, rented: 18, maintenance: 4 }
+const stats = reactive({
+  vehicles: { total: 0, available: 0, unavailable: 0 },
+  boats: { total: 0, available: 0, unavailable: 0 },
 })
+const loading = ref(true)
+
+const fetchStats = async () => {
+  loading.value = true
+  try {
+    const [vehiclesRes, boatsRes] = await Promise.all([
+      api.get('/vehicles'),
+      api.get('/boats'),
+    ])
+    const vehicles = Array.isArray(vehiclesRes) ? vehiclesRes : vehiclesRes.items || []
+    const boats = Array.isArray(boatsRes) ? boatsRes : boatsRes.items || []
+
+    stats.vehicles.total = vehicles.length
+    stats.vehicles.available = vehicles.filter((v: any) => v.is_available).length
+    stats.vehicles.unavailable = vehicles.filter((v: any) => !v.is_available).length
+
+    stats.boats.total = boats.length
+    stats.boats.available = boats.filter((b: any) => b.is_available).length
+    stats.boats.unavailable = boats.filter((b: any) => !b.is_available).length
+  } catch (error) {
+    console.error('Error fetching fleet stats:', error)
+  } finally {
+    loading.value = false
+  }
+}
 
 const navigateTo = (path: string) => {
   router.push(`/superadmin/fleet/${path}`)
 }
+
+onMounted(() => {
+  fetchStats()
+})
 </script>
 
 <template>
   <div class="space-y-6">
-    <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900">Gestión de Flota</h1>
-        <p class="mt-1 text-gray-500">Administra vehículos, botes, vuelos y equipos</p>
+        <h1 class="text-3xl font-bold text-gray-900">Gestion de Flota</h1>
+        <p class="mt-1 text-gray-500">Administra vehiculos y embarcaciones</p>
       </div>
     </div>
 
     <!-- Tabs -->
     <div class="border-b border-gray-200">
-      <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+      <nav class="-mb-px flex space-x-8">
         <button
           v-for="tab in tabs"
           :key="tab.key"
           @click="activeTab = tab.key as any"
           :class="[
             activeTab === tab.key
-              ? 'border-blue-500 text-blue-600'
+              ? 'border-primary-500 text-primary-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2'
+            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
           ]"
         >
-          <span>{{ tab.label }}</span>
+          {{ tab.label }}
         </button>
       </nav>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div 
-        v-for="(stat, key) in stats[activeTab]" 
-        :key="key"
-        class="bg-white rounded-lg shadow p-6"
-      >
-        <div class="text-sm text-gray-500 capitalize">{{ key }}</div>
-        <div class="text-3xl font-bold text-gray-900">{{ stat }}</div>
-      </div>
+    <!-- Loading -->
+    <div v-if="loading" class="bg-white rounded-lg shadow p-12 text-center">
+      <div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+      <p class="text-gray-500">Cargando estadisticas...</p>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="flex space-x-4">
-      <button
-        @click="navigateTo(activeTab)"
-        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-      >
-        Ver {{ tabs.find(t => t.key === activeTab)?.label }}
-      </button>
-      <button
-        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-      >
-        + Agregar {{ tabs.find(t => t.key === activeTab)?.label.slice(0, -1) }}
-      </button>
-    </div>
-
-    <!-- Quick Info -->
-    <div class="bg-white rounded-lg shadow p-6">
-      <h3 class="text-lg font-medium text-gray-900 mb-4">Estado de la Flota</h3>
-      <div class="space-y-4">
-        <div class="flex items-center justify-between">
-          <span class="text-gray-600">Mantenimientos Programados</span>
-          <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">12</span>
+    <template v-else>
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="text-sm text-gray-500">Total</div>
+          <div class="text-3xl font-bold text-gray-900">{{ stats[activeTab].total }}</div>
         </div>
-        <div class="flex items-center justify-between">
-          <span class="text-gray-600">Alertas de Disponibilidad</span>
-          <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">3</span>
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="text-sm text-gray-500">Disponibles</div>
+          <div class="text-3xl font-bold text-green-600">{{ stats[activeTab].available }}</div>
         </div>
-        <div class="flex items-center justify-between">
-          <span class="text-gray-600">Reservas Activas</span>
-          <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">156</span>
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="text-sm text-gray-500">No Disponibles</div>
+          <div class="text-3xl font-bold text-red-600">{{ stats[activeTab].unavailable }}</div>
         </div>
       </div>
-    </div>
+
+      <!-- Action Buttons -->
+      <div class="flex space-x-4">
+        <button
+          @click="navigateTo(activeTab)"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+        >
+          Ver {{ tabs.find(t => t.key === activeTab)?.label }}
+        </button>
+      </div>
+    </template>
   </div>
 </template>

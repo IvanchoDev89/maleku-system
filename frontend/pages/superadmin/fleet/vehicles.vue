@@ -1,84 +1,119 @@
 <script setup lang="ts">
-/**
- * Fleet - Vehicles Management
- * Gestión de vehículos de transporte
- */
-import { ref, computed } from 'vue'
-
 definePageMeta({
   layout: 'superadmin',
   middleware: ['superadmin']
 })
 
+const api = useApi()
+
 interface Vehicle {
   id: string
-  name: string
-  type: string
-  plate: string
-  capacity: number
-  status: 'active' | 'maintenance' | 'unavailable'
-  vendor: string
-  lastMaintenance: string
-  nextMaintenance: string
+  vendor_id: string
+  vehicle_type: string
+  brand: string
+  model: string
+  year: number
+  transmission: string
+  fuel_type: string
+  seats: number
+  license_plate: string
+  color: string
+  price_per_day: number
+  location: string
+  is_available: boolean
+  is_active: boolean
+  rating: number
+  total_reviews: number
 }
 
-const vehicles = ref<Vehicle[]>([
-  { id: '1', name: 'Toyota Hiace 2023', type: 'Van', plate: 'CR-1234', capacity: 12, status: 'active', vendor: 'Transportes CR', lastMaintenance: '2024-01-15', nextMaintenance: '2024-04-15' },
-  { id: '2', name: 'Hyundai Tucson 2022', type: 'SUV', plate: 'CR-5678', capacity: 5, status: 'active', vendor: 'Rental CR', lastMaintenance: '2024-02-01', nextMaintenance: '2024-05-01' },
-  { id: '3', name: 'Mitsubishi L300', type: 'Bus', plate: 'CR-9012', capacity: 25, status: 'maintenance', vendor: 'Transportes CR', lastMaintenance: '2023-12-10', nextMaintenance: '2024-03-10' }
-])
+const vehicles = ref<Vehicle[]>([])
+const loading = ref(true)
+const searchQuery = ref('')
+const filterStatus = ref('all')
+const filterType = ref('all')
 
 const statusOptions = [
-  { value: 'active', label: 'Activo' },
-  { value: 'maintenance', label: 'Mantenimiento' },
+  { value: 'all', label: 'Todos' },
+  { value: 'available', label: 'Disponible' },
   { value: 'unavailable', label: 'No Disponible' },
 ]
 
 const typeOptions = [
-  { value: 'Van', label: 'Van' },
-  { value: 'SUV', label: 'SUV' },
-  { value: 'Bus', label: 'Bus' },
-  { value: 'Sedan', label: 'Sedan' },
+  { value: 'all', label: 'Todos' },
+  { value: 'car', label: 'Auto' },
+  { value: 'suv', label: 'SUV' },
+  { value: 'van', label: 'Van' },
+  { value: 'minibus', label: 'Minibus' },
+  { value: 'motorcycle', label: 'Moto' },
 ]
 
-const filterStatus = ref<string>('all')
-const filterType = ref<string>('all')
-const searchQuery = ref('')
+const statusColors: Record<string, string> = {
+  available: 'bg-green-100 text-green-800',
+  unavailable: 'bg-red-100 text-red-800',
+}
+
+const typeLabels: Record<string, string> = {
+  car: 'Auto',
+  suv: 'SUV',
+  van: 'Van',
+  minibus: 'Minibus',
+  motorcycle: 'Moto',
+}
+
+const fetchVehicles = async () => {
+  loading.value = true
+  try {
+    const response = await api.get('/vehicles')
+    vehicles.value = Array.isArray(response) ? response : response.items || []
+  } catch (error) {
+    console.error('Error fetching vehicles:', error)
+    vehicles.value = []
+  } finally {
+    loading.value = false
+  }
+}
 
 const filteredVehicles = computed(() => {
   return vehicles.value.filter(v => {
-    const matchesStatus = filterStatus.value === 'all' || v.status === filterStatus.value
-    const matchesType = filterType.value === 'all' || v.type === filterType.value
-    const matchesSearch = v.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                         v.plate.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchesStatus = filterStatus.value === 'all' ||
+      (filterStatus.value === 'available' && v.is_available) ||
+      (filterStatus.value === 'unavailable' && !v.is_available)
+    const matchesType = filterType.value === 'all' || v.vehicle_type === filterType.value
+    const matchesSearch = !searchQuery.value ||
+      `${v.brand} ${v.model}`.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      v.license_plate?.toLowerCase().includes(searchQuery.value.toLowerCase())
     return matchesStatus && matchesType && matchesSearch
   })
 })
 
-const statusColors = {
-  active: 'bg-green-100 text-green-800',
-  maintenance: 'bg-yellow-100 text-yellow-800',
-  unavailable: 'bg-red-100 text-red-800'
-}
-
-const statusLabels = {
-  active: 'Activo',
-  maintenance: 'Mantenimiento',
-  unavailable: 'No Disponible'
-}
+onMounted(() => {
+  fetchVehicles()
+})
 </script>
 
 <template>
   <div class="space-y-6">
-    <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900">Vehículos</h1>
-        <p class="mt-1 text-gray-500">Gestión de vehículos de transporte</p>
+        <h1 class="text-3xl font-bold text-gray-900">Vehiculos</h1>
+        <p class="mt-1 text-gray-500">Gestion de vehiculos de transporte</p>
       </div>
-      <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-        + Agregar Vehículo
-      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-sm text-gray-500">Total Vehiculos</div>
+        <div class="text-3xl font-bold text-gray-900">{{ vehicles.length }}</div>
+      </div>
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-sm text-gray-500">Disponibles</div>
+        <div class="text-3xl font-bold text-green-600">{{ vehicles.filter(v => v.is_available).length }}</div>
+      </div>
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-sm text-gray-500">No Disponibles</div>
+        <div class="text-3xl font-bold text-red-600">{{ vehicles.filter(v => !v.is_available).length }}</div>
+      </div>
     </div>
 
     <!-- Filters -->
@@ -88,58 +123,59 @@ const statusLabels = {
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Buscar vehículo..."
-            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Buscar por marca, modelo o placa..."
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
           />
         </div>
-        <UiSelect v-model="filterStatus" :options="statusOptions" placeholder="Todos los estados" />
-        <UiSelect v-model="filterType" :options="typeOptions" placeholder="Todos los tipos" />
+        <UiSelect v-model="filterStatus" :options="statusOptions" />
+        <UiSelect v-model="filterType" :options="typeOptions" />
       </div>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="bg-white rounded-lg shadow p-12 text-center">
+      <div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+      <p class="text-gray-500">Cargando vehiculos...</p>
+    </div>
+
+    <!-- Empty -->
+    <div v-else-if="filteredVehicles.length === 0" class="bg-white rounded-lg shadow p-12 text-center">
+      <p class="text-gray-400 text-lg">No se encontraron vehiculos</p>
+    </div>
+
     <!-- Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehículo</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Placa</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacidad</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Próx. Mant.</th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="vehicle in filteredVehicles" :key="vehicle.id">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
-                <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span class="text-gray-500 text-sm">🚗</span>
-                </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-gray-900">{{ vehicle.name }}</div>
-                  <div class="text-sm text-gray-500">{{ vehicle.type }}</div>
-                </div>
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ vehicle.plate }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ vehicle.capacity }} pax</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span :class="['px-2 py-1 text-xs font-medium rounded-full', statusColors[vehicle.status]]">
-                {{ statusLabels[vehicle.status] }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ vehicle.vendor }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ vehicle.nextMaintenance }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button class="text-blue-600 hover:text-blue-900 mr-3">Editar</button>
-              <button class="text-gray-600 hover:text-gray-900">Ver</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-else class="bg-white rounded-lg shadow overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vehiculo</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Placa</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Capacidad</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Ubicacion</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Precio/dia</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="vehicle in filteredVehicles" :key="vehicle.id" class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">{{ vehicle.brand }} {{ vehicle.model }}</div>
+                <div class="text-sm text-gray-500">{{ vehicle.year }} &middot; {{ vehicle.color }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">{{ vehicle.license_plate }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">{{ vehicle.seats }} pax</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{{ vehicle.location }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hidden md:table-cell">${{ vehicle.price_per_day }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span :class="['px-2 py-1 text-xs font-medium rounded-full', vehicle.is_available ? statusColors.available : statusColors.unavailable]">
+                  {{ vehicle.is_available ? 'Disponible' : 'No Disponible' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
