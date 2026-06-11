@@ -434,7 +434,7 @@ async def get_bookings(
         order_by=Booking.created_at.desc()
     )
     
-    return PaginatedResponse(**response)
+    return response
 
 
 @router.post("/preview", response_model=PricePreviewResponse)
@@ -647,7 +647,7 @@ async def update_booking_status(
     return BookingResponse.model_validate(booking)
 
 
-@router.get("/vendor/stats",
+@router.get("/vendor/stats", response_model=dict,
             summary="Vendor booking statistics",
             description="Returns aggregated booking stats for the authenticated vendor: total, pending, confirmed, completed, cancelled counts plus revenue and commission totals.")
 async def get_vendor_booking_stats(
@@ -720,4 +720,4 @@ async def get_vendor_my_bookings(
         order_by=Booking.created_at.desc()
     )
     
-    return PaginatedResponse(**response)
+    return response

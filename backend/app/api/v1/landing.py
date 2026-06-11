@@ -1,8 +1,10 @@
 """Landing page content API."""
 import asyncio
+from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.models import Destination, Property, Tour
@@ -13,7 +15,48 @@ router = APIRouter(tags=["Landing"])
 CACHE_TTL_LANDING = 180  # 3 minutes for landing content
 
 
-@router.get("/content")
+class LandingDestination(BaseModel):
+    id: str
+    name: str
+    slug: str
+    region: str
+    description: Optional[str] = None
+    image: Optional[str] = None
+
+
+class LandingProperty(BaseModel):
+    id: str
+    name: str
+    slug: str
+    region: Optional[str] = None
+    short_description: Optional[str] = None
+    cover_image: Optional[str] = None
+    base_price: float = 0
+    rating: Optional[float] = None
+    property_type: Optional[str] = None
+
+
+class LandingTour(BaseModel):
+    id: str
+    name: str
+    slug: str
+    location: Optional[str] = None
+    description: Optional[str] = None
+    cover_image: Optional[str] = None
+    price: float = 0
+    rating: Optional[float] = None
+    duration_text: Optional[str] = None
+    duration_hours: float = 0
+    category: Optional[str] = None
+
+
+class LandingContentResponse(BaseModel):
+    destinations: list[LandingDestination]
+    properties: list[LandingProperty]
+    tours: list[LandingTour]
+
+
+@router.get("/content", response_model=LandingContentResponse)
 async def get_landing_content(
     db: AsyncSession = Depends(get_db)
 ):

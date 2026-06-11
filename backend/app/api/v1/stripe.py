@@ -100,6 +100,37 @@ class VendorConnectResponse(BaseModel):
     status: str
 
 
+class WebhookResponse(BaseModel):
+    status: str
+    booking_id: Optional[str] = None
+    payment_intent_id: Optional[str] = None
+    session_id: Optional[str] = None
+    error: Optional[str] = None
+    event_id: Optional[str] = None
+
+
+class StripeConfigResponse(BaseModel):
+    publishable_key: str
+    currency: str
+
+
+class PaymentStatusResponse(BaseModel):
+    booking_id: str
+    confirmation_code: str
+    status: str
+    payment_intent_id: Optional[str] = None
+    payment_status: Optional[str] = None
+    total_amount: float
+    currency: str
+
+
+class RefundResponse(BaseModel):
+    refund_id: str
+    amount: float
+    status: str
+    booking_status: str
+
+
 class RefundRequest(BaseModel):
     amount: Optional[float] = None  # If None, full refund
     reason: Optional[str] = None
@@ -199,7 +230,7 @@ async def create_checkout(
         )
 
 
-@router.get("/vendor/connect")
+@router.get("/vendor/connect", response_model=VendorConnectResponse)
 async def get_vendor_connect_link(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -280,7 +311,7 @@ async def get_vendor_connect_link(
         )
 
 
-@router.post("/webhook")
+@router.post("/webhook", response_model=WebhookResponse)
 async def stripe_webhook(
     request: Request,
     stripe_signature: str = Header(None, alias="Stripe-Signature"),
@@ -458,7 +489,7 @@ async def _update_booking_refund_status(db: AsyncSession, payment_intent_id: str
         logger.error(f"Failed to update booking refund status: {e}")
 
 
-@router.post("/bookings/{booking_id}/refund")
+@router.post("/bookings/{booking_id}/refund", response_model=RefundResponse)
 async def refund_booking(
     booking_id: UUID,
     data: RefundRequest,
@@ -548,7 +579,7 @@ async def refund_booking(
         )
 
 
-@router.get("/config")
+@router.get("/config", response_model=StripeConfigResponse)
 async def get_stripe_config():
     """
     Get public Stripe configuration for frontend.
@@ -559,7 +590,7 @@ async def get_stripe_config():
     }
 
 
-@router.get("/bookings/{booking_id}/payment-status")
+@router.get("/bookings/{booking_id}/payment-status", response_model=PaymentStatusResponse)
 async def check_payment_status(
     booking_id: UUID,
     current_user: User = Depends(get_current_user),

@@ -5,7 +5,8 @@ from typing import TypeVar, Generic, Type, Optional, List
 from uuid import UUID
 from datetime import datetime, timezone
 
-from app.core.pagination import PaginationParams, PaginatedResult, PaginationMetadata
+from app.core.pagination import PaginatedResult, PaginationMetadata
+from app.schemas import PaginationParams
 
 ModelType = TypeVar("ModelType")
 

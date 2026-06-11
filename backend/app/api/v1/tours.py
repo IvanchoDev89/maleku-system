@@ -67,9 +67,9 @@ async def get_tours(
     
     # Cache the response
     ttl = CACHE_TTL_FEATURED if featured else CACHE_TTL_LIST
-    await cache.set(cache_key, response, ttl=ttl, tags=["tours"])
+    await cache.set(cache_key, response.model_dump(), ttl=ttl, tags=["tours"])
     
-    return PaginatedResponse(**response)
+    return response
 
 
 @router.get("/{tour_id}", response_model=TourResponse,
@@ -243,7 +243,7 @@ async def update_tour(
     return TourResponse.model_validate(tour)
 
 
-@router.delete("/{tour_id}",
+@router.delete("/{tour_id}", response_model=dict,
                summary="Delete tour (soft)",
                description="Soft-deletes a tour by setting is_active=False. Only the owning vendor or SUPER_ADMIN.")
 async def delete_tour(
@@ -319,10 +319,10 @@ async def get_my_tours(
         order_by=Tour.created_at.desc()
     )
     
-    return PaginatedResponse(**response)
+    return response
 
 
-@router.get("/categories",
+@router.get("/categories", response_model=list[str],
             summary="List tour categories",
             description="Returns a distinct list of all categories from active tours.")
 async def get_categories(db: AsyncSession = Depends(get_db)):

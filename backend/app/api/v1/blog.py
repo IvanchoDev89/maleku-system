@@ -17,8 +17,17 @@ from app.schemas import (
     BlogPostListResponse, PaginationParams, PaginatedResponse
 )
 from app.services.cache_service import cache
+from pydantic import BaseModel
 
 router = APIRouter(tags=["Blog"])
+
+
+class DeleteResponse(BaseModel):
+    message: str
+
+
+class BlogCategoriesResponse(BaseModel):
+    categories: list[str]
 limiter = Limiter(key_func=get_remote_address)
 
 
@@ -68,12 +77,12 @@ async def get_blog_posts(
     )
     
     # Cache the response
-    await cache.set(cache_key, response, ttl=CACHE_TTL_LIST, tags=["blog"])
+    await cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_LIST, tags=["blog"])
     
-    return PaginatedResponse(**response)
+    return response
 
 
-@router.get("/featured",
+@router.get("/featured", response_model=list[BlogPostListResponse],
             summary="Get featured posts",
             description="Returns featured blog posts, ordered by published date. Default limit is 3.")
 async def get_featured_posts(
@@ -266,7 +275,7 @@ async def update_blog_post(
     return BlogPostResponse.model_validate(post)
 
 
-@router.delete("/{post_id}",
+@router.delete("/{post_id}", response_model=DeleteResponse,
                summary="Archive blog post",
                description="Archives (soft-deletes) a blog post by setting status to ARCHIVED. SUPER_ADMIN role required.")
 async def delete_blog_post(
@@ -294,7 +303,7 @@ async def delete_blog_post(
     return {"message": "Blog post archived"}
 
 
-@router.get("/categories",
+@router.get("/categories", response_model=BlogCategoriesResponse,
             summary="List blog categories",
             description="Returns a distinct list of categories from published blog posts.")
 async def get_blog_categories(db: AsyncSession = Depends(get_db)):

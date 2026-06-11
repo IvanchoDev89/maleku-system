@@ -157,6 +157,68 @@ class InboxMessageResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# Response schemas for endpoints
+class SendCampaignResponse(BaseModel):
+    message: str
+    total: int
+    sent: int
+    failed: int
+
+
+class MarketingOverviewResponse(BaseModel):
+    campaigns: dict
+    engagement: dict
+    recent_campaigns: list[dict]
+
+
+class VendorAnalyticsResponse(BaseModel):
+    total_campaigns: int
+    total_recipients: int
+    total_opens: int
+    total_clicks: int
+    engagement_rate: float
+
+
+class InboxMessageItem(BaseModel):
+    id: str
+    subject: str
+    content: str
+    is_from_customer: bool
+    is_read: bool
+    created_at: str
+    vendor_id: Optional[str] = None
+
+
+class InboxResponse(BaseModel):
+    messages: list[InboxMessageItem]
+    unread_count: int
+    total: int
+
+
+class SendInboxResponse(BaseModel):
+    message: str
+    message_id: str
+
+
+class UnreadCountResponse(BaseModel):
+    unread_count: int
+
+
+class EmailPreferencesResponse(BaseModel):
+    marketing_emails: bool
+    booking_notifications: bool
+    promotional_emails: bool
+    newsletter: bool
+    email_frequency: Optional[str] = None
+    unsubscribed_all: bool
+    vendor_preferences: dict
+    categories: dict
+
+
+class UpdatePreferencesResponse(BaseModel):
+    message: str
+
+
 # ============ Super Admin Endpoints ============
 
 @router.get("/admin/campaigns", response_model=List[CampaignResponse])
@@ -222,7 +284,7 @@ async def create_admin_campaign(
     return campaign
 
 
-@router.post("/admin/campaigns/{campaign_id}/send")
+@router.post("/admin/campaigns/{campaign_id}/send", response_model=SendCampaignResponse)
 async def send_admin_campaign(
     campaign_id: UUID,
     background_tasks: BackgroundTasks,
@@ -316,7 +378,7 @@ async def create_template(
     return template
 
 
-@router.get("/admin/analytics/overview")
+@router.get("/admin/analytics/overview", response_model=MarketingOverviewResponse)
 async def get_marketing_overview(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin())
@@ -427,7 +489,7 @@ async def create_vendor_campaign(
     return campaign
 
 
-@router.get("/vendor/analytics")
+@router.get("/vendor/analytics", response_model=VendorAnalyticsResponse)
 async def get_vendor_analytics(
     db: AsyncSession = Depends(get_db),
     vendor = Depends(get_current_vendor)
@@ -458,7 +520,7 @@ async def get_vendor_analytics(
 
 # ============ Inbox Endpoints ============
 
-@router.get("/inbox")
+@router.get("/inbox", response_model=InboxResponse)
 async def get_user_inbox(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
@@ -510,7 +572,7 @@ async def get_user_inbox(
     }
 
 
-@router.post("/inbox/send")
+@router.post("/inbox/send", response_model=SendInboxResponse)
 async def send_inbox_message(
     data: InboxMessageCreate,
     db: AsyncSession = Depends(get_db),
@@ -545,7 +607,7 @@ async def send_inbox_message(
     }
 
 
-@router.get("/inbox/unread-count")
+@router.get("/inbox/unread-count", response_model=UnreadCountResponse)
 async def get_unread_count(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -565,7 +627,7 @@ async def get_unread_count(
 
 # ============ Email Preferences ============
 
-@router.get("/preferences")
+@router.get("/preferences", response_model=EmailPreferencesResponse)
 async def get_email_preferences(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -596,7 +658,7 @@ async def get_email_preferences(
     }
 
 
-@router.put("/preferences")
+@router.put("/preferences", response_model=UpdatePreferencesResponse)
 async def update_email_preferences(
     prefs: dict,
     db: AsyncSession = Depends(get_db),

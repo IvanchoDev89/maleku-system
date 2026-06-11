@@ -12,8 +12,54 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models import User, UserRole, Vendor, Conversation, Message, ChatServiceType
 from app.schemas import chat as chat_schema
+from pydantic import BaseModel
 
 router = APIRouter()
+
+class DeleteResponse(BaseModel):
+    message: str
+
+
+class MessageResponse(BaseModel):
+    message: str
+
+
+class MarkReadResponse(BaseModel):
+    message: str
+    conversation_id: str
+
+
+class ReorderResponse(BaseModel):
+    message: str
+    items_updated: int
+
+
+class ActivateResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class ChangeRoleResponse(BaseModel):
+    message: str
+    user_id: str
+    new_role: str
+
+
+class VerifyResponse(BaseModel):
+    message: str
+    is_verified: bool
+
+
+class ToggleActiveResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class PresignedUrlResponse(BaseModel):
+    url: str
+    expires_in: int
+    fields: dict
+
 
 
 async def get_participant_vendor(
@@ -47,7 +93,7 @@ def assert_conversation_participant(
         )
 
 
-@router.get("/", response_model=list[chat_schema.ConversationDetailResponse])
+@router.get("", response_model=list[chat_schema.ConversationDetailResponse])
 async def list_conversations(
     service_type: ChatServiceType = None,
     db: AsyncSession = Depends(get_db),
@@ -85,7 +131,7 @@ async def list_conversations(
     return conversations
 
 
-@router.post("/", response_model=chat_schema.ConversationResponse)
+@router.post("", response_model=chat_schema.ConversationResponse)
 async def create_conversation(
     conv_data: chat_schema.ConversationCreate,
     db: AsyncSession = Depends(get_db),
@@ -231,7 +277,7 @@ async def send_message(
     return message
 
 
-@router.post("/{conversation_id}/read")
+@router.post("/{conversation_id}/read", response_model=MarkReadResponse)
 async def mark_read(
     conversation_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),

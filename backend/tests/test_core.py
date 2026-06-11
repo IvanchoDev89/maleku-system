@@ -225,7 +225,7 @@ def test_config_import():
 
 # Pagination tests
 def test_pagination_params_defaults():
-    from app.core.pagination import PaginationParams
+    from app.schemas import PaginationParams
     
     params = PaginationParams(page=1, page_size=20)
     assert params.page == 1
@@ -234,7 +234,7 @@ def test_pagination_params_defaults():
 
 
 def test_pagination_params_offset():
-    from app.core.pagination import PaginationParams
+    from app.schemas import PaginationParams
     
     params = PaginationParams(page=3, page_size=10)
     assert params.offset == 20
@@ -328,9 +328,10 @@ def test_paginate_flat_dict_shape():
 
 def test_pagination_imports():
     from app.core.pagination import (
-        PaginationParams, PaginationMetadata, PaginatedResult,
+        PaginationMetadata, PaginatedResult,
         paginate_query, paginate_list, paginate_flat
     )
+    from app.schemas import PaginationParams
     assert PaginationParams
     assert PaginationMetadata
     assert PaginatedResult

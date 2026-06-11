@@ -181,7 +181,7 @@ async def update_destination(
     return DestinationResponse.model_validate(destination)
 
 
-@router.delete("/{destination_id}",
+@router.delete("/{destination_id}", response_model=dict,
                summary="Delete destination (soft)",
                description="Soft-deletes a destination by setting is_active=False. SUPER_ADMIN role required.")
 async def delete_destination(
@@ -211,7 +211,7 @@ async def delete_destination(
     return {"message": "Destination deleted successfully"}
 
 
-@router.put("/{destination_id}/order",
+@router.put("/{destination_id}/order", response_model=dict,
             summary="Reorder destination",
             description="Updates the display order of a destination. SUPER_ADMIN role required.")
 async def reorder_destination(

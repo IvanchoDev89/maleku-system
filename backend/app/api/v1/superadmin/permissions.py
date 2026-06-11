@@ -452,7 +452,7 @@ async def update_role_permissions(
     return RolePermissionResponse.model_validate(existing)
 
 
-@router.delete("/roles/{role}/modules/{module}")
+@router.delete("/roles/{role}/modules/{module}", response_model=dict)
 async def delete_role_permissions(
     role: str,
     module: str,
@@ -560,7 +560,7 @@ async def check_permission(
     )
 
 
-@router.post("/roles/{role}/reset")
+@router.post("/roles/{role}/reset", response_model=dict)
 async def reset_role_to_defaults(
     role: str,
     db: AsyncSession = Depends(get_db),

@@ -268,7 +268,7 @@ async def get_user_stats(
     )
 
 
-@router.get("/traffic")
+@router.get("/traffic", response_model=dict)
 async def get_traffic_stats(
     period: str = Query("30", description="Days to look back"),
     db: AsyncSession = Depends(get_db),
@@ -302,7 +302,7 @@ async def get_traffic_stats(
     }
 
 
-@router.get("/bookings/trends")
+@router.get("/bookings/trends", response_model=dict)
 async def get_booking_trends(
     period: str = Query("30", description="Days to look back"),
     db: AsyncSession = Depends(get_db),

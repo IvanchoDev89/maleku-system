@@ -9,6 +9,35 @@ from app.models import User, UserRole
 router = APIRouter()
 
 
+class SettingsResponse(BaseModel):
+    """Generic settings response wrapper"""
+    pass
+
+
+class SettingDetailResponse(BaseModel):
+    key: str
+    value: Any
+    category: str
+    description: Optional[str] = None
+    is_public: bool = False
+    updated_at: datetime
+
+
+class UpdateSettingResponse(BaseModel):
+    message: str
+    key: str
+    value: Any
+
+
+class BulkUpdateResponse(BaseModel):
+    message: str
+    updated: list[str]
+
+
+class CategoriesResponse(BaseModel):
+    categories: list[str]
+
+
 # Settings Model
 class SystemSetting(BaseModel):
     key: str
@@ -210,7 +239,7 @@ for key, config in DEFAULT_SETTINGS.items():
     }
 
 
-@router.get("")
+@router.get("", response_model=dict)
 async def get_all_settings(
     current_user: User = Depends(get_current_user)
 ):
@@ -228,7 +257,7 @@ async def get_all_settings(
     return result
 
 
-@router.get("/public")
+@router.get("/public", response_model=dict)
 async def get_public_settings():
     """Get public settings for frontend"""
     result = {}
@@ -238,7 +267,7 @@ async def get_public_settings():
     return result
 
 
-@router.get("/{key}")
+@router.get("/{key}", response_model=SettingDetailResponse)
 async def get_setting_by_key(
     key: str,
     current_user: User = Depends(get_current_user)
@@ -252,7 +281,7 @@ async def get_setting_by_key(
     return settings_cache[key]
 
 
-@router.put("/{key}")
+@router.put("/{key}", response_model=UpdateSettingResponse)
 async def update_setting(
     key: str,
     value: Any,
@@ -280,7 +309,7 @@ async def update_setting(
     return {"message": "Setting updated", "key": key, "value": value}
 
 
-@router.post("/bulk")
+@router.post("/bulk", response_model=BulkUpdateResponse)
 async def bulk_update_settings(
     settings: dict,
     current_user: User = Depends(get_current_user)
@@ -318,7 +347,7 @@ async def bulk_update_settings(
     return {"message": f"Updated {len(updated)} settings", "updated": updated}
 
 
-@router.get("/categories/list")
+@router.get("/categories/list", response_model=CategoriesResponse)
 async def get_categories(
     current_user: User = Depends(get_current_user)
 ):

@@ -97,7 +97,7 @@ async def get_system_health(
     }
 
 
-@router.get("/database/stats")
+@router.get("/database/stats", response_model=dict)
 async def get_database_stats(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin())
@@ -155,7 +155,7 @@ async def get_database_stats(
     }
 
 
-@router.get("/database/connections")
+@router.get("/database/connections", response_model=dict)
 async def get_database_connections(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin())
@@ -199,7 +199,7 @@ async def get_database_connections(
     }
 
 
-@router.get("/cache/stats")
+@router.get("/cache/stats", response_model=dict)
 async def get_cache_stats(
     current_user: User = Depends(require_superadmin())
 ):
@@ -220,7 +220,7 @@ async def get_cache_stats(
     }
 
 
-@router.get("/queue/stats")
+@router.get("/queue/stats", response_model=dict)
 async def get_queue_stats(
     current_user: User = Depends(require_superadmin())
 ):
@@ -241,7 +241,7 @@ async def get_queue_stats(
     }
 
 
-@router.get("/backups")
+@router.get("/backups", response_model=dict)
 async def get_backups(
     current_user: User = Depends(require_superadmin())
 ):
@@ -258,7 +258,7 @@ async def get_backups(
     }
 
 
-@router.post("/backups/trigger")
+@router.post("/backups/trigger", response_model=dict)
 async def trigger_backup(
     current_user: User = Depends(require_superadmin())
 ):
@@ -275,7 +275,7 @@ async def trigger_backup(
     }
 
 
-@router.get("/metrics")
+@router.get("/metrics", response_model=dict)
 async def get_system_metrics(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin())
@@ -336,7 +336,7 @@ async def _get_db_connection_count(db: AsyncSession) -> Optional[int]:
         return None
 
 
-@router.post("/maintenance-mode")
+@router.post("/maintenance-mode", response_model=dict)
 async def toggle_maintenance_mode(
     enabled: bool,
     message: Optional[str] = None,
@@ -358,7 +358,7 @@ async def toggle_maintenance_mode(
     }
 
 
-@router.get("/environment")
+@router.get("/environment", response_model=dict)
 async def get_environment_info(
     current_user: User = Depends(require_superadmin())
 ):

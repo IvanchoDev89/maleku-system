@@ -270,7 +270,7 @@ async def get_feature_flags(
     return [FeatureFlag(**f) for f in _feature_flags]
 
 
-@router.put("/feature-flags/{flag_name}")
+@router.put("/feature-flags/{flag_name}", response_model=dict)
 async def update_feature_flag(
     flag_name: str,
     enabled: bool = Body(...),
@@ -304,7 +304,7 @@ async def update_feature_flag(
     return FeatureFlag(**flag)
 
 
-@router.post("/maintenance-mode")
+@router.post("/maintenance-mode", response_model=dict)
 async def toggle_maintenance_mode(
     enabled: bool = Body(..., embed=True),
     message: str = Body("", max_length=500),

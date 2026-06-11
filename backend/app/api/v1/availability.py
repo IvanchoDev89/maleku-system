@@ -18,6 +18,51 @@ from app.services.availability_service import (
 
 router = APIRouter()
 
+class DeleteResponse(BaseModel):
+    message: str
+
+
+class MessageResponse(BaseModel):
+    message: str
+
+
+class MarkReadResponse(BaseModel):
+    message: str
+    conversation_id: str
+
+
+class ReorderResponse(BaseModel):
+    message: str
+    items_updated: int
+
+
+class ActivateResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class ChangeRoleResponse(BaseModel):
+    message: str
+    user_id: str
+    new_role: str
+
+
+class VerifyResponse(BaseModel):
+    message: str
+    is_verified: bool
+
+
+class ToggleActiveResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class PresignedUrlResponse(BaseModel):
+    url: str
+    expires_in: int
+    fields: dict
+
+
 
 class AvailabilityCheckRequest(BaseModel):
     room_id: UUID
@@ -95,7 +140,7 @@ async def get_room_calendar(
     )
 
 
-@router.post("/tours/check")
+@router.post("/tours/check", response_model=AvailabilityCheckResponse)
 async def check_tour_availability_endpoint(
     tour_id: UUID,
     booking_date: datetime,
@@ -121,7 +166,7 @@ async def check_tour_availability_endpoint(
     }
 
 
-@router.get("/rooms/{room_id}/next-available")
+@router.get("/rooms/{room_id}/next-available", response_model=dict)
 async def get_next_available(
     room_id: UUID,
     nights: int = Query(1, ge=1, description="Number of nights needed"),

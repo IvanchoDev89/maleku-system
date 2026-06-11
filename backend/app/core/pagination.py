@@ -3,28 +3,13 @@ Pagination utilities for consistent API responses
 """
 from typing import TypeVar, Generic, List, Optional, Any
 from math import ceil
-from fastapi import Query
-from pydantic import BaseModel
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from pydantic import BaseModel
+from app.schemas import PaginationParams, PaginatedResponse
+
 T = TypeVar("T")
-
-
-class PaginationParams:
-    """Common pagination parameters for API endpoints"""
-    def __init__(
-        self,
-        page: int = Query(1, ge=1, description="Page number (1-indexed)"),
-        page_size: int = Query(20, ge=1, le=100, description="Items per page (max 100)"),
-    ):
-        self.page = page
-        self.page_size = page_size
-        
-    @property
-    def offset(self) -> int:
-        """Calculate database offset"""
-        return (self.page - 1) * self.page_size
 
 
 class PaginationMetadata(BaseModel):
@@ -135,9 +120,9 @@ async def paginate_flat(
     params: PaginationParams,
     transform_func: Optional[callable] = None,
     order_by=None,
-) -> dict[str, Any]:
+) -> PaginatedResponse:
     """
-    Execute a query with pagination and return a flat dict matching PaginatedResponse.
+    Execute a query with pagination and return a PaginatedResponse.
 
     Args:
         session: Database session
@@ -147,7 +132,7 @@ async def paginate_flat(
         order_by: Optional SQLAlchemy order_by clause
 
     Returns:
-        dict with items, total, page, page_size, total_pages, has_next, has_prev
+        PaginatedResponse with items and pagination metadata
     """
     count_query = select(func.count()).select_from(query.subquery())
     total_result = await session.execute(count_query)
@@ -165,12 +150,12 @@ async def paginate_flat(
 
     total_pages = ceil(total / params.page_size) if total > 0 else 0
 
-    return {
-        "items": items,
-        "total": total,
-        "page": params.page,
-        "page_size": params.page_size,
-        "total_pages": total_pages,
-        "has_next": params.page < total_pages,
-        "has_prev": params.page > 1,
-    }
+    return PaginatedResponse(
+        items=items,
+        total=total,
+        page=params.page,
+        page_size=params.page_size,
+        total_pages=total_pages,
+        has_next=params.page < total_pages,
+        has_prev=params.page > 1,
+    )

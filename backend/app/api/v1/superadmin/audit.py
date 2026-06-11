@@ -75,7 +75,7 @@ class ClientEventCreate(BaseModel):
 
 # Endpoints
 
-@router.post("/logs", status_code=201)
+@router.post("/logs", response_model=dict, status_code=201)
 async def create_client_event(
     event: ClientEventCreate,
     request: Request,
@@ -215,7 +215,7 @@ async def get_audit_logs(
     ]
 
 
-@router.get("/logs/count")
+@router.get("/logs/count", response_model=dict)
 async def get_audit_logs_count(
     user_id: Optional[UUID] = Query(None),
     action: Optional[AuditAction] = Query(None),
@@ -340,7 +340,7 @@ async def get_security_logs(
     ]
 
 
-@router.get("/security/failed-logins")
+@router.get("/security/failed-logins", response_model=dict)
 async def get_failed_login_attempts(
     hours: int = Query(24, ge=1, le=168, description="Look back period in hours"),
     group_by_ip: bool = Query(False, description="Group results by IP address"),
@@ -458,7 +458,7 @@ async def get_logs_summary(
     }
 
 
-@router.post("/export")
+@router.post("/export", response_model=dict)
 async def export_logs(
     log_type: str = Query(..., description="Type of logs: 'audit' or 'security'"),
     date_from: Optional[datetime] = Query(None),

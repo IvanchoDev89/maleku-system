@@ -119,6 +119,21 @@ class VerifyEmailRequest(BaseModel):
     token: str
 
 
+class MessageResponse(BaseModel):
+    message: str
+
+
+class UserProfileResponse(BaseModel):
+    id: str
+    email: str
+    full_name: str
+    phone: Optional[str] = None
+    role: str
+    is_active: bool
+    is_verified: bool
+    last_login: Optional[str] = None
+
+
 # Endpoints
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
@@ -183,7 +198,7 @@ async def register(
     }
 
 
-@router.post("/login")
+@router.post("/login", response_model=TokenResponse)
 @limiter.limit("5/minute")
 async def login(
     request: Request,
@@ -256,7 +271,7 @@ async def login(
     }
 
 
-@router.post("/refresh")
+@router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
     refresh_in: RefreshRequest,
     db: AsyncSession = Depends(get_async_session)
@@ -296,7 +311,7 @@ async def refresh_token(
     }
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=MessageResponse)
 async def logout(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -317,7 +332,7 @@ async def logout(
     return {"message": "Logged out successfully"}
 
 
-@router.post("/forgot-password")
+@router.post("/forgot-password", response_model=MessageResponse)
 @limiter.limit("3/minute")  # Rate limiting: 3 forgot password requests por minuto
 async def forgot_password(
     request: Request,
@@ -369,7 +384,7 @@ async def forgot_password(
     return {"message": "If email exists, reset instructions sent"}
 
 
-@router.get("/me")
+@router.get("/me", response_model=UserProfileResponse)
 async def get_me(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_async_session)
@@ -405,7 +420,7 @@ async def get_me(
     }
 
 
-@router.post("/reset-password")
+@router.post("/reset-password", response_model=MessageResponse)
 @limiter.limit("5/minute")
 async def reset_password(
     reset_in: ResetPasswordRequest,
@@ -461,7 +476,7 @@ async def reset_password(
     return {"message": "Password reset successfully"}
 
 
-@router.post("/verify-email")
+@router.post("/verify-email", response_model=MessageResponse)
 async def verify_email(
     verify_in: VerifyEmailRequest,
     request: Request,
@@ -511,7 +526,7 @@ async def verify_email(
     return {"message": "Email verified successfully"}
 
 
-@router.post("/resend-verification")
+@router.post("/resend-verification", response_model=MessageResponse)
 async def resend_verification(
     request: Request,
     current_user: User = Depends(get_current_user),

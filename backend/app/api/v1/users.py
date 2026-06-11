@@ -1,5 +1,6 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +12,51 @@ from app.schemas import (
 )
 
 router = APIRouter()
+
+class DeleteResponse(BaseModel):
+    message: str
+
+
+class MessageResponse(BaseModel):
+    message: str
+
+
+class MarkReadResponse(BaseModel):
+    message: str
+    conversation_id: str
+
+
+class ReorderResponse(BaseModel):
+    message: str
+    items_updated: int
+
+
+class ActivateResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class ChangeRoleResponse(BaseModel):
+    message: str
+    user_id: str
+    new_role: str
+
+
+class VerifyResponse(BaseModel):
+    message: str
+    is_verified: bool
+
+
+class ToggleActiveResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class PresignedUrlResponse(BaseModel):
+    url: str
+    expires_in: int
+    fields: dict
+
 
 
 @router.get("", response_model=PaginatedResponse)
@@ -98,7 +144,7 @@ async def update_user(
     return UserResponse.model_validate(user)
 
 
-@router.delete("/{user_id}")
+@router.delete("/{user_id}", response_model=DeleteResponse)
 async def delete_user(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -126,7 +172,7 @@ async def delete_user(
     return {"message": "User deactivated"}
 
 
-@router.post("/{user_id}/activate")
+@router.post("/{user_id}/activate", response_model=ActivateResponse)
 async def activate_user(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -148,7 +194,7 @@ async def activate_user(
     return {"message": "User activated"}
 
 
-@router.post("/{user_id}/role")
+@router.post("/{user_id}/role", response_model=ChangeRoleResponse)
 async def change_user_role(
     user_id: uuid.UUID,
     role: str,

@@ -2,6 +2,8 @@ import asyncio
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel
+from typing import Optional
 
 from app.core.database import get_db
 from app.core.utils import escape_like_pattern
@@ -10,7 +12,84 @@ from app.models import Property, Tour, Destination, BlogPost, BlogPostStatus
 router = APIRouter(tags=["Search"])
 
 
-@router.get("/map",
+class MapPropertyItem(BaseModel):
+    id: str
+    name: str
+    slug: str
+    property_type: str
+    category: Optional[str] = None
+    region: Optional[str] = None
+    city: Optional[str] = None
+    address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    cover_image: Optional[str] = None
+    images: list[str] = []
+    base_price: float = 0
+    weekend_price: float = 0
+    rating: Optional[float] = None
+    total_reviews: Optional[int] = None
+    min_guests: int = 1
+    max_guests: int = 10
+    amenities: list[str] = []
+
+
+class MapTourItem(BaseModel):
+    id: str
+    name: str
+    slug: str
+    category: Optional[str] = None
+    difficulty: Optional[str] = None
+    location: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    cover_image: Optional[str] = None
+    images: list[str] = []
+    price: float = 0
+    duration_hours: float = 0
+    rating: Optional[float] = None
+    total_reviews: Optional[int] = None
+    max_group_size: int = 20
+
+
+class MapPagination(BaseModel):
+    page: int
+    page_size: int
+    total_properties: int
+    total_tours: int
+    total_pages: int
+
+
+class MapDataResponse(BaseModel):
+    properties: list[MapPropertyItem]
+    tours: list[MapTourItem]
+    pagination: MapPagination
+
+
+class MapCountsResponse(BaseModel):
+    total_properties: int
+    total_tours: int
+    by_region: dict
+    by_category: dict
+
+
+class SearchResultItem(BaseModel):
+    id: str
+    name: Optional[str] = None
+    title: Optional[str] = None
+    slug: str
+    type: str
+    image: Optional[str] = None
+
+
+class SearchResponse(BaseModel):
+    properties: list[SearchResultItem]
+    tours: list[SearchResultItem]
+    destinations: list[SearchResultItem]
+    blog: list[SearchResultItem]
+
+
+@router.get("/map", response_model=MapDataResponse,
             summary="Get map data",
             description="Returns properties and tours with coordinates for map display. Supports filters by type, category, region, and price range with pagination.")
 async def get_map_data(
@@ -130,7 +209,7 @@ async def get_map_data(
     }
 
 
-@router.get("/map/count",
+@router.get("/map/count", response_model=MapCountsResponse,
             summary="Get map counts",
             description="Returns aggregate counts for map markers: total properties/tours, grouped by region and category.")
 async def get_map_counts(
@@ -178,7 +257,7 @@ async def get_map_counts(
     }
 
 
-@router.get("/search",
+@router.get("/search", response_model=SearchResponse,
             summary="Global search",
             description="Searches properties, tours, destinations, and blog in parallel using ILIKE pattern matching on names/titles.")
 async def global_search(

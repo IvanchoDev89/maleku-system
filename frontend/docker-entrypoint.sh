@@ -12,11 +12,17 @@ fi
 
 # Wait for backend to be ready
 echo "Waiting for backend..."
-while ! wget --no-verbose --tries=1 --spider http://backend:8000/health 2>/dev/null; do
+while ! wget -qO- http://backend:8000/health >/dev/null 2>&1; do
     echo "Backend not ready yet, waiting..."
     sleep 2
 done
 echo "Backend is ready!"
+
+# Ensure all required modules are installed
+if [ ! -d "/app/node_modules/@nuxt/image" ]; then
+    echo "Installing @nuxt/image..."
+    npm install @nuxt/image
+fi
 
 # Start development server
 echo "Starting Nuxt development server..."

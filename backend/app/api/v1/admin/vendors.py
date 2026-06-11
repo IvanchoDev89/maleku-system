@@ -7,15 +7,89 @@ from app.core.database import get_db
 from app.core.security import require_role
 from app.core.utils import escape_like_pattern
 from app.models import User, UserRole, Vendor
+from pydantic import BaseModel
+from typing import Optional
 
 router = APIRouter()
+
+
+class VendorListItem(BaseModel):
+    id: str
+    business_name: str
+    business_slug: str
+    business_type: str
+    description: Optional[str] = None
+    logo_url: Optional[str] = None
+    cover_image: Optional[str] = None
+    address: Optional[str] = None
+    rating: Optional[float] = None
+    total_reviews: Optional[int] = None
+    is_verified: bool
+    is_active: bool
+    created_at: Optional[str] = None
+    owner_name: Optional[str] = None
+
+
+class VendorStatsResponse(BaseModel):
+    total: int
+    verified: int
+    unverified: int
+    active: int
+    inactive: int
+    by_business_type: dict
+
+
+class VendorListResponse(BaseModel):
+    items: list[VendorListItem]
+    total: int
+    page: int
+    limit: int
+    total_pages: int
+    has_next: bool
+    has_prev: bool
+
+
+class VendorDetailResponse(BaseModel):
+    id: str
+    business_name: str
+    business_slug: str
+    business_type: str
+    description: Optional[str] = None
+    logo_url: Optional[str] = None
+    cover_image: Optional[str] = None
+    address: Optional[str] = None
+    rating: Optional[float] = None
+    total_reviews: Optional[int] = None
+    is_verified: bool
+    is_active: bool
+    created_at: Optional[str] = None
+    owner_name: Optional[str] = None
+
+
+class VendorUpdateResponse(BaseModel):
+    message: str
+    id: str
+
+
+class VendorVerifyResponse(BaseModel):
+    message: str
+    is_verified: bool
+
+
+class VendorActiveResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class VendorDeleteResponse(BaseModel):
+    message: str
 
 
 def require_admin():
     return require_role(UserRole.SUPER_ADMIN, UserRole.ADMIN)
 
 
-@router.get("")
+@router.get("", response_model=VendorListResponse)
 async def list_vendors(
     limit: int = 20,
     offset: int = 0,
@@ -53,12 +127,12 @@ async def list_vendors(
     if is_verified == "true":
         conditions.append(Vendor.is_verified)
     elif is_verified == "false":
-        conditions.append(not Vendor.is_verified)
+        conditions.append(Vendor.is_verified == False)
     
     if is_active == "true":
         conditions.append(Vendor.is_active)
     elif is_active == "false":
-        conditions.append(not Vendor.is_active)
+        conditions.append(Vendor.is_active == False)
     
     if conditions:
         query = query.where(*conditions)
@@ -123,7 +197,7 @@ async def list_vendors(
     }
 
 
-@router.get("/stats/summary")
+@router.get("/stats/summary", response_model=VendorStatsResponse)
 async def get_vendor_stats(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin)
@@ -163,7 +237,7 @@ async def get_vendor_stats(
     }
 
 
-@router.get("/{vendor_id}")
+@router.get("/{vendor_id}", response_model=VendorDetailResponse)
 async def get_vendor(
     vendor_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -209,7 +283,7 @@ async def get_vendor(
     }
 
 
-@router.put("/{vendor_id}")
+@router.put("/{vendor_id}", response_model=VendorUpdateResponse)
 async def update_vendor(
     vendor_id: uuid.UUID,
     data: dict,
@@ -259,7 +333,7 @@ async def update_vendor(
     return {"message": "Vendor updated successfully", "id": str(vendor.id)}
 
 
-@router.put("/{vendor_id}/verify")
+@router.put("/{vendor_id}/verify", response_model=VendorVerifyResponse)
 async def verify_vendor(
     vendor_id: uuid.UUID,
     is_verified: bool = True,
@@ -286,7 +360,7 @@ async def verify_vendor(
     }
 
 
-@router.put("/{vendor_id}/active")
+@router.put("/{vendor_id}/active", response_model=VendorActiveResponse)
 async def toggle_vendor_active(
     vendor_id: uuid.UUID,
     is_active: bool = True,
@@ -313,7 +387,7 @@ async def toggle_vendor_active(
     }
 
 
-@router.delete("/{vendor_id}")
+@router.delete("/{vendor_id}", response_model=VendorDeleteResponse)
 async def delete_vendor(
     vendor_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),

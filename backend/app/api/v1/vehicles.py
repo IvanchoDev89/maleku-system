@@ -12,11 +12,57 @@ from app.core.security import get_current_user, require_role
 from app.core.utils import escape_like_pattern
 from app.models import User, UserRole, Vendor, Vehicle, VehicleType
 from app.schemas import vehicle as vehicle_schema
+from pydantic import BaseModel
 
 router = APIRouter()
 
+class DeleteResponse(BaseModel):
+    message: str
 
-@router.get("/", response_model=list[vehicle_schema.VehicleResponse])
+
+class MessageResponse(BaseModel):
+    message: str
+
+
+class MarkReadResponse(BaseModel):
+    message: str
+    conversation_id: str
+
+
+class ReorderResponse(BaseModel):
+    message: str
+    items_updated: int
+
+
+class ActivateResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class ChangeRoleResponse(BaseModel):
+    message: str
+    user_id: str
+    new_role: str
+
+
+class VerifyResponse(BaseModel):
+    message: str
+    is_verified: bool
+
+
+class ToggleActiveResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class PresignedUrlResponse(BaseModel):
+    url: str
+    expires_in: int
+    fields: dict
+
+
+
+@router.get("", response_model=list[vehicle_schema.VehicleResponse])
 async def list_vehicles(
     location: str | None = None,
     vehicle_type: VehicleType | None = None,
@@ -81,7 +127,7 @@ async def get_vehicle(
     return vehicle
 
 
-@router.post("/", response_model=vehicle_schema.VehicleResponse)
+@router.post("", response_model=vehicle_schema.VehicleResponse)
 async def create_vehicle(
     vehicle_data: vehicle_schema.VehicleCreate,
     db: AsyncSession = Depends(get_db),
@@ -161,7 +207,7 @@ async def update_vehicle(
     return vehicle
 
 
-@router.delete("/{vehicle_id}")
+@router.delete("/{vehicle_id}", response_model=DeleteResponse)
 async def delete_vehicle(
     vehicle_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),

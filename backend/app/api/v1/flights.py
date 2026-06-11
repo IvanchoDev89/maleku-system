@@ -17,7 +17,7 @@ router = APIRouter()
 
 
 
-@router.get("/", response_model=list[flight_schema.FlightResponse])
+@router.get("", response_model=list[flight_schema.FlightResponse])
 async def list_flights(
     origin_airport: str | None = None,
     destination_airport: str | None = None,
@@ -53,12 +53,12 @@ async def list_flights(
     return flights
 
 
-@router.get("/search", response_model=list[flight_schema.FlightResponse])
+@router.get("/search", response_model=dict)
 async def search_flights(
     origin: str,
     destination: str,
     db: AsyncSession = Depends(get_db)
-) -> list[flight_schema.FlightResponse]:
+) -> dict:
     """
     Search flights between two airports.
     
@@ -106,7 +106,7 @@ async def get_flight(flight_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return flight
 
 
-@router.post("/", response_model=flight_schema.FlightResponse)
+@router.post("", response_model=flight_schema.FlightResponse)
 async def create_flight(
     flight_data: flight_schema.FlightCreate,
     db: AsyncSession = Depends(get_db),
@@ -160,7 +160,7 @@ async def update_flight(
     return flight
 
 
-@router.delete("/{flight_id}")
+@router.delete("/{flight_id}", response_model=dict)
 async def delete_flight(
     flight_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),

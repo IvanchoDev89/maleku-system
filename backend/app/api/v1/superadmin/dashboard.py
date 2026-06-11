@@ -90,6 +90,89 @@ class AlertItem(BaseModel):
     is_resolved: bool
 
 
+class RecentActivityResponse(BaseModel):
+    """Response model for recent activity endpoint."""
+    id: str
+    action: str
+    entity_type: str
+    entity_name: Optional[str]
+    user_name: str
+    user_email: str
+    timestamp: datetime
+    description: str
+
+
+class AlertResponse(BaseModel):
+    """Response model for system alerts."""
+    id: str
+    severity: str
+    title: str
+    description: str
+    entity_type: Optional[str]
+    entity_id: Optional[str]
+    created_at: datetime
+    is_resolved: bool
+
+
+class RevenueTrendPoint(BaseModel):
+    date: str
+    revenue: float
+    bookings_count: int
+
+
+class RevenueTrendResponse(BaseModel):
+    period_days: int
+    start_date: str
+    end_date: str
+    data: list[RevenueTrendPoint]
+
+
+class NewsletterStatsResponse(BaseModel):
+    total_subscribers: int
+    active_subscribers: int
+    confirmed_subscribers: int
+    unconfirmed: int
+    new_today: int
+    new_this_week: int
+    new_this_month: int
+    by_source: dict
+    conversion_rate: float
+
+
+class TopContentResponse(BaseModel):
+    featured_destinations: list[dict]
+    top_tours: list[dict]
+    top_properties: list[dict]
+
+
+class QuickAction(BaseModel):
+    id: str
+    label: str
+    count: int
+    icon: str
+    href: str
+    priority: str
+
+
+class QuickActionsResponse(BaseModel):
+    actions: list[QuickAction]
+
+
+class TopVendorItem(BaseModel):
+    vendor_id: str
+    vendor_name: str
+    logo_url: Optional[str]
+    total_bookings: int
+    total_revenue: float
+
+
+class SystemMetricsResponse(BaseModel):
+    timestamp: str
+    database: dict
+    system: dict
+    api: dict
+
+
 # Dashboard Overview
 @router.get("/stats", response_model=DashboardStats)
 async def get_dashboard_stats(
@@ -294,7 +377,7 @@ async def get_dashboard_stats(
     )
 
 
-@router.get("/recent-activity")
+@router.get("/recent-activity", response_model=list[RecentActivityResponse])
 async def get_recent_activity(
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -332,7 +415,7 @@ async def get_recent_activity(
     return activities
 
 
-@router.get("/alerts")
+@router.get("/alerts", response_model=list[AlertResponse])
 async def get_system_alerts(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin())
@@ -382,7 +465,7 @@ async def get_system_alerts(
     
     # Check for users without email verification
     unverified_result = await db.execute(
-        select(func.count(User.id)).where(not User.is_verified)
+        select(func.count(User.id)).where(User.is_verified == False)
     )
     unverified_count = unverified_result.scalar() or 0
     
@@ -401,7 +484,7 @@ async def get_system_alerts(
     return alerts
 
 
-@router.get("/revenue-trend")
+@router.get("/revenue-trend", response_model=RevenueTrendResponse)
 async def get_revenue_trend(
     days: int = Query(30, ge=7, le=365),
     db: AsyncSession = Depends(get_db),
@@ -443,7 +526,7 @@ async def get_revenue_trend(
     }
 
 
-@router.get("/newsletter-stats")
+@router.get("/newsletter-stats", response_model=NewsletterStatsResponse)
 async def get_newsletter_stats(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin())
@@ -512,7 +595,7 @@ async def get_newsletter_stats(
     }
 
 
-@router.get("/top-content")
+@router.get("/top-content", response_model=TopContentResponse)
 async def get_top_content(
     limit: int = Query(5, ge=1, le=20),
     db: AsyncSession = Depends(get_db),
@@ -581,7 +664,7 @@ async def get_top_content(
     }
 
 
-@router.get("/quick-actions")
+@router.get("/quick-actions", response_model=QuickActionsResponse)
 async def get_quick_actions(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin())
@@ -612,7 +695,7 @@ async def get_quick_actions(
     # Unverified users (last 24h)
     unverified_users = await db.execute(
         select(func.count(User.id))
-        .where(not User.is_verified)
+        .where(User.is_verified == False)
         .where(User.created_at >= now - timedelta(days=1))
     )
     unverified_count = unverified_users.scalar() or 0
@@ -666,7 +749,7 @@ async def get_quick_actions(
     }
 
 
-@router.get("/top-vendors")
+@router.get("/top-vendors", response_model=list[TopVendorItem])
 async def get_top_vendors(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
@@ -708,7 +791,7 @@ async def get_top_vendors(
     ]
 
 
-@router.get("/system-metrics")
+@router.get("/system-metrics", response_model=SystemMetricsResponse)
 async def get_system_metrics(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin())

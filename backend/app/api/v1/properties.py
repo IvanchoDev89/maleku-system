@@ -62,9 +62,9 @@ async def get_properties(
     )
     
     # Cache the response
-    await cache.set(cache_key, response, ttl=CACHE_TTL_LIST, tags=["properties"])
+    await cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_LIST, tags=["properties"])
     
-    return PaginatedResponse(**response)
+    return response
 
 
 @router.get("/{property_id}", response_model=PropertyResponse,
@@ -256,7 +256,7 @@ async def update_property(
     return response
 
 
-@router.delete("/{property_id}",
+@router.delete("/{property_id}", response_model=dict,
                summary="Delete property (soft)",
                description="Soft-deletes a property by setting is_active=False. Only the owning vendor or SUPER_ADMIN.")
 async def delete_property(
@@ -333,10 +333,10 @@ async def get_my_properties(
         order_by=Property.created_at.desc()
     )
     
-    return PaginatedResponse(**response)
+    return response
 
 
-@router.get("/regions",
+@router.get("/regions", response_model=list[str],
             summary="List property regions",
             description="Returns a distinct list of all regions where active properties are located.")
 async def get_regions(db: AsyncSession = Depends(get_db)):

@@ -234,7 +234,7 @@ async def upload_images(
     return list(results)
 
 
-@router.delete("/image/{file_id}",
+@router.delete("/image/{file_id}", response_model=dict,
                summary="Delete image",
                description="Deletes an image from Cloudinary (if provider=cloudinary with public_id) or from local storage. ADMIN/SUPER_ADMIN role required.")
 async def delete_image(
@@ -271,7 +271,7 @@ async def delete_image(
         raise HTTPException(status_code=500, detail="Failed to delete image. Please try again later.") from e
 
 
-@router.get("/presigned-url",
+@router.get("/presigned-url", response_model=dict,
             summary="Get presigned upload URL",
             description="Returns upload URL and metadata for a client-side upload. Validates file extension against allowed types.")
 async def get_presigned_url(

@@ -12,11 +12,57 @@ from app.core.security import get_current_user, require_role
 from app.models import User, UserRole, Vendor, PricingType
 from app.models import Transportation, TransportServiceType
 from app.schemas import transportation as transportation_schema
+from pydantic import BaseModel
 
 router = APIRouter()
 
+class DeleteResponse(BaseModel):
+    message: str
 
-@router.get("/", response_model=list[transportation_schema.TransportationResponse])
+
+class MessageResponse(BaseModel):
+    message: str
+
+
+class MarkReadResponse(BaseModel):
+    message: str
+    conversation_id: str
+
+
+class ReorderResponse(BaseModel):
+    message: str
+    items_updated: int
+
+
+class ActivateResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class ChangeRoleResponse(BaseModel):
+    message: str
+    user_id: str
+    new_role: str
+
+
+class VerifyResponse(BaseModel):
+    message: str
+    is_verified: bool
+
+
+class ToggleActiveResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class PresignedUrlResponse(BaseModel):
+    url: str
+    expires_in: int
+    fields: dict
+
+
+
+@router.get("", response_model=list[transportation_schema.TransportationResponse])
 async def list_transportation(
     location: str | None = None,
     service_type: TransportServiceType | None = None,
@@ -83,7 +129,7 @@ async def get_transportation(
     return transport
 
 
-@router.post("/", response_model=transportation_schema.TransportationResponse)
+@router.post("", response_model=transportation_schema.TransportationResponse)
 async def create_transportation(
     transport_data: transportation_schema.TransportationCreate,
     db: AsyncSession = Depends(get_db),
@@ -161,7 +207,7 @@ async def update_transportation(
     return transport
 
 
-@router.delete("/{transport_id}")
+@router.delete("/{transport_id}", response_model=DeleteResponse)
 async def delete_transportation(
     transport_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -215,7 +261,7 @@ async def get_my_transportation(
     return transports
 
 
-@router.post("/calculate-price")
+@router.post("/calculate-price", response_model=dict)
 async def calculate_price(
     transport_id: uuid.UUID,
     distance_km: float,

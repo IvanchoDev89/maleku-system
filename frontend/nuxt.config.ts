@@ -111,7 +111,7 @@ export default defineNuxtConfig({
             "font-src 'self' https://fonts.gstatic.com data:",
             "img-src 'self' data: https: blob:",
             "media-src 'self' https:",
-            "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 https://api.costaricatravel.dev https://api.stripe.com https://*.sentry.io https://api.cloudinary.com https://res.cloudinary.com",
+            "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 ws://localhost:4000 https://api.costaricatravel.dev https://api.stripe.com https://*.sentry.io https://api.cloudinary.com https://res.cloudinary.com",
             "frame-src 'self' https://*.stripe.com https://js.stripe.com",
             "object-src 'none'",
             "base-uri 'self'",

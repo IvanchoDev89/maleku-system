@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.core.security import require_role
@@ -14,8 +15,53 @@ from app.schemas import pricing as pricing_schema
 
 router = APIRouter()
 
+class DeleteResponse(BaseModel):
+    message: str
 
-@router.get("/", response_model=list[pricing_schema.PricingRuleResponse])
+
+class MessageResponse(BaseModel):
+    message: str
+
+
+class MarkReadResponse(BaseModel):
+    message: str
+    conversation_id: str
+
+
+class ReorderResponse(BaseModel):
+    message: str
+    items_updated: int
+
+
+class ActivateResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class ChangeRoleResponse(BaseModel):
+    message: str
+    user_id: str
+    new_role: str
+
+
+class VerifyResponse(BaseModel):
+    message: str
+    is_verified: bool
+
+
+class ToggleActiveResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class PresignedUrlResponse(BaseModel):
+    url: str
+    expires_in: int
+    fields: dict
+
+
+
+@router.get("", response_model=list[pricing_schema.PricingRuleResponse])
 async def list_pricing_rules(
     service_type: str | None = None,
     service_id: uuid.UUID | None = None,
@@ -52,7 +98,7 @@ async def get_pricing_rule(rule_id: uuid.UUID, db: AsyncSession = Depends(get_db
     return {**rule.__dict__, "final_price": round(final_price, 2)}
 
 
-@router.post("/", response_model=pricing_schema.PricingRuleResponse)
+@router.post("", response_model=pricing_schema.PricingRuleResponse)
 async def create_pricing_rule(
     rule_data: pricing_schema.PricingRuleCreate,
     db: AsyncSession = Depends(get_db),
@@ -114,7 +160,7 @@ async def update_pricing_rule(
     return rule
 
 
-@router.delete("/{rule_id}")
+@router.delete("/{rule_id}", response_model=DeleteResponse)
 async def delete_pricing_rule(
     rule_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -135,7 +181,7 @@ async def delete_pricing_rule(
     return {"message": "Pricing rule deleted"}
 
 
-@router.get("/calculate")
+@router.get("/calculate", response_model=dict)
 async def calculate_dynamic_price(
     service_type: str,
     service_id: uuid.UUID,

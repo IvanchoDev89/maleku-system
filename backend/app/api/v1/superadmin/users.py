@@ -166,7 +166,7 @@ async def list_users(
     return response
 
 
-@router.get("/count")
+@router.get("/count", response_model=dict)
 async def get_user_count(
     search: Optional[str] = Query(None),
     role: Optional[UserRole] = Query(None),
@@ -420,7 +420,7 @@ async def update_user(
     }
 
 
-@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{user_id}", response_model=dict, status_code=status.HTTP_200_OK)
 async def delete_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -517,7 +517,7 @@ async def get_user_activity(
     ]
 
 
-@router.post("/{user_id}/impersonate")
+@router.post("/{user_id}/impersonate", response_model=dict)
 async def impersonate_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -585,7 +585,7 @@ async def impersonate_user(
     }
 
 
-@router.post("/{user_id}/block")
+@router.post("/{user_id}/block", response_model=dict)
 async def block_user(
     user_id: UUID,
     reason: str = Query(..., max_length=500, description="Reason for blocking"),
@@ -642,7 +642,7 @@ async def block_user(
     }
 
 
-@router.post("/{user_id}/unblock")
+@router.post("/{user_id}/unblock", response_model=dict)
 async def unblock_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),

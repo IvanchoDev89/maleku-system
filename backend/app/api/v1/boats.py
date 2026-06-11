@@ -12,11 +12,57 @@ from app.core.security import get_current_user, require_role
 from app.core.utils import escape_like_pattern
 from app.models import User, UserRole, Vendor, BoatEquipment, BoatType
 from app.schemas import boat as boat_schema
+from pydantic import BaseModel
 
 router = APIRouter()
 
+class DeleteResponse(BaseModel):
+    message: str
 
-@router.get("/", response_model=list[boat_schema.BoatEquipmentResponse])
+
+class MessageResponse(BaseModel):
+    message: str
+
+
+class MarkReadResponse(BaseModel):
+    message: str
+    conversation_id: str
+
+
+class ReorderResponse(BaseModel):
+    message: str
+    items_updated: int
+
+
+class ActivateResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class ChangeRoleResponse(BaseModel):
+    message: str
+    user_id: str
+    new_role: str
+
+
+class VerifyResponse(BaseModel):
+    message: str
+    is_verified: bool
+
+
+class ToggleActiveResponse(BaseModel):
+    message: str
+    is_active: bool
+
+
+class PresignedUrlResponse(BaseModel):
+    url: str
+    expires_in: int
+    fields: dict
+
+
+
+@router.get("", response_model=list[boat_schema.BoatEquipmentResponse])
 async def list_boats(
     location: str | None = None,
     equipment_type: BoatType | None = None,
@@ -81,7 +127,7 @@ async def get_boat(
     return boat
 
 
-@router.post("/", response_model=boat_schema.BoatEquipmentResponse)
+@router.post("", response_model=boat_schema.BoatEquipmentResponse)
 async def create_boat(
     boat_data: boat_schema.BoatEquipmentCreate,
     db: AsyncSession = Depends(get_db),
@@ -161,7 +207,7 @@ async def update_boat(
     return boat
 
 
-@router.delete("/{boat_id}")
+@router.delete("/{boat_id}", response_model=DeleteResponse)
 async def delete_boat(
     boat_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),

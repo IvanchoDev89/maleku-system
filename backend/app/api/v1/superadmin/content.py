@@ -375,7 +375,7 @@ async def update_blog_post(
     return BlogPost(**post)
 
 
-@router.delete("/blog/{post_id}", status_code=204)
+@router.delete("/blog/{post_id}", response_model=dict, status_code=200)
 async def delete_blog_post(
     post_id: str,
     db: AsyncSession = Depends(get_db),
@@ -523,7 +523,7 @@ async def list_media(
     return [MediaFile(**m) for m in media[offset:offset + limit]]
 
 
-@router.delete("/media/{media_id}", status_code=204)
+@router.delete("/media/{media_id}", response_model=dict, status_code=200)
 async def delete_media(
     media_id: str,
     db: AsyncSession = Depends(get_db),

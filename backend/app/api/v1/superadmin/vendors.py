@@ -17,7 +17,7 @@ from enum import Enum
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_, func, desc
+from sqlalchemy import case,  select, or_, func, desc
 from sqlalchemy.orm import selectinload
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -156,8 +156,8 @@ async def calculate_vendor_stats(db: AsyncSession, vendor_id: UUID) -> VendorSta
         select(
             func.count(Booking.id).label("total"),
             func.sum(Booking.total_amount).label("revenue"),
-            func.sum(func.case((Booking.status == "completed", 1), else_=0)).label("completed"),
-            func.sum(func.case((Booking.status == "cancelled", 1), else_=0)).label("cancelled"),
+            func.sum(case((Booking.status == "completed", 1), else_=0)).label("completed"),
+            func.sum(case((Booking.status == "cancelled", 1), else_=0)).label("cancelled"),
         ).where(Booking.vendor_id == vendor_id)
     )
     row = result.one()
@@ -201,7 +201,7 @@ async def run_compliance_check(db: AsyncSession, vendor: Vendor) -> List[str]:
     result = await db.execute(
         select(
             func.count().label("total"),
-            func.sum(func.case((Booking.status == "completed", 1), else_=0)).label("completed"),
+            func.sum(case((Booking.status == "completed", 1), else_=0)).label("completed"),
         ).where(Booking.vendor_id == vendor.id)
     )
     row = result.one()
@@ -516,7 +516,7 @@ async def process_vendor_approval(
     )
 
 
-@router.post("/{vendor_id}/feature")
+@router.post("/{vendor_id}/feature", response_model=dict)
 async def toggle_vendor_featured(
     vendor_id: UUID,
     featured: bool = Body(..., embed=True),
@@ -670,7 +670,7 @@ async def get_vendor_analytics(
     )
 
 
-@router.post("/{vendor_id}/compliance-check")
+@router.post("/{vendor_id}/compliance-check", response_model=dict)
 async def run_vendor_compliance_check(
     vendor_id: UUID,
     data: ComplianceCheckRequest = Body(default=None),

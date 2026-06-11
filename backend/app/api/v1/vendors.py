@@ -171,7 +171,7 @@ async def update_my_vendor_profile(
     return VendorResponse.model_validate(vendor)
 
 
-@router.get("/me/analytics",
+@router.get("/me/analytics", response_model=dict,
             summary="Vendor analytics dashboard",
             description="Returns key metrics for the authenticated vendor: property count, tour count, booking stats (pending/confirmed/completed), revenue, rating, and commission rate.")
 async def get_my_analytics(
@@ -229,7 +229,7 @@ async def get_my_analytics(
     }
 
 
-@router.put("/{vendor_id}/verify",
+@router.put("/{vendor_id}/verify", response_model=dict,
             summary="Verify vendor",
             description="Marks a vendor as verified. SUPER_ADMIN role required.")
 async def verify_vendor(
@@ -258,7 +258,7 @@ async def verify_vendor(
     return {"message": "Vendor verified successfully"}
 
 
-@router.put("/{vendor_id}/activate",
+@router.put("/{vendor_id}/activate", response_model=dict,
             summary="Toggle vendor active status",
             description="Activates or deactivates a vendor account. SUPER_ADMIN role required.")
 async def toggle_vendor_active(
