@@ -36,6 +36,7 @@ from app.api.v1.availability import router as availability_router
 from app.api.v1.stripe import router as stripe_router
 from app.api.v1.marketing import router as marketing_router
 from app.api.v1.newsletter import router as newsletter_router
+from app.api.v1.contact import router as contact_router
 from app.api.v1.superadmin import router as superadmin_router
 from app.core.logging import setup_logging, get_logger
 from app.middleware.error_handler import ErrorHandlerMiddleware
@@ -280,6 +281,7 @@ app.include_router(upload_router, prefix=f"{api_v1}/upload", tags=["Upload"])
 app.include_router(availability_router, prefix=f"{api_v1}/availability", tags=["Availability"])
 app.include_router(stripe_router, prefix=f"{api_v1}/stripe", tags=["Stripe Payments"])
 app.include_router(newsletter_router, prefix=f"{api_v1}/newsletter", tags=["Newsletter"])
+app.include_router(contact_router, prefix=api_v1, tags=["Contact"])
 
 # Marketing routes (BillionMail integration)
 app.include_router(marketing_router, prefix=f"{api_v1}/marketing", tags=["Marketing"])

@@ -1,146 +1,52 @@
 <script setup lang="ts">
-/**
- * Vendor Documents Verification Page
- * Verificación de documentos de proveedor
- */
-import { ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+definePageMeta({
+  layout: 'superadmin',
+  middleware: ['superadmin']
+})
 
 const route = useRoute()
 const router = useRouter()
+const api = useApi()
 const vendorId = route.params.id as string
-const toast = useToast()
 
-const showConfirm = ref(false)
-const confirmTitle = ref('')
-const confirmMessage = ref('')
-const confirmConfirmText = ref('Confirmar')
-const confirmVariant = ref<'danger' | 'warning' | 'info'>('danger')
-const confirmLoading = ref(false)
-let confirmAction: (() => Promise<void>) | null = null
+const vendor = ref<any>(null)
+const loading = ref(true)
+const error = ref('')
 
-function openConfirm(title: string, message: string, action: () => Promise<void>, options?: { confirmText?: string, variant?: 'danger' | 'warning' | 'info' }) {
-  confirmTitle.value = title
-  confirmMessage.value = message
-  confirmConfirmText.value = options?.confirmText || 'Confirmar'
-  confirmVariant.value = options?.variant || 'danger'
-  confirmAction = action
-  showConfirm.value = true
-}
-
-async function executeConfirmAction() {
-  if (!confirmAction) return
-  confirmLoading.value = true
+const fetchVendor = async () => {
+  loading.value = true
+  error.value = ''
   try {
-    await confirmAction()
+    vendor.value = await api.get(`/superadmin/vendors/${vendorId}`)
+  } catch (e: any) {
+    error.value = e?.data?.detail || 'Error al cargar proveedor'
+    console.error('Error fetching vendor:', e)
   } finally {
-    confirmLoading.value = false
-    showConfirm.value = false
-    confirmAction = null
+    loading.value = false
   }
-}
-
-const vendor = ref({
-  id: vendorId,
-  name: 'Transportes CR',
-  email: 'contact@transportescr.com',
-  status: 'pending',
-  submitted_at: '2024-02-15'
-})
-
-const documents = ref([
-  {
-    id: 'doc-001',
-    name: 'Cédula Jurídica',
-    type: 'legal_id',
-    filename: 'cedula_juridica.pdf',
-    url: '#',
-    status: 'pending',
-    uploaded_at: '2024-02-15 10:30',
-    notes: ''
-  },
-  {
-    id: 'doc-002',
-    name: 'Permiso de Operación',
-    type: 'operating_permit',
-    filename: 'permiso_operacion.pdf',
-    url: '#',
-    status: 'verified',
-    uploaded_at: '2024-02-15 10:35',
-    notes: 'Válido hasta 2025'
-  },
-  {
-    id: 'doc-003',
-    name: 'Seguro de Responsabilidad Civil',
-    type: 'insurance',
-    filename: 'seguro_rc.pdf',
-    url: '#',
-    status: 'rejected',
-    uploaded_at: '2024-02-15 10:40',
-    notes: 'Monto insuficiente, requiere mínimo $100,000'
-  },
-  {
-    id: 'doc-004',
-    name: 'Foto de Flota',
-    type: 'fleet_photo',
-    filename: 'flota_2024.jpg',
-    url: '#',
-    status: 'pending',
-    uploaded_at: '2024-02-15 11:00',
-    notes: ''
-  }
-])
-
-const verificationNotes = ref('')
-
-const verifiedCount = computed(() => documents.value.filter(d => d.status === 'verified').length)
-const totalCount = computed(() => documents.value.length)
-const progressPercent = computed(() => Math.round((verifiedCount.value / totalCount.value) * 100))
-
-const verifyDocument = (docId: string) => {
-  const doc = documents.value.find(d => d.id === docId)
-  if (doc) doc.status = 'verified'
-}
-
-const rejectDocument = (docId: string) => {
-  const doc = documents.value.find(d => d.id === docId)
-  if (doc) doc.status = 'rejected'
-}
-
-const approveVendor = () => {
-  vendor.value.status = 'active'
-  toast.success('Proveedor aprobado exitosamente')
-  router.push('/superadmin/vendors')
-}
-
-const confirmRejectVendor = () => {
-  openConfirm(
-    'Rechazar Proveedor',
-    '¿Estás seguro de rechazar este proveedor?',
-    executeRejectVendor
-  )
-}
-
-const executeRejectVendor = () => {
-  vendor.value.status = 'rejected'
-  router.push('/superadmin/vendors')
 }
 
 const goBack = () => {
   router.push('/superadmin/vendors')
 }
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
-  verified: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800'
+  active: 'bg-green-100 text-green-800',
+  rejected: 'bg-red-100 text-red-800',
+  suspended: 'bg-gray-100 text-gray-800',
 }
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   pending: 'Pendiente',
-  verified: 'Verificado',
-  rejected: 'Rechazado'
+  active: 'Activo',
+  rejected: 'Rechazado',
+  suspended: 'Suspendido',
 }
+
+onMounted(() => {
+  fetchVendor()
+})
 </script>
 
 <template>
@@ -149,154 +55,125 @@ const statusLabels = {
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-4">
         <button @click="goBack" class="p-2 hover:bg-gray-100 rounded-lg">
-          <span class="text-2xl">←</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
         </button>
         <div>
-          <h1 class="text-3xl font-bold text-gray-900">Verificación de Documentos</h1>
-          <p class="text-gray-500">{{ vendor.name }} - ID: {{ vendorId }}</p>
+          <h1 class="text-3xl font-bold text-gray-900">Documentos del Proveedor</h1>
+          <p class="text-gray-500" v-if="vendor">{{ vendor.business_name }}</p>
         </div>
       </div>
-      <div class="flex gap-3">
-        <button 
-          @click="confirmRejectVendor"
-          class="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
-        >
-          Rechazar Proveedor
-        </button>
-        <button 
-          @click="approveVendor"
-          :disabled="verifiedCount < totalCount"
-          :class="verifiedCount >= totalCount ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-300 cursor-not-allowed'"
-          class="px-4 py-2 text-white rounded-lg"
-        >
-          ✓ Aprobar Proveedor
-        </button>
-      </div>
     </div>
 
-    <!-- Progress -->
-    <div class="bg-white rounded-lg shadow p-6">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-sm font-medium text-gray-700">Progreso de Verificación</span>
-        <span class="text-sm font-medium text-gray-900">{{ verifiedCount }} de {{ totalCount }} documentos</span>
-      </div>
-      <div class="w-full bg-gray-200 rounded-full h-2.5">
-        <div 
-          class="bg-green-600 h-2.5 rounded-full transition-all duration-300" 
-          :style="{ width: progressPercent + '%' }"
-        ></div>
-      </div>
-      <div class="mt-2 text-sm" :class="progressPercent === 100 ? 'text-green-600' : 'text-yellow-600'">
-        {{ progressPercent === 100 ? '✓ Todos los documentos verificados' : 'Faltan documentos por verificar' }}
-      </div>
+    <!-- Loading -->
+    <div v-if="loading" class="bg-white rounded-lg shadow p-12 text-center">
+      <div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+      <p class="text-gray-500">Cargando proveedor...</p>
     </div>
 
-    <!-- Documents Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div 
-        v-for="doc in documents" 
-        :key="doc.id"
-        class="bg-white rounded-lg shadow overflow-hidden"
-      >
-        <!-- Document Header -->
-        <div class="p-4 border-b border-gray-200">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                <span class="text-xl">📄</span>
+    <!-- Error -->
+    <div v-else-if="error" class="bg-white rounded-lg shadow p-12 text-center">
+      <p class="text-red-500 text-lg">{{ error }}</p>
+      <button @click="fetchVendor" class="mt-4 text-primary-600 hover:text-primary-700 font-medium">Reintentar</button>
+    </div>
+
+    <!-- Vendor Details -->
+    <template v-else-if="vendor">
+      <!-- Vendor Info Card -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Informacion del Proveedor</h3>
+            <dl class="space-y-3">
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Nombre:</dt>
+                <dd class="font-medium text-gray-900">{{ vendor.business_name }}</dd>
               </div>
-              <div>
-                <h3 class="font-medium text-gray-900">{{ doc.name }}</h3>
-                <p class="text-sm text-gray-500">{{ doc.filename }}</p>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Tipo:</dt>
+                <dd class="font-medium text-gray-900">{{ vendor.business_type }}</dd>
               </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Email:</dt>
+                <dd class="font-medium text-gray-900">{{ vendor.owner_email }}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Propietario:</dt>
+                <dd class="font-medium text-gray-900">{{ vendor.owner_name }}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Estado:</dt>
+                <dd>
+                  <span :class="['px-2 py-1 text-xs font-medium rounded-full', statusColors[vendor.status] || 'bg-gray-100']">
+                    {{ statusLabels[vendor.status] || vendor.status }}
+                  </span>
+                </dd>
+              </div>
+            </dl>
+          </div>
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Estadisticas</h3>
+            <dl class="space-y-3" v-if="vendor.stats">
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Reservas totales:</dt>
+                <dd class="font-medium text-gray-900">{{ vendor.stats.total_bookings || 0 }}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Ingresos totales:</dt>
+                <dd class="font-medium text-gray-900">${{ (vendor.stats.total_revenue || 0).toLocaleString() }}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Propiedades:</dt>
+                <dd class="font-medium text-gray-900">{{ vendor.stats.total_properties || 0 }}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Rating:</dt>
+                <dd class="font-medium text-gray-900">{{ vendor.rating || 0 }} / 5</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compliance Flags -->
+      <div class="bg-white rounded-lg shadow p-6" v-if="vendor.compliance_flags && vendor.compliance_flags.length > 0">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Alertas de Cumplimiento</h3>
+        <div class="space-y-2">
+          <div v-for="(flag, i) in vendor.compliance_flags" :key="i" class="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
+            <span class="text-yellow-600">⚠</span>
+            <span class="text-sm text-yellow-800">{{ flag }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document Verification Status -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Estado de Verificacion</h3>
+        <div class="flex items-center gap-4">
+          <div class="flex-1">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-gray-500">Documentos verificados:</span>
+              <span class="text-sm font-medium" :class="vendor.documents_verified ? 'text-green-600' : 'text-yellow-600'">
+                {{ vendor.documents_verified ? 'Completado' : 'Pendiente' }}
+              </span>
             </div>
-            <span :class="['px-3 py-1 rounded-full text-xs font-medium', statusColors[doc.status]]">
-              {{ statusLabels[doc.status] }}
-            </span>
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+              <div class="h-2.5 rounded-full transition-all duration-300" :class="vendor.documents_verified ? 'bg-green-600' : 'bg-yellow-400'" :style="{ width: vendor.documents_verified ? '100%' : '50%' }"></div>
+            </div>
           </div>
         </div>
-
-        <!-- Document Preview Placeholder -->
-        <div class="h-48 bg-gray-100 flex items-center justify-center">
-          <div class="text-center">
-            <span class="text-4xl mb-2">📄</span>
-            <p class="text-sm text-gray-500">Vista previa del documento</p>
-            <a 
-              :href="doc.url" 
-              target="_blank"
-              class="mt-2 inline-block text-blue-600 hover:text-blue-800 text-sm"
-            >
-              Abrir documento →
-            </a>
-          </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="p-4 border-t border-gray-200">
-          <div class="flex gap-2">
-            <button 
-              @click="verifyDocument(doc.id)"
-              :disabled="doc.status === 'verified'"
-              :class="doc.status === 'verified' ? 'bg-gray-100 text-gray-400' : 'bg-green-50 text-green-600 hover:bg-green-100'"
-              class="flex-1 py-2 rounded-lg text-sm font-medium"
-            >
-              ✓ Verificar
-            </button>
-            <button 
-              @click="rejectDocument(doc.id)"
-              :disabled="doc.status === 'rejected'"
-              :class="doc.status === 'rejected' ? 'bg-gray-100 text-gray-400' : 'bg-red-50 text-red-600 hover:bg-red-100'"
-              class="flex-1 py-2 rounded-lg text-sm font-medium"
-            >
-              ✗ Rechazar
-            </button>
-          </div>
-          <textarea 
-            v-if="doc.status === 'rejected' || doc.notes"
-            v-model="doc.notes"
-            placeholder="Notas sobre este documento..."
-            class="mt-3 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            rows="2"
-          ></textarea>
-        </div>
+        <p class="mt-4 text-sm text-gray-500">
+          La verificacion de documentos individuales estara disponible proximamente.
+        </p>
       </div>
-    </div>
 
-    <!-- Verification Notes -->
-    <div class="bg-white rounded-lg shadow p-6">
-      <h3 class="text-lg font-medium text-gray-900 mb-4">Notas de Verificación</h3>
-      <textarea 
-        v-model="verificationNotes"
-        placeholder="Notas generales sobre la verificación de este proveedor..."
-        class="w-full px-4 py-3 border border-gray-300 rounded-lg"
-        rows="4"
-      ></textarea>
-      <div class="mt-4 flex justify-end gap-3">
-        <button 
-          @click="goBack"
-          class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-        >
-          Cancelar
-        </button>
-        <button 
-          @click="approveVendor"
-          :disabled="verifiedCount < totalCount"
-          :class="verifiedCount >= totalCount ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
-          class="px-4 py-2 rounded-lg"
-        >
-          Aprobar Proveedor
+      <!-- Back button -->
+      <div class="flex justify-end">
+        <button @click="goBack" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">
+          Volver a Proveedores
         </button>
       </div>
-    </div>
-
-    <UiConfirmDialog
-      v-model="showConfirm"
-      :title="confirmTitle"
-      :message="confirmMessage"
-      :confirm-text="confirmConfirmText"
-      :variant="confirmVariant"
-      :loading="confirmLoading"
-      @confirm="executeConfirmAction"
-    />
+    </template>
   </div>
 </template>

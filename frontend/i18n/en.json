@@ -470,8 +470,8 @@
       }
     },
     "users": {
-      "title": "Travel Blog",
-      "subtitle": "Full Control Panel - Costa Rica Travel",
+      "title": "User Management",
+      "subtitle": "Manage system users and permissions",
       "newUser": "New User",
       "impersonate": "Impersonate",
       "view": "View Details",
@@ -489,8 +489,8 @@
       "page": "Page {page}"
     },
     "vendors": {
-      "title": "Travel Blog",
-      "subtitle": "Full Control Panel - Costa Rica Travel",
+      "title": "Vendor Management",
+      "subtitle": "Manage vendors and approvals",
       "analytics": "Analytics",
       "pending": "Pending",
       "featured": "Featured",
