@@ -58,9 +58,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-
 const { t } = useI18n()
 const route = useRoute()
 const auth = useAuthStore()
@@ -84,7 +81,6 @@ function getRedirectUrl(role: string): string {
 }
 
 onMounted(() => {
-  auth.initAuth()
   if (auth.isAuthenticated && auth.token && auth.user) {
     router.push(getRedirectUrl(auth.user.role))
   }

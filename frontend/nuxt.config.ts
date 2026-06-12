@@ -1,5 +1,6 @@
 export default defineNuxtConfig({
   devtools: { enabled: false },
+  ssr: false,
   
   modules: [
     '@pinia/nuxt',
@@ -10,9 +11,9 @@ export default defineNuxtConfig({
     '@nuxt/icon'
   ],
   
-  components: {
-    pathPrefix: false
-  },
+  components: [
+    { path: '~/components', pathPrefix: false }
+  ],
   
   css: ['~/assets/css/main.css', '~/assets/css/a11y.css'],
   
@@ -76,7 +77,6 @@ export default defineNuxtConfig({
       { code: 'fr', name: 'Français', language: 'fr-FR', file: 'fr.json' }
     ],
     defaultLocale: 'es',
-    lazy: true,
     langDir: 'i18n/',
     strategy: 'prefix_except_default',
     detectBrowserLanguage: {
@@ -125,8 +125,7 @@ export default defineNuxtConfig({
     classSuffix: '',
     preference: 'system',
     fallback: 'light',
-    storageKey: 'color-mode',
-    ssr: false
+    storageKey: 'color-mode'
   },
 
   image: {

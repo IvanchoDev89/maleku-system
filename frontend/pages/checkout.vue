@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRoute } from 'vue-router'
-
 useSeo({
   title: 'Checkout',
   description: 'Completa tu reserva de viaje en Costa Rica de forma segura.'

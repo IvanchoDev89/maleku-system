@@ -1,5 +1,3 @@
-import { ref, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import type { Tour, SearchFilters, TourSearchResponse } from '~/types'
 import { TOUR_CATEGORIES, PAGINATION, SEARCH_FILTERS } from '~/config/constants'
 

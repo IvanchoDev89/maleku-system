@@ -205,7 +205,6 @@ const managementMenuItems = [
   { icon: 'lucide:calendar-check', label: 'Reservas', path: '/admin/bookings' },
   { icon: 'lucide:newspaper', label: 'Blog', path: '/admin/blog' },
   { icon: 'lucide:map-pin', label: 'Destinos', path: '/admin/destinations' },
-  { icon: 'lucide:bar-chart-3', label: 'Reportes', path: '/admin/reports' },
   { icon: 'lucide:settings', label: 'Configuración', path: '/admin/settings' },
 ]
 
@@ -219,13 +218,6 @@ const logout = () => {
   auth.logout()
   router.push('/login')
 }
-
-onMounted(() => {
-  auth.initAuth()
-  if (!auth.isAuthenticated || !['super_admin', 'admin'].includes(auth.user?.role || '')) {
-    router.push('/login')
-  }
-})
 
 watch(() => route.path, () => {
   mobileOpen.value = false

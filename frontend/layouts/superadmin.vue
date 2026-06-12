@@ -301,7 +301,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, nextTick } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import { 
   LayoutDashboard, 
@@ -315,7 +314,6 @@ import {
   Star,
   BarChart3,
   FileBarChart2,
-  CreditCard,
   ScrollText,
   Settings,
   Cog,
@@ -399,7 +397,6 @@ const pageTitle = computed(() => {
   const titles: Record<string, string> = {
     '/superadmin/dashboard': 'Dashboard',
     '/superadmin/users': 'Usuarios',
-    '/superadmin/users/activity': 'Actividad de Usuarios',
     '/superadmin/admins': 'Administradores',
     '/superadmin/vendors': 'Proveedores',
     '/superadmin/vendors/pending': 'Aprobación de Proveedores',
@@ -446,7 +443,6 @@ const managementMenuItems = [
 const monitoringMenuItems = [
   { icon: BarChart3, label: 'Analytics', path: '/superadmin/analytics' },
   { icon: FileBarChart2, label: 'Reportes', path: '/superadmin/reports' },
-  { icon: CreditCard, label: 'Puntos de Venta', path: '/superadmin/pos' },
   { icon: ScrollText, label: 'Auditoría', path: '/superadmin/audit' },
 ]
 
@@ -465,13 +461,6 @@ watch(() => route?.path, () => { mobileOpen.value = false })
 onClickOutside(emergencyMenuRef, () => {
   showEmergencyMenu.value = false
 }, { ignore: [emergencyBtnRef] })
-
-onMounted(() => {
-  auth.initAuth()
-  if (!auth.isAuthenticated || auth.user?.role !== 'super_admin') {
-    router.push('/login')
-  }
-})
 
 const showConfirm = ref(false)
 const confirmTitle = ref('')

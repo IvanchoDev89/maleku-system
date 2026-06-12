@@ -198,6 +198,112 @@ async def register(
     }
 
 
+class VendorRegisterRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=100)
+    full_name: str = Field(..., min_length=2, max_length=100)
+    phone: Optional[str] = None
+    business_name: str = Field(..., min_length=2, max_length=255)
+    business_type: str = Field(..., min_length=2, max_length=50)
+
+    @field_validator('password')
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not re.search(r'\d', v):
+            raise ValueError('Password must contain at least one number')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
+            raise ValueError('Password must contain at least one special character')
+        return v
+
+
+@router.post("/register/vendor", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
+async def register_vendor(
+    user_in: VendorRegisterRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """Register a new vendor account (user + vendor profile)."""
+    from app.models.vendor import Vendor
+    from app.utils.slug import generate_vendor_slug
+    vendor_service = BaseService(Vendor)
+
+    client_ip = request.client.host if request.client else "unknown"
+    password_hash = get_password_hash(user_in.password)
+
+    # Check if email exists
+    result = await db.execute(select(User).where(User.email == user_in.email))
+    existing_user = result.scalar_one_or_none()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+
+    # Create user with vendor role
+    user_data = {
+        'email': user_in.email.lower().strip(),
+        'password_hash': password_hash,
+        'full_name': user_in.full_name,
+        'phone': user_in.phone,
+        'role': UserRole.VENDOR,
+        'is_active': True,
+        'is_verified': False
+    }
+
+    try:
+        user = await user_service.create(db, obj_in=user_data)
+    except Exception as e:
+        logger.error(f"Vendor user registration failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Registration failed. Please try again."
+        )
+
+    # Create vendor profile
+    vendor_data = {
+        'user_id': user.id,
+        'business_name': user_in.business_name,
+        'business_slug': generate_vendor_slug(user_in.business_name),
+        'business_type': user_in.business_type,
+        'email': user_in.email.lower().strip(),
+        'phone': user_in.phone,
+    }
+
+    try:
+        await vendor_service.create(db, obj_in=vendor_data)
+        logger.info(f"New vendor registered: {user.email} from IP: {client_ip}")
+    except Exception as e:
+        logger.error(f"Vendor profile creation failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Vendor profile creation failed. Please try again."
+        )
+
+    # Generate tokens
+    access_token = create_access_token(str(user.id))
+    refresh_token = create_refresh_token(str(user.id))
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        "user": {
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": normalize_role(user.role),
+            "is_verified": False
+        }
+    }
+
+
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("5/minute")
 async def login(
@@ -260,7 +366,7 @@ async def login(
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
-        "expires_in": 900,
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         "user": {
             "id": str(user.id),
             "email": user.email,
@@ -301,12 +407,13 @@ async def refresh_token(
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
-        "expires_in": 900,
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         "user": {
             "id": str(user.id),
             "email": user.email,
             "full_name": user.full_name,
-            "role": normalize_role(user.role)
+            "role": normalize_role(user.role),
+            "is_verified": user.is_verified
         }
     }
 

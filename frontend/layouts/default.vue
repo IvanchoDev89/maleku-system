@@ -232,7 +232,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { 
   Search, 
   MapPin, 
@@ -314,7 +313,6 @@ const closeLangMenu = (event: MouseEvent) => {
 }
 
 onMounted(() => {
-  auth.initAuth()
   document.addEventListener('click', closeLangMenu)
 })
 

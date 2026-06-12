@@ -106,5 +106,5 @@
 </template>
 
 <script setup lang="ts">
-import { MapPin, Building2, Compass, FileText, Package, Car, Phone, Mail, ArrowRight } from 'lucide-vue-next'
+import { MapPin, Building2, Compass, FileText, Package, Phone, Mail, ArrowRight } from 'lucide-vue-next'
 </script>

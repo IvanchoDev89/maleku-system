@@ -312,7 +312,7 @@
             <CheckCircle class="w-8 h-8 mx-auto mb-2 text-green-600 group-hover:scale-110 transition-transform" />
             <p class="font-medium text-gray-700 text-sm">Aprobar Vendor</p>
           </NuxtLink>
-          <NuxtLink to="/superadmin/content/blog/new" class="p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors text-center group border border-primary-100">
+          <NuxtLink to="/superadmin/content/blog" class="p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors text-center group border border-primary-100">
             <FileText class="w-8 h-8 mx-auto mb-2 text-blue-600 group-hover:scale-110 transition-transform" />
             <p class="font-medium text-gray-700 text-sm">Blog Post</p>
           </NuxtLink>

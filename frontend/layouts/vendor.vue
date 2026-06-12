@@ -152,16 +152,6 @@ const isVendorPage = computed(() => {
   return route.path.startsWith('/vendor/') && !['/vendor/login', '/vendor/register'].includes(route.path)
 })
 
-onMounted(() => {
-  if (!auth.isAuthenticated || !auth.token) {
-    router.push('/vendor/login')
-    return
-  }
-  if (auth.user?.role !== 'vendor' && auth.user?.role !== 'super_admin') {
-    router.push('/')
-  }
-})
-
 const pageTitle = computed(() => {
   const path = route.path
   const titles: Record<string, string> = {

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRoute } from 'vue-router'
 import { Check, Download, Share2, MapPin, Calendar, Users, Mail } from 'lucide-vue-next'
 
 const route = useRoute()
