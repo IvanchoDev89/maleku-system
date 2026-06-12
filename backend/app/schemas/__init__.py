@@ -588,6 +588,8 @@ class DestinationCreate(DestinationBase):
 class DestinationUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_featured: Optional[bool] = None
 
     @field_validator('name', 'description')
     @classmethod

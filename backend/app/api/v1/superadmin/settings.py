@@ -21,6 +21,19 @@ from app.models.audit import AuditAction
 router = APIRouter(prefix="/settings", tags=["Super Admin - Settings"])
 
 
+def _serialize_for_audit(data: dict) -> dict:
+    """Convert non-JSON-serializable values (datetime, etc.) to strings."""
+    result = {}
+    for k, v in data.items():
+        if isinstance(v, datetime):
+            result[k] = v.isoformat()
+        elif hasattr(v, 'isoformat'):
+            result[k] = str(v)
+        else:
+            result[k] = v
+    return result
+
+
 class SettingsResponse(BaseModel):
     """Public settings response (safe to expose)"""
     site_name: str
@@ -157,10 +170,8 @@ async def update_settings(
     current_user: User = Depends(require_superadmin())
 ):
     """Update system settings"""
-    audit = AuditService(db)
     old_values = _system_settings.copy()
     
-    # SECURITY: Prevent mass assignment - only allow fields defined in SettingsUpdate
     allowed_fields = {'site_name', 'site_url', 'support_email', 'default_currency', 
                      'commission_rate', 'maintenance_mode', 'enable_registration', 
                      'require_email_verification'}
@@ -170,15 +181,13 @@ async def update_settings(
         if key in allowed_fields:
             _system_settings[key] = value
     
-    # Log the change
-    await audit.log_action(
+    await AuditService.log_action(
+        db=db,
+        user=current_user,
         action=AuditAction.UPDATE,
         entity_type="system_settings",
-        entity_id=None,
-        user_id=current_user.id,
-        user_email=current_user.email,
-        old_values=old_values,
-        new_values=_system_settings,
+        old_values=_serialize_for_audit(old_values),
+        new_values=_serialize_for_audit(_system_settings),
         changes_summary=f"Settings updated by {current_user.email}"
     )
     
@@ -238,8 +247,7 @@ async def update_email_template(
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
     
-    audit = AuditService(db)
-    old_values = template.copy()
+    audit_old = template.copy()
     
     template["subject"] = data.subject
     template["body_html"] = data.body_html
@@ -247,14 +255,14 @@ async def update_email_template(
         template["body_text"] = data.body_text
     template["last_updated"] = datetime.now(timezone.utc)
     
-    await audit.log_action(
+    await AuditService.log_action(
+        db=db,
+        user=current_user,
         action=AuditAction.UPDATE,
         entity_type="email_template",
-        entity_id=template_id,
-        user_id=current_user.id,
-        user_email=current_user.email,
-        old_values=old_values,
-        new_values=template,
+        entity_id=None,
+        old_values=_serialize_for_audit(audit_old),
+        new_values=_serialize_for_audit(template),
         changes_summary=f"Email template '{template_id}' updated"
     )
     
@@ -283,21 +291,20 @@ async def update_feature_flag(
     if not flag:
         raise HTTPException(status_code=404, detail="Feature flag not found")
     
-    audit = AuditService(db)
-    old_values = flag.copy()
+    audit_old = flag.copy()
     
     flag["enabled"] = enabled
     flag["rollout_percentage"] = rollout_percentage
     flag["updated_at"] = datetime.now(timezone.utc)
     
-    await audit.log_action(
+    await AuditService.log_action(
+        db=db,
+        user=current_user,
         action=AuditAction.UPDATE,
         entity_type="feature_flag",
-        entity_id=flag_name,
-        user_id=current_user.id,
-        user_email=current_user.email,
-        old_values=old_values,
-        new_values=flag,
+        entity_id=None,
+        old_values=_serialize_for_audit(audit_old),
+        new_values=_serialize_for_audit(flag),
         changes_summary=f"Feature flag '{flag_name}' set to {enabled} ({rollout_percentage}%)"
     )
     
@@ -314,13 +321,11 @@ async def toggle_maintenance_mode(
     """Toggle maintenance mode - CRITICAL ACTION"""
     _system_settings["maintenance_mode"] = enabled
     
-    audit = AuditService(db)
-    await audit.log_action(
+    await AuditService.log_action(
+        db=db,
+        user=current_user,
         action=AuditAction.UPDATE,
         entity_type="maintenance_mode",
-        entity_id=None,
-        user_id=current_user.id,
-        user_email=current_user.email,
         old_values={"maintenance_mode": not enabled},
         new_values={"maintenance_mode": enabled, "message": message},
         changes_summary=f"Maintenance mode {'ENABLED' if enabled else 'DISABLED'} by super admin"

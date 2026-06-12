@@ -44,7 +44,7 @@ const fetchSettings = async () => {
 const saveSettings = async () => {
   saving.value = true
   try {
-    await api.put('/superadmin/settings', { settings: settings.value })
+    await api.put('/superadmin/settings', settings.value)
   } catch (error) {
     console.error('Error saving settings:', error)
   } finally {

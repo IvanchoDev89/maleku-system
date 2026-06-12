@@ -70,7 +70,7 @@ async def list_reviews(
     page_size: int = Query(20, ge=1, le=100),
     status_filter: Optional[str] = Query(None, alias="status"),
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(require_superadmin),
+    _current_user: User = Depends(require_superadmin()),
 ):
     query = (
         select(Review)
@@ -89,7 +89,6 @@ async def list_reviews(
         order_by=desc(Review.created_at),
     )
 
-    # Enrich with user and relation names
     items = []
     for review in result.items:
         items.append(review_to_item(review, review.user).model_dump())
@@ -104,7 +103,7 @@ async def update_review(
     review_id: UUID,
     body: ReviewUpdateRequest,
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(require_superadmin),
+    _current_user: User = Depends(require_superadmin()),
 ):
     result = await db.execute(select(Review).where(Review.id == review_id))
     review = result.scalar_one_or_none()
@@ -121,7 +120,7 @@ async def update_review(
 async def delete_review(
     review_id: UUID,
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(require_superadmin),
+    _current_user: User = Depends(require_superadmin()),
 ):
     from datetime import datetime, timezone
     result = await db.execute(select(Review).where(Review.id == review_id))

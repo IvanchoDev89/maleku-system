@@ -208,9 +208,15 @@ class AuditService:
                 sanitized[key] = AuditService._sanitize_sensitive_data(value)
             elif isinstance(value, list):
                 sanitized[key] = [
-                    AuditService._sanitize_sensitive_data(item) if isinstance(item, dict) else item
+                    AuditService._sanitize_sensitive_data(item) if isinstance(item, dict) else (
+                        item.isoformat() if hasattr(item, 'isoformat') else item
+                    )
                     for item in value
                 ]
+            elif isinstance(value, datetime):
+                sanitized[key] = value.isoformat()
+            elif hasattr(value, 'isoformat'):
+                sanitized[key] = str(value)
             else:
                 sanitized[key] = value
         

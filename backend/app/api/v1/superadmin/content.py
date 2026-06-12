@@ -21,6 +21,19 @@ from app.models.audit import AuditAction
 router = APIRouter(prefix="/content", tags=["Super Admin - Content"])
 
 
+def _serialize_for_audit(data: dict) -> dict:
+    """Convert non-JSON-serializable values (datetime, etc.) to strings."""
+    result = {}
+    for k, v in data.items():
+        if isinstance(v, datetime):
+            result[k] = v.isoformat()
+        elif hasattr(v, 'isoformat'):
+            result[k] = str(v)
+        else:
+            result[k] = v
+    return result
+
+
 class ContentStatus(str, Enum):
     draft = "draft"
     published = "published"
@@ -321,14 +334,13 @@ async def create_blog_post(
     _blog_posts.insert(0, post)
     
     # Log action
-    audit = AuditService(db)
-    await audit.log_action(
+    await AuditService.log_action(
+        db=db,
+        user=current_user,
         action=AuditAction.CREATE,
         entity_type="blog_post",
-        entity_id=new_id,
-        user_id=current_user.id,
-        user_email=current_user.email,
-        new_values=post,
+        entity_id=None,
+        new_values=_serialize_for_audit(post),
         changes_summary=f"Blog post '{data.title}' created"
     )
     
@@ -347,7 +359,6 @@ async def update_blog_post(
     if not post:
         raise HTTPException(status_code=404, detail="Blog post not found")
     
-    audit = AuditService(db)
     old_values = {k: v for k, v in post.items() if k in data.model_dump(exclude_unset=True)}
     
     # SECURITY: Prevent mass assignment - only allow fields defined in BlogPostUpdate
@@ -361,14 +372,14 @@ async def update_blog_post(
     
     post["updated_at"] = datetime.now(timezone.utc)
     
-    await audit.log_action(
+    await AuditService.log_action(
+        db=db,
+        user=current_user,
         action=AuditAction.UPDATE,
         entity_type="blog_post",
-        entity_id=post_id,
-        user_id=current_user.id,
-        user_email=current_user.email,
-        old_values=old_values,
-        new_values=post,
+        entity_id=None,
+        old_values=_serialize_for_audit(old_values),
+        new_values=_serialize_for_audit(post),
         changes_summary=f"Blog post '{post['title']}' updated"
     )
     
@@ -388,14 +399,13 @@ async def delete_blog_post(
     
     _blog_posts.remove(post)
     
-    audit = AuditService(db)
-    await audit.log_action(
+    await AuditService.log_action(
+        db=db,
+        user=current_user,
         action=AuditAction.DELETE,
         entity_type="blog_post",
-        entity_id=post_id,
-        user_id=current_user.id,
-        user_email=current_user.email,
-        old_values=post,
+        entity_id=None,
+        old_values=_serialize_for_audit(post),
         changes_summary=f"Blog post '{post['title']}' deleted"
     )
     
@@ -436,7 +446,6 @@ async def update_static_page(
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
     
-    audit = AuditService(db)
     old_values = {k: v for k, v in page.items() if k in data.model_dump(exclude_unset=True)}
     
     # SECURITY: Prevent mass assignment - only allow fields defined in StaticPageUpdate
@@ -449,14 +458,14 @@ async def update_static_page(
     
     page["updated_at"] = datetime.now(timezone.utc)
     
-    await audit.log_action(
+    await AuditService.log_action(
+        db=db,
+        user=current_user,
         action=AuditAction.UPDATE,
         entity_type="static_page",
-        entity_id=page_id,
-        user_id=current_user.id,
-        user_email=current_user.email,
-        old_values=old_values,
-        new_values=page,
+        entity_id=None,
+        old_values=_serialize_for_audit(old_values),
+        new_values=_serialize_for_audit(page),
         changes_summary=f"Static page '{page['title']}' updated"
     )
     
@@ -481,19 +490,18 @@ async def update_seo_settings(
     """Update global SEO settings"""
     global _seo_settings
     
-    audit = AuditService(db)
     old_values = _seo_settings.model_dump()
     
     _seo_settings = data
     
-    await audit.log_action(
+    await AuditService.log_action(
+        db=db,
+        user=current_user,
         action=AuditAction.UPDATE,
         entity_type="seo_settings",
         entity_id=None,
-        user_id=current_user.id,
-        user_email=current_user.email,
-        old_values=old_values,
-        new_values=data.model_dump(),
+        old_values=_serialize_for_audit(old_values),
+        new_values=_serialize_for_audit(data.model_dump()),
         changes_summary="SEO settings updated"
     )
     
@@ -542,14 +550,13 @@ async def delete_media(
     
     _media_files.remove(media)
     
-    audit = AuditService(db)
-    await audit.log_action(
+    await AuditService.log_action(
+        db=db,
+        user=current_user,
         action=AuditAction.DELETE,
         entity_type="media",
-        entity_id=media_id,
-        user_id=current_user.id,
-        user_email=current_user.email,
-        old_values=media,
+        entity_id=None,
+        old_values=_serialize_for_audit(media),
         changes_summary=f"Media file '{media['filename']}' deleted"
     )
     
