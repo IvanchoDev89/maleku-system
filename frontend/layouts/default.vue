@@ -35,15 +35,22 @@
           <!-- Right Side -->
           <div class="flex items-center gap-2">
             <!-- Dark Mode Toggle -->
-            <button 
-              @click="toggleColorMode"
-              class="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all backdrop-blur-sm"
-              :aria-label="isDark ? 'Modo claro' : 'Modo oscuro'"
-              :title="isDark ? 'Modo claro' : 'Modo oscuro'"
-            >
-              <Sun v-if="isDark" class="w-5 h-5" />
-              <Moon v-else class="w-5 h-5" />
-            </button>
+            <ClientOnly>
+              <button 
+                @click="toggleColorMode"
+                class="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all backdrop-blur-sm"
+                :aria-label="isDark ? 'Modo claro' : 'Modo oscuro'"
+                :title="isDark ? 'Modo claro' : 'Modo oscuro'"
+              >
+                <Sun v-if="isDark" class="w-5 h-5" />
+                <Moon v-else class="w-5 h-5" />
+              </button>
+              <template #fallback>
+                <div class="p-2.5 bg-white/10 rounded-lg">
+                  <div class="w-5 h-5"></div>
+                </div>
+              </template>
+            </ClientOnly>
 
             <!-- Search Toggle -->
             <button 

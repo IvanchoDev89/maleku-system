@@ -7,9 +7,12 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@nuxt/image',
     '@nuxtjs/color-mode',
-    '@nuxt/content',
     '@nuxt/icon'
   ],
+  
+  components: {
+    pathPrefix: false
+  },
   
   css: ['~/assets/css/main.css', '~/assets/css/a11y.css'],
   
@@ -105,7 +108,7 @@ export default defineNuxtConfig({
             "font-src 'self' https://fonts.gstatic.com data:",
             "img-src 'self' data: https: blob:",
             "media-src 'self' https:",
-            "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 ws://localhost:4000 https://api.costaricatravel.dev https://api.stripe.com https://*.sentry.io https://api.cloudinary.com https://res.cloudinary.com",
+            "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 ws://localhost:3000 ws://localhost:5173 https://api.costaricatravel.dev https://api.stripe.com https://*.sentry.io https://api.cloudinary.com https://res.cloudinary.com",
             "frame-src 'self' https://*.stripe.com https://js.stripe.com",
             "object-src 'none'",
             "base-uri 'self'",
@@ -122,7 +125,8 @@ export default defineNuxtConfig({
     classSuffix: '',
     preference: 'system',
     fallback: 'light',
-    storageKey: 'color-mode'
+    storageKey: 'color-mode',
+    ssr: false
   },
 
   image: {

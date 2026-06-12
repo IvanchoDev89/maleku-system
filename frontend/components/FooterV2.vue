@@ -50,7 +50,6 @@
             <li><NuxtLink to="/hoteles" class="text-gray-400 hover:text-primary-400 transition-colors flex items-center gap-2"><Building2 class="w-4 h-4" /> Hoteles</NuxtLink></li>
             <li><NuxtLink to="/paquetes" class="text-gray-400 hover:text-primary-400 transition-colors flex items-center gap-2"><Package class="w-4 h-4" /> Paquetes</NuxtLink></li>
             <li><NuxtLink to="/planificador" class="text-gray-400 hover:text-primary-400 transition-colors flex items-center gap-2"><FileText class="w-4 h-4" /> Planificador</NuxtLink></li>
-            <li><NuxtLink to="/transfers" class="text-gray-400 hover:text-primary-400 transition-colors flex items-center gap-2"><Car class="w-4 h-4" /> Transfers</NuxtLink></li>
           </ul>
         </div>
         

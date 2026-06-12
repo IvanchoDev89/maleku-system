@@ -302,7 +302,6 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { onClickOutside } from '@vueuse/core'
 import { 
   LayoutDashboard, 
@@ -461,7 +460,7 @@ const logout = () => {
   router.push('/login')
 }
 
-watch(() => route.path, () => { mobileOpen.value = false })
+watch(() => route?.path, () => { mobileOpen.value = false })
 
 onClickOutside(emergencyMenuRef, () => {
   showEmergencyMenu.value = false

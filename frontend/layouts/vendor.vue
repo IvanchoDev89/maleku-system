@@ -14,7 +14,7 @@
       <div class="p-4 border-b border-slate-800">
         <NuxtLink to="/" class="flex items-center gap-3 hover:opacity-90 transition-opacity">
           <div class="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-            <Icon name="lucide:palm-tree" class="w-5 h-5 text-white" />
+            <Icon name="lucide:tree-palm" class="w-5 h-5 text-white" />
           </div>
           <div>
             <span class="font-bold text-white text-sm">Vendor Panel</span>
