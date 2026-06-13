@@ -1,6 +1,6 @@
 <script setup lang="ts">
 interface Props {
-  modelValue: string
+  modelValue: string | number
   label?: string
   placeholder?: string
   required?: boolean
@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string]
+  'update:modelValue': [value: string | number]
 }>()
 
 function onChange(event: Event) {

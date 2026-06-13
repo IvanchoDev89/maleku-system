@@ -1,4 +1,3 @@
-import asyncio
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -266,7 +265,7 @@ async def get_map_counts(db: AsyncSession = Depends(get_db)) -> dict:
 
 
 @router.get(
-    "/search",
+    "",
     response_model=SearchResponse,
     summary="Global search",
     description="Searches properties, tours, destinations, and blog in parallel using ILIKE pattern matching on names/titles.",
@@ -354,8 +353,11 @@ async def global_search(
             for b in result.scalars().all()
         ]
 
-    props, tours_res, dests, blog = await asyncio.gather(
-        _search_properties(), _search_tours(), _search_destinations(), _search_blog()
+    props, tours_res, dests, blog = (
+        await _search_properties(),
+        await _search_tours(),
+        await _search_destinations(),
+        await _search_blog(),
     )
 
     return {

@@ -255,7 +255,8 @@
   "step5": {
     "title": "¡Tu Itinerario Personalizado!",
     "subtitle": "Basado en tus preferencias, aquí tienes una recomendación",
-    "print": "Guardar / Imprimir"
+    "print": "Guardar / Imprimir",
+    "reset": "Reiniciar"
   },
   "budget": {
     "summary": "Resumen de Presupuesto",

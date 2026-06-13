@@ -1,6 +1,5 @@
 """Landing page content API."""
 
-import asyncio
 from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
@@ -94,8 +93,10 @@ async def get_landing_content(db: AsyncSession = Depends(get_db)):
         )
         return result.scalars().all()
 
-    destinations, properties, tours = await asyncio.gather(
-        _get_destinations(), _get_properties(), _get_tours()
+    destinations, properties, tours = (
+        await _get_destinations(),
+        await _get_properties(),
+        await _get_tours(),
     )
 
     response = {
