@@ -2,6 +2,7 @@
 Marketing API Endpoints for BillionMail Integration
 Handles email campaigns, templates, and analytics
 """
+
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
@@ -16,8 +17,12 @@ from app.core.database import get_db
 from app.core.security import require_superadmin, require_role, get_current_user
 from app.models import User, UserRole, Vendor
 from app.models.marketing import (
-    EmailCampaign, EmailTemplate, CampaignStatus, CampaignType,
-    InboxMessage, EmailPreference
+    EmailCampaign,
+    EmailTemplate,
+    CampaignStatus,
+    CampaignType,
+    InboxMessage,
+    EmailPreference,
 )
 from app.services.billionmail import MarketingService
 
@@ -26,14 +31,13 @@ router = APIRouter()
 
 # ============ Dependencies ============
 
+
 async def get_current_vendor(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.VENDOR))
+    current_user: User = Depends(require_role(UserRole.VENDOR)),
 ) -> "Vendor":
     """Get the current vendor from the authenticated user"""
-    result = await db.execute(
-        select(Vendor).where(Vendor.user_id == current_user.id)
-    )
+    result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     vendor = result.scalar_one_or_none()
     if not vendor:
         raise HTTPException(status_code=403, detail="Vendor not found")
@@ -42,21 +46,28 @@ async def get_current_vendor(
 
 # ============ Pydantic Schemas ============
 
+
 def validate_html_content(v: str) -> str:
     """Validate HTML content for potentially dangerous tags/scripts."""
     import re
+
     # Check for potentially dangerous tags
-    dangerous_tags = re.compile(r'<\s*(script|iframe|object|embed|form|input)', re.IGNORECASE)
-    event_handlers = re.compile(r'on\w+\s*=', re.IGNORECASE)
-    javascript_protocol = re.compile(r'javascript:', re.IGNORECASE)
-    
+    dangerous_tags = re.compile(
+        r"<\s*(script|iframe|object|embed|form|input)", re.IGNORECASE
+    )
+    event_handlers = re.compile(r"on\w+\s*=", re.IGNORECASE)
+    javascript_protocol = re.compile(r"javascript:", re.IGNORECASE)
+
     if dangerous_tags.search(v):
-        raise ValueError("HTML content contains potentially dangerous tags (script, iframe, etc.)")
+        raise ValueError(
+            "HTML content contains potentially dangerous tags (script, iframe, etc.)"
+        )
     if event_handlers.search(v):
         raise ValueError("HTML content contains event handlers (onclick, etc.)")
     if javascript_protocol.search(v):
         raise ValueError("HTML content contains javascript: protocol")
     return v
+
 
 class CampaignCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
@@ -68,8 +79,8 @@ class CampaignCreate(BaseModel):
     scheduled_at: Optional[datetime] = None
     from_name: str = Field(default="Costa Rica Travel")
     from_email: str = Field(default="noreply@costaricatravel.dev")
-    
-    @field_validator('html_content')
+
+    @field_validator("html_content")
     @classmethod
     def validate_html(cls, v: str) -> str:
         return validate_html_content(v)
@@ -89,7 +100,7 @@ class CampaignResponse(BaseModel):
     created_at: datetime
     scheduled_at: Optional[datetime]
     sent_at: Optional[datetime]
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -114,7 +125,7 @@ class TemplateResponse(BaseModel):
     is_system: bool
     preview_image: Optional[str]
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -153,7 +164,7 @@ class InboxMessageResponse(BaseModel):
     is_from_customer: bool
     is_read: bool
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -221,6 +232,7 @@ class UpdatePreferencesResponse(BaseModel):
 
 # ============ Super Admin Endpoints ============
 
+
 @router.get("/admin/campaigns", response_model=List[CampaignResponse])
 async def list_all_campaigns(
     status: Optional[str] = Query(None),
@@ -228,32 +240,32 @@ async def list_all_campaigns(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     List all email campaigns (Super Admin only)
     """
     query = select(EmailCampaign).order_by(desc(EmailCampaign.created_at))
-    
+
     if status:
         query = query.where(EmailCampaign.status == status)
     if campaign_type:
         query = query.where(EmailCampaign.campaign_type == campaign_type)
-    
+
     # Eager load relationships to avoid N+1
     query = query.options(
         joinedload(EmailCampaign.creator),
         joinedload(EmailCampaign.vendor),
-        joinedload(EmailCampaign.template)
+        joinedload(EmailCampaign.template),
     )
-    
+
     # Pagination
     offset = (page - 1) * limit
     query = query.offset(offset).limit(limit)
-    
+
     result = await db.execute(query)
     campaigns = result.scalars().all()
-    
+
     return campaigns
 
 
@@ -261,13 +273,13 @@ async def list_all_campaigns(
 async def create_admin_campaign(
     data: CampaignCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Create a new marketing campaign (Super Admin)
     """
     service = MarketingService(db)
-    
+
     campaign = await service.create_campaign(
         name=data.name,
         subject=data.subject,
@@ -278,9 +290,9 @@ async def create_admin_campaign(
         template_id=data.template_id,
         scheduled_at=data.scheduled_at,
         from_name=data.from_name,
-        from_email=data.from_email
+        from_email=data.from_email,
     )
-    
+
     return campaign
 
 
@@ -289,41 +301,45 @@ async def send_admin_campaign(
     campaign_id: UUID,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Send a campaign immediately (Super Admin)
     """
     service = MarketingService(db)
-    
+
     result = await service.send_campaign(str(campaign_id))
-    
+
     if not result["success"]:
-        raise HTTPException(status_code=400, detail=result.get("error", "Failed to send campaign"))
-    
+        raise HTTPException(
+            status_code=400, detail=result.get("error", "Failed to send campaign")
+        )
+
     return {
         "message": "Campaign sent successfully",
         "total": result["total"],
         "sent": result["sent"],
-        "failed": result["failed"]
+        "failed": result["failed"],
     }
 
 
-@router.get("/admin/campaigns/{campaign_id}/analytics", response_model=CampaignAnalytics)
+@router.get(
+    "/admin/campaigns/{campaign_id}/analytics", response_model=CampaignAnalytics
+)
 async def get_campaign_analytics(
     campaign_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Get detailed analytics for a campaign
     """
     service = MarketingService(db)
     analytics = await service.get_campaign_analytics(str(campaign_id))
-    
+
     if not analytics:
         raise HTTPException(status_code=404, detail="Campaign not found")
-    
+
     return analytics
 
 
@@ -332,23 +348,23 @@ async def list_templates(
     template_type: Optional[str] = Query(None),
     include_system: bool = Query(True),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     List email templates (Super Admin)
     """
     query = select(EmailTemplate)
-    
+
     if template_type:
         query = query.where(EmailTemplate.template_type == template_type)
     if not include_system:
         query = query.where(EmailTemplate.is_system == False)
-    
+
     query = query.order_by(desc(EmailTemplate.created_at))
-    
+
     result = await db.execute(query)
     templates = result.scalars().all()
-    
+
     return templates
 
 
@@ -356,7 +372,7 @@ async def list_templates(
 async def create_template(
     data: TemplateCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Create a new email template (Super Admin)
@@ -364,24 +380,26 @@ async def create_template(
     template = EmailTemplate(
         name=data.name,
         description=data.description,
-        template_type=getattr(CampaignType, data.template_type.upper(), CampaignType.NEWSLETTER),
+        template_type=getattr(
+            CampaignType, data.template_type.upper(), CampaignType.NEWSLETTER
+        ),
         html_content=data.html_content,
         text_content=MarketingService(db).mail_service._strip_html(data.html_content),
         is_system=False,
-        created_by=current_user.id
+        created_by=current_user.id,
     )
-    
+
     db.add(template)
     await db.commit()
     await db.refresh(template)
-    
+
     return template
 
 
 @router.get("/admin/analytics/overview", response_model=MarketingOverviewResponse)
 async def get_marketing_overview(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Get overall marketing analytics (Super Admin)
@@ -390,35 +408,47 @@ async def get_marketing_overview(
     campaigns_result = await db.execute(
         select(
             func.count(EmailCampaign.id).label("total"),
-            func.count(EmailCampaign.id).filter(EmailCampaign.status == CampaignStatus.SENT).label("sent"),
+            func.count(EmailCampaign.id)
+            .filter(EmailCampaign.status == CampaignStatus.SENT)
+            .label("sent"),
             func.sum(EmailCampaign.total_recipients).label("total_recipients"),
             func.sum(EmailCampaign.sent_count).label("total_sent"),
             func.sum(EmailCampaign.opened_count).label("total_opens"),
-            func.sum(EmailCampaign.clicked_count).label("total_clicks")
+            func.sum(EmailCampaign.clicked_count).label("total_clicks"),
         )
     )
     campaigns_stats = campaigns_result.one()
-    
+
     # Recent campaigns
     recent_campaigns = await db.execute(
-        select(EmailCampaign)
-        .order_by(desc(EmailCampaign.created_at))
-        .limit(5)
+        select(EmailCampaign).order_by(desc(EmailCampaign.created_at)).limit(5)
     )
-    
+
     return {
         "campaigns": {
             "total": campaigns_stats.total or 0,
             "sent": campaigns_stats.sent or 0,
-            "draft": campaigns_stats.total - campaigns_stats.sent if campaigns_stats.total else 0
+            "draft": campaigns_stats.total - campaigns_stats.sent
+            if campaigns_stats.total
+            else 0,
         },
         "engagement": {
             "total_recipients": campaigns_stats.total_recipients or 0,
             "total_sent": campaigns_stats.total_sent or 0,
             "total_opens": campaigns_stats.total_opens or 0,
             "total_clicks": campaigns_stats.total_clicks or 0,
-            "avg_open_rate": round((campaigns_stats.total_opens or 0) / (campaigns_stats.total_sent or 1) * 100, 2),
-            "avg_click_rate": round((campaigns_stats.total_clicks or 0) / (campaigns_stats.total_sent or 1) * 100, 2)
+            "avg_open_rate": round(
+                (campaigns_stats.total_opens or 0)
+                / (campaigns_stats.total_sent or 1)
+                * 100,
+                2,
+            ),
+            "avg_click_rate": round(
+                (campaigns_stats.total_clicks or 0)
+                / (campaigns_stats.total_sent or 1)
+                * 100,
+                2,
+            ),
         },
         "recent_campaigns": [
             {
@@ -426,21 +456,22 @@ async def get_marketing_overview(
                 "name": c.name,
                 "status": c.status.value,
                 "recipients": c.total_recipients,
-                "created_at": c.created_at.isoformat()
+                "created_at": c.created_at.isoformat(),
             }
             for c in recent_campaigns.scalars().all()
-        ]
+        ],
     }
 
 
 # ============ Vendor Endpoints ============
+
 
 @router.get("/vendor/campaigns", response_model=List[CampaignResponse])
 async def list_vendor_campaigns(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    vendor = Depends(get_current_vendor)
+    vendor=Depends(get_current_vendor),
 ):
     """
     List vendor's own email campaigns
@@ -450,13 +481,13 @@ async def list_vendor_campaigns(
         .where(EmailCampaign.vendor_id == vendor.id)
         .order_by(desc(EmailCampaign.created_at))
     )
-    
+
     offset = (page - 1) * limit
     query = query.offset(offset).limit(limit)
-    
+
     result = await db.execute(query)
     campaigns = result.scalars().all()
-    
+
     return campaigns
 
 
@@ -465,13 +496,13 @@ async def create_vendor_campaign(
     data: CampaignCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.VENDOR)),
-    vendor = Depends(get_current_vendor)
+    vendor=Depends(get_current_vendor),
 ):
     """
     Create a new campaign for vendor's customers
     """
     service = MarketingService(db)
-    
+
     campaign = await service.create_campaign(
         name=data.name,
         subject=data.subject,
@@ -483,16 +514,15 @@ async def create_vendor_campaign(
         template_id=data.template_id,
         scheduled_at=data.scheduled_at,
         from_name=vendor.business_name or data.from_name,
-        from_email=data.from_email
+        from_email=data.from_email,
     )
-    
+
     return campaign
 
 
 @router.get("/vendor/analytics", response_model=VendorAnalyticsResponse)
 async def get_vendor_analytics(
-    db: AsyncSession = Depends(get_db),
-    vendor = Depends(get_current_vendor)
+    db: AsyncSession = Depends(get_db), vendor=Depends(get_current_vendor)
 ):
     """
     Get analytics for vendor's campaigns
@@ -503,22 +533,24 @@ async def get_vendor_analytics(
             func.count(EmailCampaign.id).label("total"),
             func.sum(EmailCampaign.total_recipients).label("recipients"),
             func.sum(EmailCampaign.opened_count).label("opens"),
-            func.sum(EmailCampaign.clicked_count).label("clicks")
-        )
-        .where(EmailCampaign.vendor_id == vendor.id)
+            func.sum(EmailCampaign.clicked_count).label("clicks"),
+        ).where(EmailCampaign.vendor_id == vendor.id)
     )
     stats = stats_result.one()
-    
+
     return {
         "total_campaigns": stats.total or 0,
         "total_recipients": stats.recipients or 0,
         "total_opens": stats.opens or 0,
         "total_clicks": stats.clicks or 0,
-        "engagement_rate": round((stats.clicks or 0) / (stats.recipients or 1) * 100, 2)
+        "engagement_rate": round(
+            (stats.clicks or 0) / (stats.recipients or 1) * 100, 2
+        ),
     }
 
 
 # ============ Inbox Endpoints ============
+
 
 @router.get("/inbox", response_model=InboxResponse)
 async def get_user_inbox(
@@ -526,26 +558,24 @@ async def get_user_inbox(
     limit: int = Query(20, ge=1, le=100),
     unread_only: bool = Query(False),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get user's inbox messages
     """
-    query = select(InboxMessage).where(
-        InboxMessage.customer_id == current_user.id
-    )
-    
+    query = select(InboxMessage).where(InboxMessage.customer_id == current_user.id)
+
     if unread_only:
         query = query.where(InboxMessage.is_read == False)
-    
+
     query = query.order_by(desc(InboxMessage.created_at))
-    
+
     offset = (page - 1) * limit
     query = query.offset(offset).limit(limit)
-    
+
     result = await db.execute(query)
     messages = result.scalars().all()
-    
+
     # Get unread count
     unread_count_result = await db.execute(
         select(func.count(InboxMessage.id))
@@ -553,22 +583,24 @@ async def get_user_inbox(
         .where(InboxMessage.is_read == False)
     )
     unread_count = unread_count_result.scalar() or 0
-    
+
     return {
         "messages": [
             {
                 "id": str(m.id),
                 "subject": m.subject,
-                "content": m.content[:200] + "..." if len(m.content) > 200 else m.content,
+                "content": m.content[:200] + "..."
+                if len(m.content) > 200
+                else m.content,
                 "is_from_customer": m.is_from_customer,
                 "is_read": m.is_read,
                 "created_at": m.created_at.isoformat(),
-                "vendor_id": str(m.vendor_id) if m.vendor_id else None
+                "vendor_id": str(m.vendor_id) if m.vendor_id else None,
             }
             for m in messages
         ],
         "unread_count": unread_count,
-        "total": len(messages)
+        "total": len(messages),
     }
 
 
@@ -576,13 +608,13 @@ async def get_user_inbox(
 async def send_inbox_message(
     data: InboxMessageCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Send a message to a vendor or support
     """
     import uuid
-    
+
     message = InboxMessage(
         id=uuid.uuid4(),
         customer_id=current_user.id,
@@ -595,22 +627,18 @@ async def send_inbox_message(
         property_id=data.property_id,
         tour_id=data.tour_id,
         is_from_customer=True,
-        is_read=False
+        is_read=False,
     )
-    
+
     db.add(message)
     await db.commit()
-    
-    return {
-        "message": "Message sent successfully",
-        "message_id": str(message.id)
-    }
+
+    return {"message": "Message sent successfully", "message_id": str(message.id)}
 
 
 @router.get("/inbox/unread-count", response_model=UnreadCountResponse)
 async def get_unread_count(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     """
     Get unread message count
@@ -621,16 +649,16 @@ async def get_unread_count(
         .where(InboxMessage.is_read == False)
     )
     count = result.scalar() or 0
-    
+
     return {"unread_count": count}
 
 
 # ============ Email Preferences ============
 
+
 @router.get("/preferences", response_model=EmailPreferencesResponse)
 async def get_email_preferences(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     """
     Get user's email preferences
@@ -639,13 +667,13 @@ async def get_email_preferences(
         select(EmailPreference).where(EmailPreference.user_id == current_user.id)
     )
     prefs = result.scalar_one_or_none()
-    
+
     if not prefs:
         # Create default preferences
         prefs = EmailPreference(user_id=current_user.id)
         db.add(prefs)
         await db.commit()
-    
+
     return {
         "marketing_emails": prefs.marketing_emails,
         "booking_notifications": prefs.booking_notifications,
@@ -654,7 +682,7 @@ async def get_email_preferences(
         "email_frequency": prefs.email_frequency,
         "unsubscribed_all": prefs.unsubscribed_all,
         "vendor_preferences": prefs.vendor_preferences or {},
-        "categories": prefs.categories or {}
+        "categories": prefs.categories or {},
     }
 
 
@@ -662,7 +690,7 @@ async def get_email_preferences(
 async def update_email_preferences(
     prefs: dict,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Update email preferences
@@ -671,11 +699,11 @@ async def update_email_preferences(
         select(EmailPreference).where(EmailPreference.user_id == current_user.id)
     )
     existing = result.scalar_one_or_none()
-    
+
     if not existing:
         existing = EmailPreference(user_id=current_user.id)
         db.add(existing)
-    
+
     # Update fields
     if "marketing_emails" in prefs:
         existing.marketing_emails = prefs["marketing_emails"]
@@ -691,7 +719,7 @@ async def update_email_preferences(
         existing.vendor_preferences = prefs["vendor_preferences"]
     if "categories" in prefs:
         existing.categories = prefs["categories"]
-    
+
     await db.commit()
-    
+
     return {"message": "Preferences updated successfully"}

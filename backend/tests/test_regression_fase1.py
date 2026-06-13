@@ -15,18 +15,22 @@ Bugs fixed:
 - Extra: ``superadmin/system.py`` and ``superadmin/users.py`` had several
   undefined names (``select``, ``func``, ``Vendor``, ``Booking``, ``timedelta``)
 """
+
 import pytest
 from importlib import import_module
 
 
-@pytest.mark.parametrize("module_path", [
-    "app.api.v1.stripe",
-    "app.api.v1.marketing",
-    "app.api.v1.superadmin.content",
-    "app.api.v1.superadmin.system",
-    "app.api.v1.superadmin.users",
-    "app.api.v1.admin.settings",
-])
+@pytest.mark.parametrize(
+    "module_path",
+    [
+        "app.api.v1.stripe",
+        "app.api.v1.marketing",
+        "app.api.v1.superadmin.content",
+        "app.api.v1.superadmin.system",
+        "app.api.v1.superadmin.users",
+        "app.api.v1.admin.settings",
+    ],
+)
 def test_module_imports_without_nameerror(module_path):
     """Each fixed module must import without NameError or UndefinedError."""
     mod = import_module(module_path)
@@ -60,8 +64,7 @@ def test_stripe_get_connect_link_does_not_shadow_status():
     assert "connect_status" in src
     # And the response field ``status=`` is still allowed (that's a kwarg, not
     # a local variable). We just check that no assignment to ``status =`` remains.
-    bad = [line for line in src.splitlines()
-           if line.lstrip().startswith("status =")]
+    bad = [line for line in src.splitlines() if line.lstrip().startswith("status =")]
     assert not bad, f"Found shadowing local assignments: {bad}"
 
 
@@ -93,7 +96,7 @@ def test_superadmin_content_blog_filter_uses_alias():
     import inspect
 
     src = inspect.getsource(content.list_blog_posts)
-    assert "alias=\"status\"" in src
+    assert 'alias="status"' in src
     assert "status_filter" in src
 
 

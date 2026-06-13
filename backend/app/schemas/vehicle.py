@@ -1,6 +1,7 @@
 """
 Vehicle Schemas - Rent a Car
 """
+
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 from datetime import datetime

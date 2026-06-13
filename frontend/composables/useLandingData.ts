@@ -46,7 +46,7 @@ export function useLandingData() {
           first_name: firstName
         })
       },
-      { 
+      {
         defaultValue: { success: false, message: 'Error al suscribirse' }
       }
     ) as Promise<NewsletterResponse>

@@ -7,7 +7,7 @@ export function useSearch() {
   const route = useRoute()
   const router = useRouter()
   const api = useApi()
-  
+
   // State
   const tours = ref<Tour[]>([])
   const loading = ref(false)
@@ -15,7 +15,7 @@ export function useSearch() {
   const totalCount = ref(0)
   const currentPage = ref(1)
   const pageSize = ref(PAGINATION.searchPageSize)
-  
+
   // Filtros desde URL o defaults
   const filters = ref<SearchFilters>({
     query: route.query.q as string || '',
@@ -31,7 +31,7 @@ export function useSearch() {
     travelers: route.query.travelers ? parseInt(route.query.travelers as string) : 2,
     sortBy: (route.query.sortBy as SearchFilters['sortBy']) || 'popular'
   })
-  
+
   // Opciones de filtros disponibles - using centralized constants
   const filterOptions = computed(() => ({
     categories: TOUR_CATEGORIES.map((cat: typeof TOUR_CATEGORIES[number]) => ({
@@ -45,7 +45,7 @@ export function useSearch() {
     sortOptions: SEARCH_FILTERS.sortOptions.map(o => ({ value: o.value, label: o.key })),
     regions: SEARCH_FILTERS.regions
   }))
-  
+
   // Computed
   const activeFiltersCount = computed(() => {
     let count = 0
@@ -58,17 +58,17 @@ export function useSearch() {
     if (filters.value.date) count++
     return count
   })
-  
+
   const hasActiveFilters = computed(() => activeFiltersCount.value > 0)
-  
+
   // Methods
   async function searchTours() {
     loading.value = true
     error.value = null
-    
+
     try {
       const params = new URLSearchParams()
-      
+
       if (filters.value.query) params.set('q', filters.value.query)
       if (filters.value.destination) params.set('destination', filters.value.destination)
       if (filters.value.category) params.set('category', filters.value.category)
@@ -79,14 +79,14 @@ export function useSearch() {
       if (filters.value.maxDuration) params.set('max_duration', filters.value.maxDuration.toString())
       if (filters.value.rating) params.set('min_rating', filters.value.rating.toString())
       if (filters.value.sortBy) params.set('sort', filters.value.sortBy)
-      
+
       params.set('page', currentPage.value.toString())
       params.set('page_size', pageSize.value.toString())
-      
+
       const data = await api.get<TourSearchResponse>(`/tours?${params.toString()}`)
       tours.value = data.items || []
       totalCount.value = data.total || 0
-      
+
     } catch (err: any) {
       error.value = err?.message || err?.data?.detail || 'Error en búsqueda'
       console.error('Search error:', err)
@@ -95,14 +95,14 @@ export function useSearch() {
       loading.value = false
     }
   }
-  
+
   function updateFilters(newFilters: Partial<SearchFilters>) {
     filters.value = { ...filters.value, ...newFilters }
     currentPage.value = 1 // Reset page on filter change
     syncUrlWithFilters()
     searchTours()
   }
-  
+
   function clearFilters() {
     filters.value = {
       query: '',
@@ -115,16 +115,16 @@ export function useSearch() {
     syncUrlWithFilters()
     searchTours()
   }
-  
+
   function clearFilter(key: keyof SearchFilters) {
     filters.value[key] = undefined
     syncUrlWithFilters()
     searchTours()
   }
-  
+
   function syncUrlWithFilters() {
     const query: Record<string, string> = {}
-    
+
     if (filters.value.query) query.q = filters.value.query
     if (filters.value.destination) query.destination = filters.value.destination
     if (filters.value.category) query.category = filters.value.category
@@ -138,10 +138,10 @@ export function useSearch() {
     if (filters.value.travelers) query.travelers = filters.value.travelers.toString()
     if (filters.value.sortBy && filters.value.sortBy !== 'popular') query.sortBy = filters.value.sortBy
     if (currentPage.value > 1) query.page = currentPage.value.toString()
-    
+
     router.replace({ query })
   }
-  
+
   function setPage(page: number) {
     currentPage.value = page
     syncUrlWithFilters()
@@ -149,7 +149,7 @@ export function useSearch() {
     // Scroll to top of results
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-  
+
   // Watch for URL changes (browser back/forward)
   watch(() => route.query, (newQuery) => {
     filters.value = {
@@ -169,12 +169,12 @@ export function useSearch() {
     currentPage.value = newQuery.page ? parseInt(newQuery.page as string) : 1
     searchTours()
   }, { deep: true })
-  
+
   // Initial search
   const init = () => {
     searchTours()
   }
-  
+
   return {
     // State
     tours,
@@ -184,12 +184,12 @@ export function useSearch() {
     totalCount,
     currentPage,
     pageSize,
-    
+
     // Computed
     filterOptions,
     activeFiltersCount,
     hasActiveFilters,
-    
+
     // Methods
     searchTours,
     updateFilters,

@@ -1,6 +1,7 @@
 """
 Slug utilities - Genera slugs SEO-friendly con soporte para español/francés
 """
+
 import uuid
 from slugify import slugify
 
@@ -8,13 +9,13 @@ from slugify import slugify
 def generate_slug(text: str, max_length: int = 100, suffix: bool = True) -> str:
     """
     Generate a URL-friendly slug from text.
-    
+
     Features:
     - Handles Spanish/French characters (ñ, tildes, cedillas)
     - Removes special characters
     - Adds unique suffix if requested
     - Truncates to max_length
-    
+
     Examples:
         "Hotel Paraíso" -> "hotel-paraiso-a1b2c3d4"
         "Montaña Verde" -> "montana-verde-e5f6g7h8"
@@ -22,27 +23,27 @@ def generate_slug(text: str, max_length: int = 100, suffix: bool = True) -> str:
     """
     if not text:
         return ""
-    
+
     # Generate base slug using python-slugify
     # separator='-' ensures consistent hyphen separation
     # lowercase=True ensures lowercase output
     base_slug = slugify(
         text,
-        separator='-',
+        separator="-",
         lowercase=True,
         max_length=max_length - 9 if suffix else max_length,  # Reserve space for suffix
         word_boundary=True,
-        save_order=True
+        save_order=True,
     )
-    
+
     if not base_slug:
         base_slug = "item"
-    
+
     # Add unique suffix if requested
     if suffix:
         unique_suffix = uuid.uuid4().hex[:8]
         return f"{base_slug}-{unique_suffix}"
-    
+
     return base_slug
 
 
@@ -85,11 +86,6 @@ def sanitize_existing_slug(slug: str) -> str:
     """
     if not slug:
         return ""
-    
+
     # Re-slugify to ensure consistency
-    return slugify(
-        slug,
-        separator='-',
-        lowercase=True,
-        max_length=150
-    )
+    return slugify(slug, separator="-", lowercase=True, max_length=150)

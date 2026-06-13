@@ -100,17 +100,17 @@ async def list_vendors(
     sort_by: str = "created_at",
     sort_order: str = "desc",
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin),
 ):
     """List all vendors with filters, search, and pagination"""
-    
+
     # Build base query
     query = select(Vendor, User).outerjoin(User, Vendor.user_id == User.id)
     count_query = select(func.count(Vendor.id))
-    
+
     # Apply filters
     conditions = []
-    
+
     if search:
         safe_search = escape_like_pattern(search)
         search_term = f"%{safe_search}%"
@@ -120,72 +120,76 @@ async def list_vendors(
                 Vendor.business_slug.ilike(search_term),
             )
         )
-    
+
     if business_type:
         conditions.append(Vendor.business_type == business_type)
-    
+
     if is_verified == "true":
         conditions.append(Vendor.is_verified)
     elif is_verified == "false":
         conditions.append(Vendor.is_verified == False)
-    
+
     if is_active == "true":
         conditions.append(Vendor.is_active)
     elif is_active == "false":
         conditions.append(Vendor.is_active == False)
-    
+
     if conditions:
         query = query.where(*conditions)
         count_query = count_query.where(*conditions)
-    
+
     # Get total count
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
-    
+
     # Apply sorting
     sort_column = getattr(Vendor, sort_by, Vendor.created_at)
     if sort_order == "asc":
         query = query.order_by(sort_column.asc())
     else:
         query = query.order_by(sort_column.desc())
-    
+
     # Apply pagination
     query = query.offset(offset).limit(limit)
-    
+
     result = await db.execute(query)
     rows = result.all()
-    
+
     # Build response
     items = []
     for row in rows:
         vendor = row[0]
         user = row[1] if row[1] is not None else None
-        
+
         # SECURITY: Admin-safe vendor data - NO financial or PII
-        items.append({
-            "id": str(vendor.id),
-            "business_name": vendor.business_name,
-            "business_slug": vendor.business_slug,
-            "business_type": vendor.business_type,
-            "description": vendor.description,
-            "logo_url": vendor.logo_url,
-            "cover_image": vendor.cover_image,
-            "address": vendor.address,
-            # SECURITY: Phone removed - prevents PII exposure
-            # SECURITY: Email removed - prevents PII exposure
-            "rating": vendor.rating,
-            "total_reviews": vendor.total_reviews,
-            # SECURITY: Financial data removed
-            # commission_rate, stripe_account_id, stripe_connected excluded
-            "is_verified": vendor.is_verified,
-            "is_active": vendor.is_active,
-            "created_at": vendor.created_at.isoformat() if vendor.created_at else None,
-            # SECURITY: Owner info limited to name only
-            "owner_name": user.full_name if user else None,
-        })
-    
+        items.append(
+            {
+                "id": str(vendor.id),
+                "business_name": vendor.business_name,
+                "business_slug": vendor.business_slug,
+                "business_type": vendor.business_type,
+                "description": vendor.description,
+                "logo_url": vendor.logo_url,
+                "cover_image": vendor.cover_image,
+                "address": vendor.address,
+                # SECURITY: Phone removed - prevents PII exposure
+                # SECURITY: Email removed - prevents PII exposure
+                "rating": vendor.rating,
+                "total_reviews": vendor.total_reviews,
+                # SECURITY: Financial data removed
+                # commission_rate, stripe_account_id, stripe_connected excluded
+                "is_verified": vendor.is_verified,
+                "is_active": vendor.is_active,
+                "created_at": vendor.created_at.isoformat()
+                if vendor.created_at
+                else None,
+                # SECURITY: Owner info limited to name only
+                "owner_name": user.full_name if user else None,
+            }
+        )
+
     total_pages = (total + limit - 1) // limit if limit > 0 else 0
-    
+
     return {
         "items": items,
         "total": total,
@@ -193,47 +197,47 @@ async def list_vendors(
         "limit": limit,
         "total_pages": total_pages,
         "has_next": offset + limit < total if limit > 0 else False,
-        "has_prev": offset > 0
+        "has_prev": offset > 0,
     }
 
 
 @router.get("/stats/summary", response_model=VendorStatsResponse)
 async def get_vendor_stats(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    db: AsyncSession = Depends(get_db), current_user: User = Depends(require_admin)
 ):
     """Get vendor statistics"""
-    
+
     # Total vendors
     total_result = await db.execute(select(func.count(Vendor.id)))
     total = total_result.scalar() or 0
-    
+
     # Verified
     verified_result = await db.execute(
         select(func.count(Vendor.id)).where(Vendor.is_verified)
     )
     verified = verified_result.scalar() or 0
-    
+
     # Active
     active_result = await db.execute(
         select(func.count(Vendor.id)).where(Vendor.is_active)
     )
     active = active_result.scalar() or 0
-    
+
     # By business type
     type_result = await db.execute(
-        select(Vendor.business_type, func.count(Vendor.id))
-        .group_by(Vendor.business_type)
+        select(Vendor.business_type, func.count(Vendor.id)).group_by(
+            Vendor.business_type
+        )
     )
     by_type = {row[0]: row[1] for row in type_result.all()}
-    
+
     return {
         "total": total,
         "verified": verified,
         "unverified": total - verified,
         "active": active,
         "inactive": total - active,
-        "by_business_type": by_type
+        "by_business_type": by_type,
     }
 
 
@@ -241,7 +245,7 @@ async def get_vendor_stats(
 async def get_vendor(
     vendor_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin),
 ):
     """Get vendor details with owner info"""
     result = await db.execute(
@@ -250,16 +254,15 @@ async def get_vendor(
         .where(Vendor.id == vendor_id)
     )
     row = result.first()
-    
+
     if not row:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
         )
-    
+
     vendor = row[0]
     user = row[1] if row[1] is not None else None
-    
+
     # SECURITY: Admin-safe response - NO financial data or PII
     return {
         "id": str(vendor.id),
@@ -288,48 +291,53 @@ async def update_vendor(
     vendor_id: uuid.UUID,
     data: dict,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin),
 ):
     """Update vendor details.
-    
+
     SECURITY: Field whitelist prevents mass assignment.
     Admin CANNOT modify financial or sensitive fields.
     """
     result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
         )
-    
+
     # SECURITY: Field whitelist - admin can only modify safe fields
     # Financial fields (commission_rate, stripe_account_id) EXCLUDED
     # Sensitive PII fields (phone, email) EXCLUDED
     allowed_fields = {
-        'business_name', 'business_slug', 'business_type', 'description',
-        'logo_url', 'cover_image', 'address', 'is_active'
+        "business_name",
+        "business_slug",
+        "business_type",
+        "description",
+        "logo_url",
+        "cover_image",
+        "address",
+        "is_active",
         # NOTE: is_verified excluded - only Super Admin can verify
     }
-    
+
     # SECURITY: Check for forbidden fields
     forbidden_fields = set(data.keys()) - allowed_fields
     if forbidden_fields:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Cannot modify fields: {', '.join(forbidden_fields)}. Contact Super Admin."
+            detail=f"Cannot modify fields: {', '.join(forbidden_fields)}. Contact Super Admin.",
         )
-    
+
     # Update only allowed fields
     for field, value in data.items():
         if hasattr(vendor, field):
             setattr(vendor, field, value)
-    
+
     await db.flush()
     await db.refresh(vendor)
     await db.commit()
-    
+
     return {"message": "Vendor updated successfully", "id": str(vendor.id)}
 
 
@@ -338,25 +346,24 @@ async def verify_vendor(
     vendor_id: uuid.UUID,
     is_verified: bool = True,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN))
+    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
 ):
     """Verify or unverify a vendor"""
     result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
         )
-    
+
     vendor.is_verified = is_verified
     await db.flush()
     await db.commit()
-    
+
     return {
         "message": f"Vendor {'verified' if is_verified else 'unverified'} successfully",
-        "is_verified": vendor.is_verified
+        "is_verified": vendor.is_verified,
     }
 
 
@@ -365,25 +372,24 @@ async def toggle_vendor_active(
     vendor_id: uuid.UUID,
     is_active: bool = True,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin),
 ):
     """Activate or deactivate a vendor"""
     result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
         )
-    
+
     vendor.is_active = is_active
     await db.flush()
     await db.commit()
-    
+
     return {
         "message": f"Vendor {'activated' if is_active else 'deactivated'} successfully",
-        "is_active": vendor.is_active
+        "is_active": vendor.is_active,
     }
 
 
@@ -391,20 +397,19 @@ async def toggle_vendor_active(
 async def delete_vendor(
     vendor_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN))
+    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
 ):
     """Soft delete a vendor (deactivate)"""
     result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
         )
-    
+
     vendor.is_active = False
     await db.flush()
     await db.commit()
-    
+
     return {"message": "Vendor deleted successfully"}

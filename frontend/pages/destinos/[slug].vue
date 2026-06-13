@@ -63,7 +63,7 @@
                 <span>🎯</span> Lo que vas a encontrar
               </h2>
               <ul class="space-y-3 grid sm:grid-cols-2 gap-3">
-                <li 
+                <li
                   v-for="(highlight, index) in getHighlights()"
                   :key="index"
                   class="flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100"
@@ -80,7 +80,7 @@
                 <span>🧗</span> Actividades Principales
               </h2>
               <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <div 
+                <div
                   v-for="activity in getThingsToDo()"
                   :key="activity.name"
                   class="p-4 bg-white rounded-xl border border-gray-100 text-center hover:shadow-md transition-shadow"
@@ -185,7 +185,7 @@
         <section class="mt-16">
           <h2 class="text-2xl font-bold text-gray-900 mb-6">Otros Destinos que Te Pueden Gustar</h2>
           <div class="grid md:grid-cols-3 gap-6">
-            <NuxtLink 
+            <NuxtLink
               v-for="related in relatedDestinations"
               :key="related.slug"
               :to="`/destinos/${related.slug}`"

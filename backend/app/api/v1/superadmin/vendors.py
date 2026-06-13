@@ -10,6 +10,7 @@ Security:
 - Input validation and sanitization
 - Rate limiting recommended at nginx level
 """
+
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime, timezone, timedelta
@@ -17,7 +18,7 @@ from enum import Enum
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import case,  select, or_, func, desc
+from sqlalchemy import case, select, or_, func, desc
 from sqlalchemy.orm import selectinload
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -34,6 +35,7 @@ router = APIRouter(prefix="/vendors", tags=["Super Admin - Vendors"])
 # ============================================================================
 # Enums and Schemas
 # ============================================================================
+
 
 class VendorSortBy(str, Enum):
     CREATED_AT = "created_at"
@@ -67,7 +69,7 @@ class VendorApprovalRequest(BaseModel):
 
 class VendorStats(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
+
     vendor_id: UUID
     total_bookings: int = 0
     total_revenue: float = 0.0
@@ -81,7 +83,7 @@ class VendorStats(BaseModel):
 
 class VendorDetailResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     business_name: str
     business_type: str
@@ -94,16 +96,16 @@ class VendorDetailResponse(BaseModel):
     total_bookings: int
     created_at: datetime
     updated_at: datetime
-    
+
     # Owner info
     owner_id: UUID
     owner_email: str
     owner_name: str
     owner_phone: Optional[str]
-    
+
     # Statistics
     stats: VendorStats
-    
+
     # Compliance
     documents_verified: bool
     last_compliance_check: Optional[datetime]
@@ -112,7 +114,7 @@ class VendorDetailResponse(BaseModel):
 
 class VendorListResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     business_name: str
     business_type: str
@@ -131,10 +133,10 @@ class VendorAnalytics(BaseModel):
     active_vendors: int
     suspended_vendors: int
     rejected_vendors: int
-    
+
     top_performers: List[VendorStats]
     recent_registrations: List[VendorListResponse]
-    
+
     revenue_by_vendor_type: dict
     bookings_by_month: List[dict]
 
@@ -149,6 +151,7 @@ class ComplianceCheckRequest(BaseModel):
 # Helper Functions
 # ============================================================================
 
+
 async def calculate_vendor_stats(db: AsyncSession, vendor_id: UUID) -> VendorStats:
     """Calculate comprehensive vendor statistics."""
     # Bookings stats
@@ -156,12 +159,16 @@ async def calculate_vendor_stats(db: AsyncSession, vendor_id: UUID) -> VendorSta
         select(
             func.count(Booking.id).label("total"),
             func.sum(Booking.total_amount).label("revenue"),
-            func.sum(case((Booking.status == "completed", 1), else_=0)).label("completed"),
-            func.sum(case((Booking.status == "cancelled", 1), else_=0)).label("cancelled"),
+            func.sum(case((Booking.status == "completed", 1), else_=0)).label(
+                "completed"
+            ),
+            func.sum(case((Booking.status == "cancelled", 1), else_=0)).label(
+                "cancelled"
+            ),
         ).where(Booking.vendor_id == vendor_id)
     )
     row = result.one()
-    
+
     # Reviews stats
     result = await db.execute(
         select(
@@ -170,7 +177,7 @@ async def calculate_vendor_stats(db: AsyncSession, vendor_id: UUID) -> VendorSta
         ).where(Review.vendor_id == vendor_id)
     )
     review_row = result.one()
-    
+
     return VendorStats(
         vendor_id=vendor_id,
         total_bookings=row.total or 0,
@@ -187,21 +194,23 @@ async def calculate_vendor_stats(db: AsyncSession, vendor_id: UUID) -> VendorSta
 async def run_compliance_check(db: AsyncSession, vendor: Vendor) -> List[str]:
     """Run compliance checks and return flags."""
     flags = []
-    
+
     # Check if vendor has properties/tours
     result = await db.execute(
         select(func.count(Property.id)).where(Property.vendor_id == vendor.id)
     )
     property_count = result.scalar()
-    
+
     if property_count == 0:
         flags.append("no_properties")
-    
+
     # Check booking completion rate
     result = await db.execute(
         select(
             func.count().label("total"),
-            func.sum(case((Booking.status == "completed", 1), else_=0)).label("completed"),
+            func.sum(case((Booking.status == "completed", 1), else_=0)).label(
+                "completed"
+            ),
         ).where(Booking.vendor_id == vendor.id)
     )
     row = result.one()
@@ -209,17 +218,18 @@ async def run_compliance_check(db: AsyncSession, vendor: Vendor) -> List[str]:
         completion_rate = (row.completed or 0) / row.total
         if completion_rate < 0.5:
             flags.append("low_completion_rate")
-    
+
     # Check rating
     if vendor.rating and vendor.rating < 2.0:
         flags.append("low_rating")
-    
+
     return flags
 
 
 # ============================================================================
 # Endpoints
 # ============================================================================
+
 
 @router.get("", response_model=List[VendorListResponse])
 async def list_vendors(
@@ -231,11 +241,11 @@ async def list_vendors(
     offset: int = Query(default=0, ge=0),
     featured_only: bool = Query(default=False),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> List[VendorListResponse]:
     """
     List all vendors with filtering and sorting.
-    
+
     Query Parameters:
     - status: Filter by vendor status (all, pending, active, suspended, rejected)
     - sort_by: Sort field (created_at, name, rating, bookings, revenue)
@@ -244,11 +254,11 @@ async def list_vendors(
     - featured_only: Show only featured vendors
     """
     query = select(Vendor).options(selectinload(Vendor.owner))
-    
+
     # Apply status filter
     if status != VendorFilterStatus.ALL:
         query = query.where(Vendor.status == VendorStatus(status.value))
-    
+
     # Apply search
     if search:
         safe_search = escape_like_pattern(search)
@@ -256,14 +266,14 @@ async def list_vendors(
         query = query.where(
             or_(
                 Vendor.business_name.ilike(search_pattern),
-                Vendor.owner.has(User.email.ilike(search_pattern))
+                Vendor.owner.has(User.email.ilike(search_pattern)),
             )
         )
-    
+
     # Apply featured filter
     if featured_only:
         query = query.where(Vendor.is_featured)
-    
+
     # Apply sorting
     sort_column = {
         VendorSortBy.CREATED_AT: Vendor.created_at,
@@ -271,18 +281,18 @@ async def list_vendors(
         VendorSortBy.RATING: Vendor.rating,
         VendorSortBy.BOOKINGS: Vendor.total_bookings,
     }.get(sort_by, Vendor.created_at)
-    
+
     if sort_order == "desc":
         query = query.order_by(desc(sort_column))
     else:
         query = query.order_by(sort_column)
-    
+
     # Apply pagination
     query = query.offset(offset).limit(limit)
-    
+
     result = await db.execute(query)
     vendors = result.scalars().all()
-    
+
     return [
         VendorListResponse(
             id=v.id,
@@ -304,11 +314,11 @@ async def list_vendors(
 async def list_pending_vendors(
     limit: int = Query(default=50, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> List[VendorDetailResponse]:
     """
     List vendors pending approval with detailed information.
-    
+
     Sorted by registration date (oldest first for priority).
     """
     result = await db.execute(
@@ -319,35 +329,39 @@ async def list_pending_vendors(
         .limit(limit)
     )
     vendors = result.scalars().all()
-    
+
     response_list = []
     for v in vendors:
         stats = await calculate_vendor_stats(db, v.id)
         flags = await run_compliance_check(db, v)
-        
-        response_list.append(VendorDetailResponse(
-            id=v.id,
-            business_name=v.business_name,
-            business_type=v.business_type,
-            description=v.description,
-            status=v.status.value if isinstance(v.status, VendorStatus) else v.status,
-            tax_id=v.tax_id,
-            commission_rate=v.commission_rate,
-            is_featured=v.is_featured or False,
-            rating=v.rating or 0.0,
-            total_bookings=v.total_bookings or 0,
-            created_at=v.created_at,
-            updated_at=v.updated_at,
-            owner_id=v.owner_id,
-            owner_email=v.owner.email,
-            owner_name=v.owner.full_name,
-            owner_phone=v.owner.phone,
-            stats=stats,
-            documents_verified=False,  # Set based on document verification
-            last_compliance_check=None,
-            compliance_flags=flags,
-        ))
-    
+
+        response_list.append(
+            VendorDetailResponse(
+                id=v.id,
+                business_name=v.business_name,
+                business_type=v.business_type,
+                description=v.description,
+                status=v.status.value
+                if isinstance(v.status, VendorStatus)
+                else v.status,
+                tax_id=v.tax_id,
+                commission_rate=v.commission_rate,
+                is_featured=v.is_featured or False,
+                rating=v.rating or 0.0,
+                total_bookings=v.total_bookings or 0,
+                created_at=v.created_at,
+                updated_at=v.updated_at,
+                owner_id=v.owner_id,
+                owner_email=v.owner.email,
+                owner_name=v.owner.full_name,
+                owner_phone=v.owner.phone,
+                stats=stats,
+                documents_verified=False,  # Set based on document verification
+                last_compliance_check=None,
+                compliance_flags=flags,
+            )
+        )
+
     return response_list
 
 
@@ -355,35 +369,34 @@ async def list_pending_vendors(
 async def get_vendor_details(
     vendor_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> VendorDetailResponse:
     """
     Get detailed information about a specific vendor.
-    
+
     Includes statistics, compliance flags, and owner information.
     """
     result = await db.execute(
-        select(Vendor)
-        .options(selectinload(Vendor.owner))
-        .where(Vendor.id == vendor_id)
+        select(Vendor).options(selectinload(Vendor.owner)).where(Vendor.id == vendor_id)
     )
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
         )
-    
+
     stats = await calculate_vendor_stats(db, vendor.id)
     flags = await run_compliance_check(db, vendor)
-    
+
     return VendorDetailResponse(
         id=vendor.id,
         business_name=vendor.business_name,
         business_type=vendor.business_type,
         description=vendor.description,
-        status=vendor.status.value if isinstance(vendor.status, VendorStatus) else vendor.status,
+        status=vendor.status.value
+        if isinstance(vendor.status, VendorStatus)
+        else vendor.status,
         tax_id=vendor.tax_id,
         commission_rate=vendor.commission_rate,
         is_featured=vendor.is_featured or False,
@@ -407,50 +420,53 @@ async def process_vendor_approval(
     vendor_id: UUID,
     data: VendorApprovalRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> VendorDetailResponse:
     """
     Process vendor approval, rejection, suspension, or reactivation.
-    
+
     Actions:
     - approve: Approve pending vendor
     - reject: Reject pending vendor
     - suspend: Suspend active vendor
     - reactivate: Reactivate suspended vendor
-    
+
     All actions are audited and require a reason.
     """
     result = await db.execute(
         select(Vendor).options(selectinload(Vendor.owner)).where(Vendor.id == vendor_id)
     )
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
         )
-    
+
     # Validate state transitions
-    current_status = vendor.status.value if isinstance(vendor.status, VendorStatus) else vendor.status
-    
+    current_status = (
+        vendor.status.value
+        if isinstance(vendor.status, VendorStatus)
+        else vendor.status
+    )
+
     valid_transitions = {
         VendorApprovalAction.APPROVE: ["pending"],
         VendorApprovalAction.REJECT: ["pending"],
         VendorApprovalAction.SUSPEND: ["active"],
         VendorApprovalAction.REACTIVATE: ["suspended"],
     }
-    
+
     if current_status not in valid_transitions[data.action]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot {data.action.value} vendor with status '{current_status}'"
+            detail=f"Cannot {data.action.value} vendor with status '{current_status}'",
         )
-    
+
     # Store old state for audit
     old_status = current_status
     old_featured = vendor.is_featured
-    
+
     # Apply action
     new_status_map = {
         VendorApprovalAction.APPROVE: VendorStatus.ACTIVE,
@@ -458,10 +474,10 @@ async def process_vendor_approval(
         VendorApprovalAction.SUSPEND: VendorStatus.SUSPENDED,
         VendorApprovalAction.REACTIVATE: VendorStatus.ACTIVE,
     }
-    
+
     vendor.status = new_status_map[data.action]
     vendor.updated_at = datetime.now(timezone.utc)
-    
+
     # Audit log
     audit_action = {
         VendorApprovalAction.APPROVE: AuditAction.APPROVE,
@@ -469,7 +485,7 @@ async def process_vendor_approval(
         VendorApprovalAction.SUSPEND: AuditAction.SUSPEND,
         VendorApprovalAction.REACTIVATE: AuditAction.ACTIVATE,
     }[data.action]
-    
+
     await AuditService.log_audit_action(
         db=db,
         user=current_user,
@@ -479,25 +495,29 @@ async def process_vendor_approval(
         entity_name=vendor.business_name,
         old_values={"status": old_status, "is_featured": old_featured},
         new_values={
-            "status": vendor.status.value if isinstance(vendor.status, VendorStatus) else vendor.status,
+            "status": vendor.status.value
+            if isinstance(vendor.status, VendorStatus)
+            else vendor.status,
             "reason": data.reason,
             "notes": data.notes,
         },
-        changes_summary=f"{data.action.value}d vendor: {data.reason or 'No reason provided'}"
+        changes_summary=f"{data.action.value}d vendor: {data.reason or 'No reason provided'}",
     )
-    
+
     await db.commit()
-    
+
     # Return updated vendor
     stats = await calculate_vendor_stats(db, vendor.id)
     flags = await run_compliance_check(db, vendor)
-    
+
     return VendorDetailResponse(
         id=vendor.id,
         business_name=vendor.business_name,
         business_type=vendor.business_type,
         description=vendor.description,
-        status=vendor.status.value if isinstance(vendor.status, VendorStatus) else vendor.status,
+        status=vendor.status.value
+        if isinstance(vendor.status, VendorStatus)
+        else vendor.status,
         tax_id=vendor.tax_id,
         commission_rate=vendor.commission_rate,
         is_featured=vendor.is_featured or False,
@@ -521,36 +541,39 @@ async def toggle_vendor_featured(
     vendor_id: UUID,
     featured: bool = Body(..., embed=True),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> dict:
     """
     Toggle featured status for a vendor.
-    
+
     Only active vendors can be featured.
     """
     result = await db.execute(
         select(Vendor).options(selectinload(Vendor.owner)).where(Vendor.id == vendor_id)
     )
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
         )
-    
+
     # Only active vendors can be featured
-    current_status = vendor.status.value if isinstance(vendor.status, VendorStatus) else vendor.status
+    current_status = (
+        vendor.status.value
+        if isinstance(vendor.status, VendorStatus)
+        else vendor.status
+    )
     if featured and current_status != "active":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only active vendors can be featured"
+            detail="Only active vendors can be featured",
         )
-    
+
     old_featured = vendor.is_featured
     vendor.is_featured = featured
     vendor.updated_at = datetime.now(timezone.utc)
-    
+
     # Audit log
     await AuditService.log_audit_action(
         db=db,
@@ -561,14 +584,14 @@ async def toggle_vendor_featured(
         entity_name=vendor.business_name,
         old_values={"is_featured": old_featured},
         new_values={"is_featured": featured},
-        changes_summary=f"{'Featured' if featured else 'Unfeatured'} vendor"
+        changes_summary=f"{'Featured' if featured else 'Unfeatured'} vendor",
     )
-    
+
     await db.commit()
-    
+
     return {
         "message": f"Vendor {vendor.business_name} is now {'featured' if featured else 'unfeatured'}",
-        "is_featured": featured
+        "is_featured": featured,
     }
 
 
@@ -576,20 +599,22 @@ async def toggle_vendor_featured(
 async def get_vendor_analytics(
     days: int = Query(default=30, ge=1, le=365),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> VendorAnalytics:
     """
     Get comprehensive vendor analytics.
-    
+
     Includes counts, top performers, recent registrations, and trends.
     """
     # Count by status
     result = await db.execute(
-        select(Vendor.status, func.count(Vendor.id))
-        .group_by(Vendor.status)
+        select(Vendor.status, func.count(Vendor.id)).group_by(Vendor.status)
     )
-    status_counts = {row[0].value if isinstance(row[0], VendorStatus) else row[0]: row[1] for row in result.all()}
-    
+    status_counts = {
+        row[0].value if isinstance(row[0], VendorStatus) else row[0]: row[1]
+        for row in result.all()
+    }
+
     # Top performers by revenue
     result = await db.execute(
         select(Vendor, func.sum(Booking.total_amount).label("revenue"))
@@ -600,12 +625,12 @@ async def get_vendor_analytics(
         .limit(10)
     )
     top_vendors = result.all()
-    
+
     top_stats = []
     for vendor, revenue in top_vendors:
         stats = await calculate_vendor_stats(db, vendor.id)
         top_stats.append(stats)
-    
+
     # Recent registrations
     result = await db.execute(
         select(Vendor)
@@ -614,7 +639,7 @@ async def get_vendor_analytics(
         .limit(10)
     )
     recent = result.scalars().all()
-    
+
     recent_list = [
         VendorListResponse(
             id=v.id,
@@ -630,24 +655,28 @@ async def get_vendor_analytics(
         )
         for v in recent
     ]
-    
+
     # Bookings by month (last 12 months)
     months_ago = datetime.now(timezone.utc) - timedelta(days=365)
     result = await db.execute(
         select(
-            func.date_trunc('month', Booking.created_at).label("month"),
+            func.date_trunc("month", Booking.created_at).label("month"),
             func.count(Booking.id).label("count"),
             func.sum(Booking.total_amount).label("revenue"),
         )
         .where(Booking.created_at >= months_ago)
-        .group_by(func.date_trunc('month', Booking.created_at))
+        .group_by(func.date_trunc("month", Booking.created_at))
         .order_by("month")
     )
     bookings_by_month = [
-        {"month": row.month.strftime("%Y-%m"), "count": row.count, "revenue": float(row.revenue or 0)}
+        {
+            "month": row.month.strftime("%Y-%m"),
+            "count": row.count,
+            "revenue": float(row.revenue or 0),
+        }
         for row in result.all()
     ]
-    
+
     # Revenue by vendor type
     result = await db.execute(
         select(Vendor.business_type, func.sum(Booking.total_amount))
@@ -656,7 +685,7 @@ async def get_vendor_analytics(
         .group_by(Vendor.business_type)
     )
     revenue_by_type = {row[0]: float(row[1] or 0) for row in result.all()}
-    
+
     return VendorAnalytics(
         total_vendors=sum(status_counts.values()),
         pending_approval=status_counts.get("pending", 0),
@@ -675,29 +704,26 @@ async def run_vendor_compliance_check(
     vendor_id: UUID,
     data: ComplianceCheckRequest = Body(default=None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> dict:
     """
     Run compliance check on a vendor.
-    
+
     Checks documents, bookings, and reviews for compliance issues.
     """
-    result = await db.execute(
-        select(Vendor).where(Vendor.id == vendor_id)
-    )
+    result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
         )
-    
+
     flags = await run_compliance_check(db, vendor)
-    
+
     # Update vendor
     vendor.last_compliance_check = datetime.now(timezone.utc)
-    
+
     # Audit log
     await AuditService.log_audit_action(
         db=db,
@@ -706,14 +732,14 @@ async def run_vendor_compliance_check(
         entity_type="vendor",
         entity_id=vendor.id,
         entity_name=vendor.business_name,
-        changes_summary=f"Ran compliance check. Flags: {', '.join(flags) if flags else 'None'}"
+        changes_summary=f"Ran compliance check. Flags: {', '.join(flags) if flags else 'None'}",
     )
-    
+
     await db.commit()
-    
+
     return {
         "vendor_id": vendor_id,
         "compliant": len(flags) == 0,
         "flags": flags,
-        "checked_at": vendor.last_compliance_check.isoformat()
+        "checked_at": vendor.last_compliance_check.isoformat(),
     }

@@ -14,17 +14,17 @@ def sample_user():
         "email": "test@example.com",
         "password": "TestPass123",
         "full_name": "Test User",
-        "phone": "+50612345678"
+        "phone": "+50612345678",
     }
 
 
-@pytest.fixture  
+@pytest.fixture
 def sample_vendor():
     return {
         "user_id": uuid4(),
         "business_name": "Test Hotel",
         "business_type": "hotel",
-        "description": "A test hotel"
+        "description": "A test hotel",
     }
 
 
@@ -36,14 +36,14 @@ def sample_property():
         "slug": "test-property",
         "property_type": "hotel",
         "address": "Test Address",
-        "country": "Costa Rica"
+        "country": "Costa Rica",
     }
 
 
 # Validation tests
 def test_sanitize_sql_injection():
     from app.schemas import is_dangerous_sql
-    
+
     assert not is_dangerous_sql("Hello World")
     assert is_dangerous_sql("DROP TABLE users")
     assert is_dangerous_sql("DELETE FROM users")
@@ -52,7 +52,7 @@ def test_sanitize_sql_injection():
 
 def test_password_strength():
     from app.schemas import is_weak_password
-    
+
     assert is_weak_password("weak")
     assert is_weak_password("12345678")
     assert is_weak_password("ABCDEFGH")
@@ -62,7 +62,7 @@ def test_password_strength():
 # Schema tests
 def test_schema_user_create(sample_user):
     from app.schemas import UserCreate
-    
+
     user = UserCreate(**sample_user)
     assert user.email == sample_user["email"]
     assert user.full_name == sample_user["full_name"]
@@ -71,18 +71,14 @@ def test_schema_user_create(sample_user):
 def test_schema_user_password_too_short():
     from app.schemas import UserCreate
     from pydantic import ValidationError
-    
+
     with pytest.raises(ValidationError):
-        UserCreate(
-            email="test@example.com",
-            password="short",
-            full_name="Test User"
-        )
+        UserCreate(email="test@example.com", password="short", full_name="Test User")
 
 
 def test_schema_pagination():
     from app.schemas import PaginationParams
-    
+
     params = PaginationParams(page=1, page_size=20)
     assert params.page == 1
     assert params.page_size == 20
@@ -90,33 +86,37 @@ def test_schema_pagination():
 
 def test_schema_vendor_create(sample_vendor):
     from app.schemas import VendorCreate
-    
+
     vendor = VendorCreate(**sample_vendor)
     assert vendor.business_name == sample_vendor["business_name"]
     assert vendor.business_type == sample_vendor["business_type"]
 
 
-# Authentication tests  
+# Authentication tests
 def test_password_hashing():
     from app.core.security import get_password_hash, verify_password
-    
+
     password = "TestPass123"
     hashed = get_password_hash(password)
-    
+
     assert verify_password(password, hashed)
     assert not verify_password("WrongPass", hashed)
 
 
 def test_jwt_token_creation():
-    from app.core.security import create_access_token, create_refresh_token, decode_token
-    
+    from app.core.security import (
+        create_access_token,
+        create_refresh_token,
+        decode_token,
+    )
+
     user_id = str(uuid4())
     access_token = create_access_token(user_id)
     refresh_token = create_refresh_token(user_id)
-    
+
     assert access_token
     assert refresh_token
-    
+
     payload = decode_token(access_token)
     assert payload["sub"] == user_id
     assert payload["type"] == "access"
@@ -125,10 +125,10 @@ def test_jwt_token_creation():
 def test_token_expiration():
     from app.core.security import create_access_token, decode_token
     from fastapi import HTTPException
-    
+
     user_id = str(uuid4())
     expired_token = create_access_token(user_id, expires_delta=timedelta(seconds=-1))
-    
+
     with pytest.raises(HTTPException):
         decode_token(expired_token)
 
@@ -136,7 +136,7 @@ def test_token_expiration():
 # Model tests
 def test_user_model_fields():
     from app.models import User
-    
+
     required_fields = ["id", "email", "password_hash", "full_name", "role", "is_active"]
     for field in required_fields:
         assert hasattr(User, field), f"User missing {field}"
@@ -144,7 +144,7 @@ def test_user_model_fields():
 
 def test_vendor_model_fields():
     from app.models import Vendor
-    
+
     required_fields = ["id", "user_id", "business_name", "business_slug", "is_active"]
     for field in required_fields:
         assert hasattr(Vendor, field), f"Vendor missing {field}"
@@ -152,14 +152,14 @@ def test_vendor_model_fields():
 
 def test_property_model():
     from app.models import Property
-    
+
     assert hasattr(Property, "vendor_id")
     assert hasattr(Property, "slug")
 
 
 def test_booking_status_enum():
     from app.models import BookingStatus
-    
+
     assert BookingStatus.PENDING.value == "pending"
     assert BookingStatus.CONFIRMED.value == "confirmed"
     assert BookingStatus.CANCELLED.value == "cancelled"
@@ -168,7 +168,7 @@ def test_booking_status_enum():
 
 def test_tour_category_enum():
     from app.models import TourCategory
-    
+
     assert TourCategory.ADVENTURE.value == "adventure"
     assert TourCategory.NATURE.value == "nature"
 
@@ -176,7 +176,7 @@ def test_tour_category_enum():
 # CRUD tests
 def test_crud_base_import():
     from app.crud import CRUDBase, CRUDUser, CRUDSlug, CRUDRating
-    
+
     assert CRUDBase
     assert CRUDUser
     assert CRUDSlug
@@ -186,22 +186,22 @@ def test_crud_base_import():
 # Service tests - verify actual services used in the application
 def test_cache_service_import():
     from app.services.cache_service import CacheService, cache
+
     assert CacheService
     assert cache
 
 
 def test_pricing_service_import():
     from app.services.pricing_service import calculate_room_price, calculate_tour_price
+
     assert calculate_room_price
     assert calculate_tour_price
 
 
-# Exception tests  
+# Exception tests
 def test_exceptions_import():
-    from app.exceptions import (
-        NotFoundException, AlreadyExistsException
-    )
-    
+    from app.exceptions import NotFoundException, AlreadyExistsException
+
     assert NotFoundException
     assert AlreadyExistsException
 
@@ -209,7 +209,7 @@ def test_exceptions_import():
 def test_not_found_exception():
     from app.exceptions import NotFoundException
     from fastapi import status
-    
+
     exc = NotFoundException("User", "123")
     assert "not found" in exc.message
     assert exc.status_code == status.HTTP_404_NOT_FOUND
@@ -218,7 +218,7 @@ def test_not_found_exception():
 # Configuration tests
 def test_config_import():
     from app.core.config import settings
-    
+
     assert settings.APP_NAME == "Costa Rica Travel"
     assert settings.SECRET_KEY
 
@@ -226,7 +226,7 @@ def test_config_import():
 # Pagination tests
 def test_pagination_params_defaults():
     from app.schemas import PaginationParams
-    
+
     params = PaginationParams(page=1, page_size=20)
     assert params.page == 1
     assert params.page_size == 20
@@ -235,15 +235,17 @@ def test_pagination_params_defaults():
 
 def test_pagination_params_offset():
     from app.schemas import PaginationParams
-    
+
     params = PaginationParams(page=3, page_size=10)
     assert params.offset == 20
 
 
 def test_pagination_metadata():
     from app.core.pagination import PaginationMetadata
-    
-    meta = PaginationMetadata(page=2, page_size=10, total=25, total_pages=3, has_next=True, has_prev=True)
+
+    meta = PaginationMetadata(
+        page=2, page_size=10, total=25, total_pages=3, has_next=True, has_prev=True
+    )
     assert meta.page == 2
     assert meta.total == 25
     assert meta.total_pages == 3
@@ -253,16 +255,20 @@ def test_pagination_metadata():
 
 def test_pagination_metadata_last_page():
     from app.core.pagination import PaginationMetadata
-    
-    meta = PaginationMetadata(page=3, page_size=10, total=25, total_pages=3, has_next=False, has_prev=True)
+
+    meta = PaginationMetadata(
+        page=3, page_size=10, total=25, total_pages=3, has_next=False, has_prev=True
+    )
     assert meta.has_next is False
     assert meta.has_prev is True
 
 
 def test_paginated_result():
     from app.core.pagination import PaginatedResult, PaginationMetadata
-    
-    meta = PaginationMetadata(page=1, page_size=10, total=3, total_pages=1, has_next=False, has_prev=False)
+
+    meta = PaginationMetadata(
+        page=1, page_size=10, total=3, total_pages=1, has_next=False, has_prev=False
+    )
     result = PaginatedResult(items=["a", "b", "c"], pagination=meta)
     assert len(result.items) == 3
     assert result.items == ["a", "b", "c"]
@@ -272,10 +278,10 @@ def test_paginated_result():
 @pytest.mark.asyncio
 async def test_paginate_list():
     from app.core.pagination import paginate_list, PaginationParams
-    
+
     items = list(range(50))
     params = PaginationParams(page=2, page_size=10)
-    
+
     result = await paginate_list(items, params)
     assert len(result.items) == 10
     assert result.items[0] == 10
@@ -289,10 +295,10 @@ async def test_paginate_list():
 @pytest.mark.asyncio
 async def test_paginate_list_last_page():
     from app.core.pagination import paginate_list, PaginationParams
-    
+
     items = list(range(25))
     params = PaginationParams(page=3, page_size=10)
-    
+
     result = await paginate_list(items, params)
     assert len(result.items) == 5
     assert result.items[0] == 20
@@ -304,7 +310,7 @@ async def test_paginate_list_last_page():
 @pytest.mark.asyncio
 async def test_paginate_list_empty():
     from app.core.pagination import paginate_list, PaginationParams
-    
+
     result = await paginate_list([], PaginationParams(page=1, page_size=20))
     assert len(result.items) == 0
     assert result.pagination.total == 0
@@ -315,8 +321,9 @@ async def test_paginate_list_empty():
 
 def test_paginate_flat_dict_shape():
     from app.core.pagination import paginate_flat
-    
+
     import inspect
+
     sig = inspect.signature(paginate_flat)
     params = list(sig.parameters.keys())
     assert "session" in params
@@ -328,10 +335,14 @@ def test_paginate_flat_dict_shape():
 
 def test_pagination_imports():
     from app.core.pagination import (
-        PaginationMetadata, PaginatedResult,
-        paginate_query, paginate_list, paginate_flat
+        PaginationMetadata,
+        PaginatedResult,
+        paginate_query,
+        paginate_list,
+        paginate_flat,
     )
     from app.schemas import PaginationParams
+
     assert PaginationParams
     assert PaginationMetadata
     assert PaginatedResult

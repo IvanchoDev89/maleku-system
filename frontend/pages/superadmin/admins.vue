@@ -7,15 +7,15 @@
         <p class="text-gray-500 mt-1">Matriz de permisos y roles del sistema</p>
       </div>
       <div class="flex gap-3">
-        <button 
+        <button
           @click="showPermissionMatrix = true"
           class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
         >
           <span>🔐</span>
           <span>Matriz de Permisos</span>
         </button>
-        <NuxtLink 
-          to="/superadmin/users/create" 
+        <NuxtLink
+          to="/superadmin/users/create"
           class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
         >
           <span>+</span>
@@ -26,8 +26,8 @@
 
     <!-- Role Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div 
-        v-for="role in roleSummaries" 
+      <div
+        v-for="role in roleSummaries"
         :key="role.role"
         class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
         @click="selectedRole = role.role; showPermissionMatrix = true"
@@ -41,12 +41,12 @@
             {{ role.role }}
           </UiBadge>
         </div>
-        
+
         <div class="mt-4">
           <p class="text-xs text-gray-500 uppercase tracking-wider mb-2">Módulos</p>
           <div class="flex flex-wrap gap-2">
-            <span 
-              v-for="module in role.modules.slice(0, 5)" 
+            <span
+              v-for="module in role.modules.slice(0, 5)"
               :key="module"
               class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs"
             >
@@ -60,7 +60,7 @@
             Sin permisos configurados
           </p>
         </div>
-        
+
         <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
           <span class="text-xs text-gray-500">
             {{ role.is_system_role ? 'Rol del Sistema' : 'Rol Personalizado' }}
@@ -82,7 +82,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead class="bg-gray-50">
@@ -122,14 +122,14 @@
               </td>
               <td class="px-6 py-4 text-right">
                 <div class="flex items-center justify-end gap-2">
-                  <button 
+                  <button
                     @click="confirmImpersonateUser(user)"
                     class="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
                     title="Impersonar"
                   >
                     👤
                   </button>
-                  <NuxtLink 
+                  <NuxtLink
                     :to="`/superadmin/users/${user.id}`"
                     class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg"
                   >
@@ -152,22 +152,22 @@
       <div v-if="loadingPermissions" class="flex justify-center py-12">
         <span class="text-gray-500">Cargando permisos...</span>
       </div>
-      
+
       <div v-else class="space-y-6">
-        <div 
-          v-for="module in permissionMatrix" 
+        <div
+          v-for="module in permissionMatrix"
           :key="module.module"
           class="border border-gray-200 rounded-xl overflow-hidden"
         >
           <!-- Module Header -->
-          <div 
+          <div
             class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center cursor-pointer"
             @click="toggleModule(module.module)"
           >
             <div class="flex items-center gap-3">
               <span class="text-lg">{{ getModuleIcon(module.module) }}</span>
               <span class="font-semibold text-gray-900 capitalize">{{ module.module }}</span>
-              <span 
+              <span
                 class="px-2 py-0.5 text-xs rounded-full"
                 :class="getModulePermissionCount(module.module) > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
               >
@@ -178,19 +178,19 @@
               {{ expandedModules.includes(module.module) ? '▼' : '▶' }}
             </span>
           </div>
-          
+
           <!-- Module Permissions -->
           <div v-show="expandedModules.includes(module.module)" class="p-4">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div 
-                v-for="perm in module.permissions" 
+              <div
+                v-for="perm in module.permissions"
                 :key="perm.action"
                 class="flex items-start gap-3 p-3 rounded-lg border transition-all"
-                :class="isPermissionGranted(module.module, perm.action) 
-                  ? 'bg-green-50 border-green-200' 
+                :class="isPermissionGranted(module.module, perm.action)
+                  ? 'bg-green-50 border-green-200'
                   : 'bg-gray-50 border-gray-200 hover:border-gray-300'"
               >
-                <input 
+                <input
                   type="checkbox"
                   :checked="isPermissionGranted(module.module, perm.action)"
                   @change="togglePermission(module.module, perm.action, $event.target.checked)"
@@ -213,21 +213,21 @@
           </div>
         </div>
       </div>
-      
+
       <template #footer>
         <div class="text-sm text-gray-500">
           <span v-if="hasChanges" class="text-amber-600 font-medium">⚠️ Hay cambios sin guardar</span>
           <span v-else>Sin cambios pendientes</span>
         </div>
         <div class="flex gap-3">
-          <button 
+          <button
             @click="confirmResetDefaults"
             class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             :disabled="!selectedRole"
           >
             Restablecer
           </button>
-          <button 
+          <button
             @click="savePermissions"
             class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
             :disabled="!hasChanges || saving"
@@ -336,7 +336,7 @@ const loadAdminUsers = async () => {
       params.append('role', 'super_admin')
     }
     params.append('limit', '100')
-    
+
     const response = await api.get(`/superadmin/users?${params}`)
     adminUsers.value = response
   } catch (error) {
@@ -354,14 +354,14 @@ const loadPermissionMatrix = async () => {
 
 const loadRolePermissions = async () => {
   if (!selectedRole.value) return
-  
+
   loadingPermissions.value = true
   try {
     const response = await api.get(`/superadmin/permissions/roles/${selectedRole.value}`)
     rolePermissions.value = {}
     pendingChanges.value = {}
     hasChanges.value = false
-    
+
     // Organize by module
     for (const perm of response) {
       rolePermissions.value[perm.module] = perm.permissions
@@ -407,7 +407,7 @@ const formatTimeAgo = (timestamp: string) => {
   const date = new Date(timestamp)
   const now = new Date()
   const diff = Math.floor((now.getTime() - date.getTime()) / 1000)
-  
+
   if (diff < 60) return 'hace un momento'
   if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`
   if (diff < 86400) return `hace ${Math.floor(diff / 3600)} h`
@@ -456,7 +456,7 @@ const togglePermission = (module: string, action: string, granted: boolean) => {
     // Initialize with current permissions
     pendingChanges.value[module] = [...(rolePermissions.value[module] || [])]
   }
-  
+
   if (granted) {
     if (!pendingChanges.value[module].includes(action)) {
       pendingChanges.value[module].push(action)
@@ -464,7 +464,7 @@ const togglePermission = (module: string, action: string, granted: boolean) => {
   } else {
     pendingChanges.value[module] = pendingChanges.value[module].filter((a: string) => a !== action)
   }
-  
+
   hasChanges.value = Object.keys(pendingChanges.value).length > 0
 }
 
@@ -479,11 +479,11 @@ const savePermissions = async () => {
         is_active: true,
       })
     }
-    
+
     // Clear pending changes
     pendingChanges.value = {}
     hasChanges.value = false
-    
+
     // Reload
     await loadRolePermissions()
     await loadRoleSummaries()
@@ -527,11 +527,11 @@ const executeImpersonateUser = async (user: any) => {
     const response = await api.post(`/superadmin/users/${user.id}/impersonate`)
     sessionStorage.setItem('impersonation_token', response.impersonation_token)
     sessionStorage.setItem('original_user', JSON.stringify(useAuthStore().user))
-    
+
     const auth = useAuthStore()
     auth.token = response.impersonation_token
     auth.user = response.target_user
-    
+
     navigateTo('/dashboard')
   } catch (error) {
     console.error('Error impersonating:', error)

@@ -28,7 +28,7 @@
           <p class="text-sm text-primary-300">{{ currentDate }}</p>
           <div class="flex items-center gap-3 justify-end">
             <p class="text-3xl font-bold text-primary-300">{{ currentTime }}</p>
-            <button 
+            <button
               @click="refreshDashboard"
               class="p-2 bg-primary-800 hover:bg-primary-700 rounded-lg transition-colors"
               :title="$t('superadmin.dashboard.refresh')"
@@ -42,8 +42,8 @@
 
     <!-- Critical Alerts -->
     <div v-if="alerts.length > 0" class="space-y-3">
-      <div 
-        v-for="alert in alerts" 
+      <div
+        v-for="alert in alerts"
         :key="alert.id"
         class="p-4 rounded-xl border-l-4 flex items-start justify-between shadow-sm"
         :class="{
@@ -53,7 +53,7 @@
         }"
       >
         <div class="flex items-start gap-3">
-          <div 
+          <div
             class="w-10 h-10 rounded-full flex items-center justify-center"
             :class="{
               'bg-red-100 text-red-600': alert.severity === 'critical',
@@ -61,13 +61,13 @@
               'bg-blue-100 text-blue-600': alert.severity === 'info'
             }"
           >
-            <component 
-              :is="alert.severity === 'critical' ? AlertTriangle : alert.severity === 'warning' ? AlertCircle : Info" 
-              class="w-5 h-5" 
+            <component
+              :is="alert.severity === 'critical' ? AlertTriangle : alert.severity === 'warning' ? AlertCircle : Info"
+              class="w-5 h-5"
             />
           </div>
           <div>
-            <h3 
+            <h3
               class="font-bold"
               :class="{
                 'text-red-700': alert.severity === 'critical',
@@ -85,7 +85,7 @@
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <NuxtLink 
+          <NuxtLink
             v-if="alert.entity_type"
             :to="`/superadmin/${alert.entity_type}s`"
             class="px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
@@ -98,7 +98,7 @@
             <Eye class="w-4 h-4" />
             Ver
           </NuxtLink>
-          <button 
+          <button
             @click="dismissAlert(alert.id)"
             class="p-2 rounded-lg transition-colors"
             :class="{
@@ -116,9 +116,9 @@
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div 
-        v-for="(stat, index) in statsCards" 
-        :key="index" 
+      <div
+        v-for="(stat, index) in statsCards"
+        :key="index"
         class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
         @click="navigateTo(stat.link)"
       >
@@ -150,8 +150,8 @@
             <p class="text-gray-500 text-sm">Últimos {{ revenuePeriod }} días</p>
           </div>
           <div class="flex gap-2">
-            <button 
-              v-for="period in ['7', '30', '90']" 
+            <button
+              v-for="period in ['7', '30', '90']"
               :key="period"
               @click="revenuePeriod = period"
               :class="revenuePeriod === period ? 'bg-primary-600 text-white' : 'bg-primary-50 text-primary-700 hover:bg-primary-100'"
@@ -191,7 +191,7 @@
             </div>
             <span class="text-green-600 font-medium text-sm">Activo</span>
           </div>
-          
+
           <div class="mt-4 p-4 bg-primary-50 rounded-lg">
             <div class="flex justify-between text-sm mb-2">
               <span class="text-gray-600">Uso de memoria</span>
@@ -201,7 +201,7 @@
               <div class="bg-primary-600 h-2 rounded-full" style="width: 50%"></div>
             </div>
           </div>
-          
+
           <div class="p-4 bg-primary-50 rounded-lg">
             <div class="flex justify-between text-sm mb-2">
               <span class="text-gray-600">Almacenamiento DB</span>
@@ -230,12 +230,12 @@
           </NuxtLink>
         </div>
         <div class="space-y-3">
-          <div 
-            v-for="(vendor, index) in topVendors.slice(0, 5)" 
-            :key="vendor.vendor_id" 
+          <div
+            v-for="(vendor, index) in topVendors.slice(0, 5)"
+            :key="vendor.vendor_id"
             class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer group"
           >
-            <div 
+            <div
               class="w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-sm"
               :class="index === 0 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' : index === 1 ? 'bg-gradient-to-br from-gray-200 to-gray-400 text-gray-800' : index === 2 ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-white' : 'bg-gray-200 text-gray-600'"
             >
@@ -251,8 +251,8 @@
             </div>
             <div class="text-right">
               <p class="font-bold text-green-600">${{ formatNumber(vendor.total_revenue) }}</p>
-              <NuxtLink 
-                :to="`/superadmin/vendors/${vendor.vendor_id}`" 
+              <NuxtLink
+                :to="`/superadmin/vendors/${vendor.vendor_id}`"
                 class="text-xs text-primary-600 hover:text-primary-700 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 Ver →
@@ -273,9 +273,9 @@
           <NuxtLink to="/superadmin/audit" class="text-primary-600 text-sm hover:underline">Ver logs →</NuxtLink>
         </div>
         <div class="space-y-3">
-          <div 
-            v-for="activity in recentActivity" 
-            :key="activity.id" 
+          <div
+            v-for="activity in recentActivity"
+            :key="activity.id"
             class="flex items-start gap-3 p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
           >
             <div class="w-10 h-10 rounded-full flex items-center justify-center" :class="activity.iconBg">

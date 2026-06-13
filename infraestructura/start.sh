@@ -67,12 +67,12 @@ check_docker() {
         print_error "Docker is not installed"
         exit 1
     fi
-    
+
     if ! command -v docker-compose &> /dev/null; then
         print_error "docker-compose is not installed"
         exit 1
     fi
-    
+
     print_status "Docker: $(docker --version | cut -d' ' -f3 | cut -d',' -f1)"
     print_status "Docker Compose: $(docker-compose --version | cut -d' ' -f4 | cut -d',' -f1)"
 }
@@ -80,16 +80,16 @@ check_docker() {
 # Check ports
 check_ports() {
     print_status "Checking required ports..."
-    
+
     PORTS_OK=true
-    
+
     for port in 5432 6379; do
         if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
             print_warning "Port $port is in use (may conflict)"
             PORTS_OK=false
         fi
     done
-    
+
     if [ "$PORTS_OK" = true ]; then
         print_status "All required ports available"
     fi
@@ -98,12 +98,12 @@ check_ports() {
 # Start database services
 start_databases() {
     print_status "Starting database services..."
-    
+
     cd "$INFRA_DIR"
-    
+
     # Start only db and redis
     docker-compose up -d db redis
-    
+
     # Wait for PostgreSQL
     print_status "Waiting for PostgreSQL..."
     for i in {1..30}; do
@@ -113,7 +113,7 @@ start_databases() {
         fi
         sleep 1
     done
-    
+
     # Wait for Redis
     print_status "Waiting for Redis..."
     for i in {1..10}; do
@@ -123,16 +123,16 @@ start_databases() {
         fi
         sleep 1
     done
-    
+
     print_status "Databases started"
 }
 
 # Run migrations
 run_migrations() {
     print_status "Running database migrations..."
-    
+
     cd "$BACKEND_DIR"
-    
+
     # Apply migrations using SQLAlchemy create_all
     python3 -c "
 import asyncio
@@ -147,32 +147,32 @@ async def migrate():
 
 asyncio.run(migrate())
 "
-    
+
     print_status "Migrations completed"
 }
 
 # Initialize database with seed data
 init_database() {
     print_status "Initializing database with seed data..."
-    
+
     cd "$BACKEND_DIR"
     python3 init_db.py
-    
+
     print_status "Database initialized"
 }
 
 # Start API
 start_api() {
     print_status "Starting API server..."
-    
+
     cd "$BACKEND_DIR"
-    
+
     # Run in background
     nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > /tmp/api.log 2>&1 &
     API_PID=$!
-    
+
     echo $API_PID > /tmp/api.pid
-    
+
     # Wait for API to be ready
     for i in {1..20}; do
         if curl -s http://localhost:8000/health &>/dev/null; then
@@ -182,7 +182,7 @@ start_api() {
         fi
         sleep 1
     done
-    
+
     print_error "API failed to start"
     cat /tmp/api.log
     return 1
@@ -191,27 +191,27 @@ start_api() {
 # Build frontend
 build_frontend() {
     print_status "Building frontend..."
-    
+
     cd "$FRONTEND_DIR"
-    
+
     # Install deps if needed
     if [ ! -d "node_modules" ]; then
         print_status "Installing frontend dependencies..."
         npm ci --silent
     fi
-    
+
     # Build
     npm run build
-    
+
     print_status "Frontend built successfully"
 }
 
 # Test API with curl
 test_api() {
     print_status "Testing API endpoints..."
-    
+
     BASE_URL="http://localhost:8000/api/v1"
-    
+
     # Test health
     HEALTH=$(curl -s http://localhost:8000/health)
     if echo "$HEALTH" | grep -q "healthy"; then
@@ -219,7 +219,7 @@ test_api() {
     else
         print_error "✗ Health check failed"
     fi
-    
+
     # Test public destinations
     DESTINATIONS=$(curl -s "$BASE_URL/destinations")
     if echo "$DESTINATIONS" | grep -q "Guanacaste"; then
@@ -227,7 +227,7 @@ test_api() {
     else
         print_warning "! Destinations may need data"
     fi
-    
+
     # Test blog posts
     POSTS=$(curl -s "$BASE_URL/blog")
     if echo "$POSTS" | grep -q "content"; then
@@ -235,7 +235,7 @@ test_api() {
     else
         print_warning "! Blog may need data"
     fi
-    
+
     print_status "API tests completed"
 }
 
@@ -263,13 +263,13 @@ show_status() {
     echo "  Services Status"
     echo "════��══════════════════════════════════════"
     echo ""
-    
+
     # Check Docker
     echo "Docker Services:"
     cd "$INFRA_DIR"
     docker-compose ps 2>/dev/null || echo "  (not running)"
     echo ""
-    
+
     # Check API
     if curl -s http://localhost:8000/health &>/dev/null; then
         echo -e "${GREEN}API: Running${NC} (http://localhost:8000)"
@@ -282,24 +282,24 @@ show_status() {
 # Stop services
 stop_services() {
     print_status "Stopping services..."
-    
+
     # Stop API
     if [ -f /tmp/api.pid ]; then
         kill $(cat /tmp/api.pid) 2>/dev/null || true
         rm /tmp/api.pid
     fi
-    
+
     # Stop Docker
     cd "$INFRA_DIR"
     docker-compose stop 2>/dev/null || true
-    
+
     print_status "Services stopped"
 }
 
 # Show logs
 show_logs() {
     cd "$INFRA_DIR"
-    
+
     if [ "$1" = "api" ]; then
         tail -f /tmp/api.log 2>/dev/null || echo "No API logs found"
     else
@@ -322,7 +322,7 @@ clean_up() {
 # Main
 main() {
     print_header
-    
+
     case "${1:-start}" in
         start)
             check_docker

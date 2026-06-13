@@ -57,17 +57,17 @@ const toggleFaq = (index: number) => {
 
       <!-- FAQ Accordion -->
       <div class="space-y-4">
-        <div 
-          v-for="(faq, index) in faqs" 
+        <div
+          v-for="(faq, index) in faqs"
           :key="index"
           class="bg-white rounded-xl shadow-sm overflow-hidden"
         >
-          <button 
+          <button
             @click="toggleFaq(index)"
             class="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
           >
             <span class="font-semibold text-gray-900 pr-4">{{ faq.question }}</span>
-            <span 
+            <span
               :class="['text-primary-600 text-2xl transition-transform duration-300', openIndex === index ? 'rotate-45' : '']"
             >
               +
@@ -81,7 +81,7 @@ const toggleFaq = (index: number) => {
             leave-from="opacity-100 max-h-96"
             leave-to="opacity-0 max-h-0"
           >
-            <div 
+            <div
               v-show="openIndex === index"
               class="overflow-hidden"
             >
@@ -100,14 +100,14 @@ const toggleFaq = (index: number) => {
           Nuestro equipo está listo para ayudarte a planificar el viaje perfecto.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <a 
+          <a
             href="mailto:ayuda@costaricatravel.dev"
             class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors"
           >
             <span>✉️</span>
             Escríbenos
           </a>
-          <NuxtLink 
+          <NuxtLink
             to="/ayuda"
             class="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-primary-600 hover:text-primary-600 transition-colors"
           >

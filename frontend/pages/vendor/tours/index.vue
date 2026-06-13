@@ -51,8 +51,8 @@
                 <NuxtLink to="/vendor/tours/new" class="text-primary hover:underline">Crear primer tour</NuxtLink>
               </td>
             </tr>
-            <tr 
-              v-for="tour in tours" 
+            <tr
+              v-for="tour in tours"
               :key="tour.id"
               class="border-t hover:bg-gray-50"
             >

@@ -28,16 +28,16 @@ const certifications = [
           Confiado por viajeros y respaldado por los mejores
         </p>
       </div>
-      
+
       <!-- Logos Grid -->
       <div class="flex flex-wrap items-center justify-center gap-6 md:gap-10">
-        <div 
-          v-for="partner in partners" 
+        <div
+          v-for="partner in partners"
           :key="partner.name"
           class="flex items-center justify-center px-6 py-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50/30 transition-all duration-300"
         >
-          <img 
-            :src="partner.logo" 
+          <img
+            :src="partner.logo"
             :alt="partner.name"
             class="h-8 md:h-10 w-auto object-contain grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
           />
@@ -47,8 +47,8 @@ const certifications = [
 
       <!-- Certifications -->
       <div class="flex flex-wrap items-center justify-center gap-4 mt-8 pt-8 border-t border-gray-100">
-        <div 
-          v-for="cert in certifications" 
+        <div
+          v-for="cert in certifications"
           :key="cert.name"
           class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full"
         >

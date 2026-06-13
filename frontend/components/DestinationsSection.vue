@@ -21,15 +21,15 @@
 
       <!-- Content -->
       <div v-else class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <NuxtLink 
-          v-for="dest in destinations" 
+        <NuxtLink
+          v-for="dest in destinations"
           :key="dest.slug"
           :to="`/destinos/${dest.slug}`"
           class="group relative overflow-hidden rounded-2xl aspect-[4/3] focus:outline-none focus:ring-2 focus:ring-primary-500"
           :aria-label="t(`destinations.items.${dest.slug}.ariaLabel`)"
         >
-          <NuxtImg 
-            :src="dest.image" 
+          <NuxtImg
+            :src="dest.image"
             :alt="t(`destinations.items.${dest.slug}.imageAlt`)"
             class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             loading="lazy"

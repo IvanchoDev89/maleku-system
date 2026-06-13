@@ -8,7 +8,7 @@
           </span>
           <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">{{ $t('why.title') }}</h2>
           <p class="text-lg text-gray-600 mb-8">{{ $t('why.subtitle') }}</p>
-          
+
           <div class="space-y-4">
             <div v-for="(item, index) in features" :key="index" class="flex items-start gap-4">
               <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -21,11 +21,11 @@
             </div>
           </div>
         </div>
-        
+
         <div class="relative">
-          <NuxtImg 
-            src="https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=600&q=80" 
-            alt="Costa Rica sloth" 
+          <NuxtImg
+            src="https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=600&q=80"
+            alt="Costa Rica sloth"
             class="rounded-2xl shadow-2xl w-full"
             width="600"
             height="400"

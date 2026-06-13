@@ -72,7 +72,7 @@
         </p>
       </div>
     </div>
-    
+
     <!-- Vendor Registration Link -->
     <div class="mt-6 text-center">
       <p class="text-gray-600 text-sm">
@@ -139,13 +139,13 @@ const handleRegister = async () => {
     password: form.password,
     phone: form.phone
   })
-  
+
   if (result.success) {
     router.push('/dashboard')
   } else {
     error.value = result.error || 'Error al registrar'
   }
-  
+
   loading.value = false
 }
 

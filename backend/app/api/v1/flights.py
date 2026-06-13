@@ -26,18 +26,18 @@ async def list_flights(
 ) -> list[flight_schema.FlightResponse]:
     """
     List all available flights with optional filters.
-    
+
     Args:
         origin_airport: Filter by origin airport (IATA code or partial)
         destination_airport: Filter by destination airport (IATA code or partial)
         route_type: Filter by route type (international/domestic)
         db: Database session
-        
+
     Returns:
         List of flights matching the filters
     """
     query = select(Flight).where(Flight.is_active, Flight.deleted_at.is_(None))
-    
+
     if origin_airport:
         safe_origin = escape_like_pattern(origin_airport)
         query = query.where(Flight.origin_airport.ilike(f"%{safe_origin}%"))
@@ -46,10 +46,10 @@ async def list_flights(
         query = query.where(Flight.destination_airport.ilike(f"%{safe_destination}%"))
     if route_type:
         query = query.where(Flight.route_type == route_type)
-    
+
     result = await db.execute(query.order_by(Flight.departure_time))
     flights = result.scalars().all()
-    
+
     return flights
 
 
@@ -61,19 +61,19 @@ async def search_flights(
 ) -> dict:
     """
     Search flights between two airports.
-    
+
     Args:
         origin: Origin airport code (e.g., 'SJO', 'LAX')
         destination: Destination airport code
         db: Database session
-        
+
     Returns:
         List of available flights between the specified airports
     """
     # Escape LIKE patterns for security
     safe_origin = escape_like_pattern(origin)
     safe_destination = escape_like_pattern(destination)
-    
+
     result = await db.execute(
         select(Flight).where(
             Flight.is_active,
@@ -89,7 +89,7 @@ async def search_flights(
         ).order_by(Flight.price_economy)
     )
     flights = result.scalars().all()
-    
+
     return {"flights": flights, "count": len(flights)}
 
 
@@ -100,10 +100,10 @@ async def get_flight(flight_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
         select(Flight).where(Flight.id == flight_id, Flight.deleted_at.is_(None))
     )
     flight = result.scalar_one_or_none()
-    
+
     if not flight:
         raise HTTPException(status_code=404, detail="Flight not found")
-    
+
     return flight
 
 
@@ -120,13 +120,13 @@ async def get_flight(flight_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
                      'price_economy', 'price_business', 'price_first',
                      'currency', 'baggage_allowance', 'amenities', 'schedule_days'}
     flight_data_filtered = {k: v for k, v in flight_data.model_dump().items() if k in allowed_fields}
-    
+
     flight = Flight(**flight_data_filtered)
-    
+
     db.add(flight)
     await db.commit()
     await db.refresh(flight)
-    
+
     return flight
 
 
@@ -142,10 +142,10 @@ async def update_flight(
         select(Flight).where(Flight.id == flight_id, Flight.deleted_at.is_(None))
     )
     flight = result.scalar_one_or_none()
-    
+
     if not flight:
         raise HTTPException(status_code=404, detail="Flight not found")
-    
+
     # SECURITY: Prevent mass assignment - only allow specific fields
     allowed_fields = {'airline', 'flight_number', 'route_type', 'origin_airport',
                      'destination_airport', 'departure_time', 'arrival_time',
@@ -153,15 +153,15 @@ async def update_flight(
                      'price_economy', 'price_business', 'price_first',
                      'currency', 'baggage_allowance', 'amenities', 'schedule_days',
                      'is_active'}
-    
+
     for key, value in flight_data.model_dump(exclude_unset=True).items():
         if key in allowed_fields:
             setattr(flight, key, value)
-    
+
     flight.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(flight)
-    
+
     return flight
 
 
@@ -176,12 +176,12 @@ async def delete_flight(
         select(Flight).where(Flight.id == flight_id, Flight.deleted_at.is_(None))
     )
     flight = result.scalar_one_or_none()
-    
+
     if not flight:
         raise HTTPException(status_code=404, detail="Flight not found")
-    
+
     flight.is_active = False
     flight.deleted_at = datetime.now(timezone.utc)
     await db.commit()
-    
+
     return {"message": "Flight deleted"}

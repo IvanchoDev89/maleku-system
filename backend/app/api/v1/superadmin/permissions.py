@@ -10,6 +10,7 @@ Security:
 - Input validation and sanitization
 - Rate limiting recommended at nginx level
 """
+
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime, timezone
@@ -32,36 +33,52 @@ router = APIRouter(prefix="/permissions", tags=["Super Admin - Permissions"])
 # Schemas
 # ============================================================================
 
+
 class PermissionDefinition(BaseModel):
     """Individual permission definition."""
+
     model_config = ConfigDict(frozen=True)
-    
-    action: str = Field(..., description="Action identifier (e.g., 'create', 'read', 'update', 'delete')")
+
+    action: str = Field(
+        ...,
+        description="Action identifier (e.g., 'create', 'read', 'update', 'delete')",
+    )
     description: str = Field(..., description="Human-readable description")
-    scope: str = Field(default="own", description="Permission scope: 'own', 'team', 'all'")
+    scope: str = Field(
+        default="own", description="Permission scope: 'own', 'team', 'all'"
+    )
     requires_2fa: bool = Field(default=False, description="Whether 2FA is required")
 
 
 class ModulePermissions(BaseModel):
     """Permissions for a specific module."""
+
     model_config = ConfigDict(frozen=True)
-    
+
     module: str = Field(..., description="Module identifier")
     permissions: List[PermissionDefinition] = Field(default_factory=list)
 
 
 class RolePermissionCreate(BaseModel):
     """Schema for creating/updating role permissions."""
+
     role: str = Field(..., min_length=1, max_length=50, description="Role identifier")
-    module: str = Field(..., min_length=1, max_length=50, description="Module identifier")
-    permissions: List[str] = Field(default_factory=list, description="List of allowed actions")
-    conditions: Optional[dict] = Field(default=None, description="Conditional permissions (JSON)")
+    module: str = Field(
+        ..., min_length=1, max_length=50, description="Module identifier"
+    )
+    permissions: List[str] = Field(
+        default_factory=list, description="List of allowed actions"
+    )
+    conditions: Optional[dict] = Field(
+        default=None, description="Conditional permissions (JSON)"
+    )
     description: Optional[str] = Field(default=None, max_length=500)
     is_active: bool = Field(default=True)
 
 
 class RolePermissionUpdate(BaseModel):
     """Schema for updating role permissions."""
+
     permissions: Optional[List[str]] = None
     conditions: Optional[dict] = None
     description: Optional[str] = Field(default=None, max_length=500)
@@ -70,8 +87,9 @@ class RolePermissionUpdate(BaseModel):
 
 class RolePermissionResponse(BaseModel):
     """Response schema for role permissions."""
+
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     role: str
     module: str
@@ -85,6 +103,7 @@ class RolePermissionResponse(BaseModel):
 
 class RoleSummary(BaseModel):
     """Summary of a role and its permissions."""
+
     role: str
     display_name: str
     user_count: int
@@ -94,6 +113,7 @@ class RoleSummary(BaseModel):
 
 class PermissionCheckRequest(BaseModel):
     """Request to check if a user has a specific permission."""
+
     user_id: UUID
     module: str
     action: str
@@ -102,6 +122,7 @@ class PermissionCheckRequest(BaseModel):
 
 class PermissionCheckResponse(BaseModel):
     """Response for permission check."""
+
     has_permission: bool
     reason: Optional[str] = None
     scope: Optional[str] = None  # 'own', 'team', 'all'
@@ -113,58 +134,144 @@ class PermissionCheckResponse(BaseModel):
 
 SYSTEM_PERMISSIONS = {
     "users": [
-        PermissionDefinition(action="create", description="Create new users", scope="all"),
-        PermissionDefinition(action="read", description="View user details", scope="all"),
-        PermissionDefinition(action="update", description="Update user information", scope="all"),
+        PermissionDefinition(
+            action="create", description="Create new users", scope="all"
+        ),
+        PermissionDefinition(
+            action="read", description="View user details", scope="all"
+        ),
+        PermissionDefinition(
+            action="update", description="Update user information", scope="all"
+        ),
         PermissionDefinition(action="delete", description="Delete users", scope="all"),
-        PermissionDefinition(action="impersonate", description="Impersonate users", scope="all", requires_2fa=True),
-        PermissionDefinition(action="block", description="Block/unblock users", scope="all"),
-        PermissionDefinition(action="export", description="Export user data", scope="all"),
+        PermissionDefinition(
+            action="impersonate",
+            description="Impersonate users",
+            scope="all",
+            requires_2fa=True,
+        ),
+        PermissionDefinition(
+            action="block", description="Block/unblock users", scope="all"
+        ),
+        PermissionDefinition(
+            action="export", description="Export user data", scope="all"
+        ),
     ],
     "vendors": [
-        PermissionDefinition(action="create", description="Create vendors", scope="all"),
-        PermissionDefinition(action="read", description="View vendor details", scope="all"),
-        PermissionDefinition(action="update", description="Update vendor information", scope="all"),
-        PermissionDefinition(action="delete", description="Delete vendors", scope="all"),
-        PermissionDefinition(action="approve", description="Approve pending vendors", scope="all"),
-        PermissionDefinition(action="suspend", description="Suspend vendors", scope="all"),
-        PermissionDefinition(action="export", description="Export vendor data", scope="all"),
+        PermissionDefinition(
+            action="create", description="Create vendors", scope="all"
+        ),
+        PermissionDefinition(
+            action="read", description="View vendor details", scope="all"
+        ),
+        PermissionDefinition(
+            action="update", description="Update vendor information", scope="all"
+        ),
+        PermissionDefinition(
+            action="delete", description="Delete vendors", scope="all"
+        ),
+        PermissionDefinition(
+            action="approve", description="Approve pending vendors", scope="all"
+        ),
+        PermissionDefinition(
+            action="suspend", description="Suspend vendors", scope="all"
+        ),
+        PermissionDefinition(
+            action="export", description="Export vendor data", scope="all"
+        ),
     ],
     "properties": [
-        PermissionDefinition(action="create", description="Create properties", scope="all"),
+        PermissionDefinition(
+            action="create", description="Create properties", scope="all"
+        ),
         PermissionDefinition(action="read", description="View properties", scope="all"),
-        PermissionDefinition(action="update", description="Update properties", scope="all"),
-        PermissionDefinition(action="delete", description="Delete properties", scope="all"),
-        PermissionDefinition(action="feature", description="Feature/unfeature properties", scope="all"),
-        PermissionDefinition(action="moderate", description="Moderate property content", scope="all"),
+        PermissionDefinition(
+            action="update", description="Update properties", scope="all"
+        ),
+        PermissionDefinition(
+            action="delete", description="Delete properties", scope="all"
+        ),
+        PermissionDefinition(
+            action="feature", description="Feature/unfeature properties", scope="all"
+        ),
+        PermissionDefinition(
+            action="moderate", description="Moderate property content", scope="all"
+        ),
     ],
     "bookings": [
-        PermissionDefinition(action="create", description="Create bookings", scope="all"),
+        PermissionDefinition(
+            action="create", description="Create bookings", scope="all"
+        ),
         PermissionDefinition(action="read", description="View bookings", scope="all"),
-        PermissionDefinition(action="update", description="Update bookings", scope="all"),
-        PermissionDefinition(action="cancel", description="Cancel bookings", scope="all"),
-        PermissionDefinition(action="refund", description="Process refunds", scope="all", requires_2fa=True),
-        PermissionDefinition(action="export", description="Export booking data", scope="all"),
+        PermissionDefinition(
+            action="update", description="Update bookings", scope="all"
+        ),
+        PermissionDefinition(
+            action="cancel", description="Cancel bookings", scope="all"
+        ),
+        PermissionDefinition(
+            action="refund",
+            description="Process refunds",
+            scope="all",
+            requires_2fa=True,
+        ),
+        PermissionDefinition(
+            action="export", description="Export booking data", scope="all"
+        ),
     ],
     "content": [
-        PermissionDefinition(action="create", description="Create blog posts/pages", scope="all"),
+        PermissionDefinition(
+            action="create", description="Create blog posts/pages", scope="all"
+        ),
         PermissionDefinition(action="read", description="View content", scope="all"),
         PermissionDefinition(action="update", description="Edit content", scope="all"),
-        PermissionDefinition(action="delete", description="Delete content", scope="all"),
-        PermissionDefinition(action="publish", description="Publish/unpublish content", scope="all"),
-        PermissionDefinition(action="seo", description="Manage SEO settings", scope="all"),
+        PermissionDefinition(
+            action="delete", description="Delete content", scope="all"
+        ),
+        PermissionDefinition(
+            action="publish", description="Publish/unpublish content", scope="all"
+        ),
+        PermissionDefinition(
+            action="seo", description="Manage SEO settings", scope="all"
+        ),
     ],
     "analytics": [
         PermissionDefinition(action="read", description="View analytics", scope="all"),
-        PermissionDefinition(action="export", description="Export analytics data", scope="all"),
-        PermissionDefinition(action="reports", description="Generate reports", scope="all"),
+        PermissionDefinition(
+            action="export", description="Export analytics data", scope="all"
+        ),
+        PermissionDefinition(
+            action="reports", description="Generate reports", scope="all"
+        ),
     ],
     "system": [
-        PermissionDefinition(action="settings", description="Manage system settings", scope="all", requires_2fa=True),
-        PermissionDefinition(action="maintenance", description="Enable/disable maintenance mode", scope="all", requires_2fa=True),
-        PermissionDefinition(action="backup", description="Manage backups", scope="all", requires_2fa=True),
-        PermissionDefinition(action="logs", description="View system logs", scope="all"),
-        PermissionDefinition(action="permissions", description="Manage permissions", scope="all", requires_2fa=True),
+        PermissionDefinition(
+            action="settings",
+            description="Manage system settings",
+            scope="all",
+            requires_2fa=True,
+        ),
+        PermissionDefinition(
+            action="maintenance",
+            description="Enable/disable maintenance mode",
+            scope="all",
+            requires_2fa=True,
+        ),
+        PermissionDefinition(
+            action="backup",
+            description="Manage backups",
+            scope="all",
+            requires_2fa=True,
+        ),
+        PermissionDefinition(
+            action="logs", description="View system logs", scope="all"
+        ),
+        PermissionDefinition(
+            action="permissions",
+            description="Manage permissions",
+            scope="all",
+            requires_2fa=True,
+        ),
     ],
 }
 
@@ -173,13 +280,14 @@ SYSTEM_PERMISSIONS = {
 # Endpoints
 # ============================================================================
 
+
 @router.get("/matrix", response_model=List[ModulePermissions])
 async def get_permission_matrix(
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> List[ModulePermissions]:
     """
     Get the complete permission matrix for all modules.
-    
+
     Returns a structured list of all available permissions organized by module.
     This is used to build the permission configuration UI.
     """
@@ -192,24 +300,24 @@ async def get_permission_matrix(
 @router.get("/roles", response_model=List[RoleSummary])
 async def get_all_roles(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> List[RoleSummary]:
     """
     Get summary of all roles and their configured permissions.
-    
+
     Includes user count per role and list of modules they have access to.
     """
     # Get all role permissions from database
     result = await db.execute(select(RolePermission).where(RolePermission.is_active))
     role_perms = result.scalars().all()
-    
+
     # Group by role
     role_modules: dict = {}
     for rp in role_perms:
         if rp.role not in role_modules:
             role_modules[rp.role] = set()
         role_modules[rp.role].add(rp.module)
-    
+
     # Get user counts per role
     role_counts = {}
     for role in UserRole:
@@ -217,11 +325,18 @@ async def get_all_roles(
             select(User).where(and_(User.role == role, User.is_active))
         )
         role_counts[role.value] = len(result.scalars().all())
-    
+
     # Build response
     summaries = []
-    system_roles = {"super_admin", "admin", "agent", "customer_service", "vendor", "client"}
-    
+    system_roles = {
+        "super_admin",
+        "admin",
+        "agent",
+        "customer_service",
+        "vendor",
+        "client",
+    }
+
     for role in UserRole:
         display_names = {
             "super_admin": "Super Administrator",
@@ -231,15 +346,17 @@ async def get_all_roles(
             "vendor": "Vendor/Provider",
             "client": "Client/Customer",
         }
-        
-        summaries.append(RoleSummary(
-            role=role.value,
-            display_name=display_names.get(role.value, role.value),
-            user_count=role_counts.get(role.value, 0),
-            modules=sorted(list(role_modules.get(role.value, set()))),
-            is_system_role=role.value in system_roles
-        ))
-    
+
+        summaries.append(
+            RoleSummary(
+                role=role.value,
+                display_name=display_names.get(role.value, role.value),
+                user_count=role_counts.get(role.value, 0),
+                modules=sorted(list(role_modules.get(role.value, set()))),
+                is_system_role=role.value in system_roles,
+            )
+        )
+
     return summaries
 
 
@@ -247,7 +364,7 @@ async def get_all_roles(
 async def get_role_permissions(
     role: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> List[RolePermissionResponse]:
     """
     Get all permissions configured for a specific role.
@@ -257,17 +374,16 @@ async def get_role_permissions(
         UserRole(role)
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid role: {role}"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid role: {role}"
         )
-    
+
     result = await db.execute(
         select(RolePermission)
         .where(RolePermission.role == role)
         .order_by(RolePermission.module)
     )
     permissions = result.scalars().all()
-    
+
     return [RolePermissionResponse.model_validate(p) for p in permissions]
 
 
@@ -277,11 +393,11 @@ async def set_role_permissions(
     module: str,
     data: RolePermissionCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> RolePermissionResponse:
     """
     Set permissions for a role on a specific module.
-    
+
     Creates new or updates existing permission configuration.
     Audits the change for security tracking.
     """
@@ -290,26 +406,24 @@ async def set_role_permissions(
         UserRole(role)
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid role: {role}"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid role: {role}"
         )
-    
+
     # Validate module exists in system
     if module not in SYSTEM_PERMISSIONS:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid module: {module}"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid module: {module}"
         )
-    
+
     # Validate permissions are valid for this module
     valid_actions = {p.action for p in SYSTEM_PERMISSIONS[module]}
     invalid_perms = set(data.permissions) - valid_actions
     if invalid_perms:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid permissions for module {module}: {invalid_perms}"
+            detail=f"Invalid permissions for module {module}: {invalid_perms}",
         )
-    
+
     # Check for existing permission record
     result = await db.execute(
         select(RolePermission).where(
@@ -317,19 +431,19 @@ async def set_role_permissions(
         )
     )
     existing = result.scalar_one_or_none()
-    
+
     now = datetime.now(timezone.utc)
-    
+
     if existing:
         # Update existing
         old_perms = existing.permissions.copy()
-        
+
         existing.permissions = data.permissions
         existing.conditions = data.conditions
         existing.description = data.description
         existing.is_active = data.is_active
         existing.updated_at = now
-        
+
         # Audit log
         await AuditService.log_audit_action(
             db=db,
@@ -340,12 +454,12 @@ async def set_role_permissions(
             entity_name=f"{role}.{module}",
             old_values={"permissions": old_perms},
             new_values={"permissions": data.permissions},
-            changes_summary=f"Updated permissions for {role} on {module}"
+            changes_summary=f"Updated permissions for {role} on {module}",
         )
-        
+
         await db.commit()
         return RolePermissionResponse.model_validate(existing)
-    
+
     else:
         # Create new
         new_perm = RolePermission(
@@ -356,12 +470,12 @@ async def set_role_permissions(
             description=data.description,
             is_active=data.is_active,
             created_at=now,
-            updated_at=now
+            updated_at=now,
         )
-        
+
         db.add(new_perm)
         await db.flush()
-        
+
         # Audit log
         await AuditService.log_audit_action(
             db=db,
@@ -371,9 +485,9 @@ async def set_role_permissions(
             entity_id=new_perm.id,
             entity_name=f"{role}.{module}",
             new_values={"permissions": data.permissions},
-            changes_summary=f"Created permissions for {role} on {module}"
+            changes_summary=f"Created permissions for {role} on {module}",
         )
-        
+
         await db.commit()
         return RolePermissionResponse.model_validate(new_perm)
 
@@ -384,7 +498,7 @@ async def update_role_permissions(
     module: str,
     data: RolePermissionUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> RolePermissionResponse:
     """
     Partially update permissions for a role on a specific module.
@@ -395,16 +509,16 @@ async def update_role_permissions(
         )
     )
     existing = result.scalar_one_or_none()
-    
+
     if not existing:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Permission configuration not found for {role}.{module}"
+            detail=f"Permission configuration not found for {role}.{module}",
         )
-    
+
     old_values = {}
     new_values = {}
-    
+
     if data.permissions is not None:
         # Validate
         valid_actions = {p.action for p in SYSTEM_PERMISSIONS.get(module, [])}
@@ -412,29 +526,29 @@ async def update_role_permissions(
         if invalid_perms:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid permissions: {invalid_perms}"
+                detail=f"Invalid permissions: {invalid_perms}",
             )
         old_values["permissions"] = existing.permissions.copy()
         new_values["permissions"] = data.permissions
         existing.permissions = data.permissions
-    
+
     if data.conditions is not None:
         old_values["conditions"] = existing.conditions
         new_values["conditions"] = data.conditions
         existing.conditions = data.conditions
-    
+
     if data.description is not None:
         old_values["description"] = existing.description
         new_values["description"] = data.description
         existing.description = data.description
-    
+
     if data.is_active is not None:
         old_values["is_active"] = existing.is_active
         new_values["is_active"] = data.is_active
         existing.is_active = data.is_active
-    
+
     existing.updated_at = datetime.now(timezone.utc)
-    
+
     # Audit log
     await AuditService.log_audit_action(
         db=db,
@@ -445,9 +559,9 @@ async def update_role_permissions(
         entity_name=f"{role}.{module}",
         old_values=old_values if old_values else None,
         new_values=new_values if new_values else None,
-        changes_summary=f"Updated {role}.{module} configuration"
+        changes_summary=f"Updated {role}.{module} configuration",
     )
-    
+
     await db.commit()
     return RolePermissionResponse.model_validate(existing)
 
@@ -457,11 +571,11 @@ async def delete_role_permissions(
     role: str,
     module: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> dict:
     """
     Delete permission configuration for a role on a module.
-    
+
     This removes all custom permissions - the role will have no access
     to this module unless system defaults apply.
     """
@@ -471,22 +585,22 @@ async def delete_role_permissions(
         )
     )
     existing = result.scalar_one_or_none()
-    
+
     if not existing:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Permission configuration not found"
+            detail="Permission configuration not found",
         )
-    
+
     perm_id = existing.id
     perm_data = {
         "role": existing.role,
         "module": existing.module,
-        "permissions": existing.permissions.copy()
+        "permissions": existing.permissions.copy(),
     }
-    
+
     await db.delete(existing)
-    
+
     # Audit log
     await AuditService.log_audit_action(
         db=db,
@@ -496,11 +610,11 @@ async def delete_role_permissions(
         entity_id=perm_id,
         entity_name=f"{role}.{module}",
         old_values=perm_data,
-        changes_summary=f"Deleted permission configuration for {role}.{module}"
+        changes_summary=f"Deleted permission configuration for {role}.{module}",
     )
-    
+
     await db.commit()
-    
+
     return {"message": f"Permission configuration for {role}.{module} deleted"}
 
 
@@ -508,43 +622,42 @@ async def delete_role_permissions(
 async def check_permission(
     data: PermissionCheckRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> PermissionCheckResponse:
     """
     Check if a specific user has a permission.
-    
+
     Used for testing and debugging permission configurations.
     """
     # Get target user
     result = await db.execute(select(User).where(User.id == data.user_id))
     target_user = result.scalar_one_or_none()
-    
+
     if not target_user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    
+
     # Get role permissions
     result = await db.execute(
         select(RolePermission).where(
             and_(
                 RolePermission.role == target_user.role.value,
                 RolePermission.module == data.module,
-                RolePermission.is_active
+                RolePermission.is_active,
             )
         )
     )
     role_perm = result.scalar_one_or_none()
-    
+
     if not role_perm:
         return PermissionCheckResponse(
             has_permission=False,
-            reason=f"No permissions configured for {target_user.role.value} on {data.module}"
+            reason=f"No permissions configured for {target_user.role.value} on {data.module}",
         )
-    
+
     has_perm = data.action in role_perm.permissions
-    
+
     # Determine scope from permission definition
     scope = None
     if has_perm and data.module in SYSTEM_PERMISSIONS:
@@ -552,11 +665,11 @@ async def check_permission(
             if perm.action == data.action:
                 scope = perm.scope
                 break
-    
+
     return PermissionCheckResponse(
         has_permission=has_perm,
         reason=None if has_perm else f"Action '{data.action}' not in role permissions",
-        scope=scope
+        scope=scope,
     )
 
 
@@ -564,11 +677,11 @@ async def check_permission(
 async def reset_role_to_defaults(
     role: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ) -> dict:
     """
     Reset a role's permissions to system defaults.
-    
+
     WARNING: This will delete all custom permission configurations for this role.
     """
     # Validate role
@@ -576,21 +689,18 @@ async def reset_role_to_defaults(
         UserRole(role)
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid role: {role}"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid role: {role}"
         )
-    
+
     # Delete all existing permissions for this role
-    result = await db.execute(
-        select(RolePermission).where(RolePermission.role == role)
-    )
+    result = await db.execute(select(RolePermission).where(RolePermission.role == role))
     existing_perms = result.scalars().all()
-    
+
     deleted_count = len(existing_perms)
-    
+
     for perm in existing_perms:
         await db.delete(perm)
-    
+
     # Audit log
     await AuditService.log_audit_action(
         db=db,
@@ -599,12 +709,12 @@ async def reset_role_to_defaults(
         entity_type="role_permission",
         entity_id=None,
         entity_name=f"{role}.*",
-        changes_summary=f"Reset all permissions for role {role} to defaults ({deleted_count} configurations deleted)"
+        changes_summary=f"Reset all permissions for role {role} to defaults ({deleted_count} configurations deleted)",
     )
-    
+
     await db.commit()
-    
+
     return {
         "message": f"Role {role} permissions reset to defaults",
-        "deleted_configurations": deleted_count
+        "deleted_configurations": deleted_count,
     }

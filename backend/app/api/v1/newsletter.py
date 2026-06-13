@@ -1,6 +1,7 @@
 """
 Newsletter API endpoints for email subscriptions.
 """
+
 import secrets
 import time
 from collections import defaultdict, deque
@@ -55,9 +56,7 @@ def _enforce_newsletter_rate_limit(request: Request) -> None:
 
 @router.post("/subscribe", response_model=NewsletterSubscribeResponse)
 async def subscribe_to_newsletter(
-    request: Request,
-    data: NewsletterSubscribe,
-    db: AsyncSession = Depends(get_db)
+    request: Request, data: NewsletterSubscribe, db: AsyncSession = Depends(get_db)
 ):
     """
     Subscribe to newsletter.
@@ -79,8 +78,7 @@ async def subscribe_to_newsletter(
         if existing.is_active:
             # Already subscribed and active
             return NewsletterSubscribeResponse(
-                success=True,
-                message="Ya estás suscrito a nuestro newsletter."
+                success=True, message="Ya estás suscrito a nuestro newsletter."
             )
         else:
             # Reactivate subscription
@@ -89,7 +87,7 @@ async def subscribe_to_newsletter(
             await db.commit()
             return NewsletterSubscribeResponse(
                 success=True,
-                message="Tu suscripción ha sido reactivada. ¡Bienvenido de vuelta!"
+                message="Tu suscripción ha sido reactivada. ¡Bienvenido de vuelta!",
             )
 
     # Create new subscriber
@@ -100,7 +98,7 @@ async def subscribe_to_newsletter(
         is_active=True,
         is_confirmed=False,
         source="landing_page",
-        confirmation_token=confirmation_token
+        confirmation_token=confirmation_token,
     )
 
     db.add(subscriber)
@@ -129,15 +127,12 @@ async def subscribe_to_newsletter(
 
     return NewsletterSubscribeResponse(
         success=True,
-        message="¡Gracias por suscribirte! Revisa tu correo para confirmar tu suscripción."
+        message="¡Gracias por suscribirte! Revisa tu correo para confirmar tu suscripción.",
     )
 
 
 @router.post("/unsubscribe", response_model=NewsletterSubscribeResponse)
-async def unsubscribe_from_newsletter(
-    email: str,
-    db: AsyncSession = Depends(get_db)
-):
+async def unsubscribe_from_newsletter(email: str, db: AsyncSession = Depends(get_db)):
     """
     Unsubscribe from newsletter.
 
@@ -157,6 +152,5 @@ async def unsubscribe_from_newsletter(
 
     # Always return generic success message
     return NewsletterSubscribeResponse(
-        success=True,
-        message="Has sido dado de baja del newsletter."
+        success=True, message="Has sido dado de baja del newsletter."
     )

@@ -55,7 +55,7 @@ const loadAnalytics = async () => {
   try {
     // Cargar stats del dashboard (datos reales de la BD)
     const dashboardData = await api.get('/superadmin/dashboard/stats')
-    
+
     // Usar bookings y users como proxy para traffic (hasta tener Google Analytics)
     trafficStats.value = {
       pageviews: dashboardData.total_bookings * 3 + dashboardData.total_users * 2, // Estimación
@@ -65,11 +65,11 @@ const loadAnalytics = async () => {
       newUsers: dashboardData.new_users_today,
       returningUsers: dashboardData.active_users_today
     }
-    
+
     // Cargar marketing stats
     const marketingData = await api.get('/marketing/admin/analytics/overview')
     marketingStats.value = marketingData
-    
+
   } catch (error) {
     console.error('Error loading analytics:', error)
   } finally {

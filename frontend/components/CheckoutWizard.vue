@@ -68,7 +68,7 @@ const isContactValid = computed(() => {
 })
 
 const isTravelersValid = computed(() => {
-  return travelers.value.every(t => 
+  return travelers.value.every(t =>
     t.firstName && t.lastName && t.documentNumber
   )
 })
@@ -220,8 +220,8 @@ const formatExpiry = (value: string) => {
 
     <!-- Progress -->
     <div class="flex border-b border-gray-200">
-      <div 
-        v-for="step in totalSteps" 
+      <div
+        v-for="step in totalSteps"
         :key="step"
         class="flex-1 py-4 text-center text-sm font-medium relative"
         :class="{
@@ -229,7 +229,7 @@ const formatExpiry = (value: string) => {
           'text-gray-400': currentStep < step
         }"
       >
-        <div 
+        <div
           class="w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-1"
           :class="{
             'bg-primary-600 text-white': currentStep > step,
@@ -240,12 +240,12 @@ const formatExpiry = (value: string) => {
           <Check v-if="currentStep > step" class="w-4 h-4" />
           <span v-else>{{ step }}</span>
         </div>
-        {{ 
+        {{
           step === 1 ? 'Contacto' :
           step === 2 ? 'Viajeros' :
           'Pago'
         }}
-        <div 
+        <div
           v-if="step < totalSteps"
           class="absolute top-8 right-0 w-1/2 h-0.5"
           :class="currentStep > step ? 'bg-primary-600' : 'bg-gray-200'"
@@ -261,12 +261,12 @@ const formatExpiry = (value: string) => {
           <User class="w-5 h-5 text-primary-600" />
           Información de contacto
         </h3>
-        
+
         <div class="space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-              <input 
+              <input
                 v-model="contactForm.firstName"
                 type="text"
                 class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -275,7 +275,7 @@ const formatExpiry = (value: string) => {
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
-              <input 
+              <input
                 v-model="contactForm.lastName"
                 type="text"
                 class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -283,10 +283,10 @@ const formatExpiry = (value: string) => {
               />
             </div>
           </div>
-          
+
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input 
+            <input
               v-model="contactForm.email"
               type="email"
               class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -296,11 +296,11 @@ const formatExpiry = (value: string) => {
               Email inválido
             </p>
           </div>
-          
+
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-              <input 
+              <input
                 v-model="contactForm.phone"
                 type="tel"
                 class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -309,7 +309,7 @@ const formatExpiry = (value: string) => {
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">País</label>
-              <select 
+              <select
                 v-model="contactForm.country"
                 class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
@@ -342,7 +342,7 @@ const formatExpiry = (value: string) => {
             <Users class="w-5 h-5 text-primary-600" />
             Información de viajeros
           </h3>
-          <button 
+          <button
             @click="addTraveler"
             :disabled="travelers.length >= 10"
             class="px-4 py-2 bg-primary-50 text-primary-700 rounded-lg font-medium hover:bg-primary-100 transition-colors disabled:opacity-50"
@@ -352,14 +352,14 @@ const formatExpiry = (value: string) => {
         </div>
 
         <div class="space-y-4">
-          <div 
-            v-for="(traveler, index) in travelers" 
+          <div
+            v-for="(traveler, index) in travelers"
             :key="index"
             class="p-4 border border-gray-200 rounded-xl"
           >
             <div class="flex items-center justify-between mb-4">
               <h4 class="font-medium text-gray-900">Viajero {{ index + 1 }}</h4>
-              <button 
+              <button
                 v-if="travelers.length > 1"
                 @click="removeTraveler(index)"
                 class="text-red-500 text-sm hover:underline"
@@ -367,11 +367,11 @@ const formatExpiry = (value: string) => {
                 Eliminar
               </button>
             </div>
-            
+
             <div class="grid md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm text-gray-600 mb-1">Nombre</label>
-                <input 
+                <input
                   v-model="traveler.firstName"
                   type="text"
                   class="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500"
@@ -379,7 +379,7 @@ const formatExpiry = (value: string) => {
               </div>
               <div>
                 <label class="block text-sm text-gray-600 mb-1">Apellido</label>
-                <input 
+                <input
                   v-model="traveler.lastName"
                   type="text"
                   class="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500"
@@ -387,7 +387,7 @@ const formatExpiry = (value: string) => {
               </div>
               <div>
                 <label class="block text-sm text-gray-600 mb-1">Tipo de documento</label>
-                <select 
+                <select
                   v-model="traveler.documentType"
                   class="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500"
                 >
@@ -397,7 +397,7 @@ const formatExpiry = (value: string) => {
               </div>
               <div>
                 <label class="block text-sm text-gray-600 mb-1">Número de documento</label>
-                <input 
+                <input
                   v-model="traveler.documentNumber"
                   type="text"
                   class="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500"
@@ -405,7 +405,7 @@ const formatExpiry = (value: string) => {
               </div>
               <div class="md:col-span-2">
                 <label class="block text-sm text-gray-600 mb-1">Fecha de nacimiento</label>
-                <input 
+                <input
                   v-model="traveler.birthday"
                   type="date"
                   class="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500"
@@ -428,7 +428,7 @@ const formatExpiry = (value: string) => {
 
             <!-- Payment Methods -->
             <div class="flex gap-3 mb-6">
-              <button 
+              <button
                 @click="paymentForm.method = 'card'"
                 class="flex-1 p-4 border-2 rounded-xl transition-all text-left"
                 :class="paymentForm.method === 'card' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'"
@@ -436,7 +436,7 @@ const formatExpiry = (value: string) => {
                 <div class="font-medium">Tarjeta de crédito</div>
                 <div class="text-sm text-gray-500">Visa, Mastercard, Amex</div>
               </button>
-              <button 
+              <button
                 @click="paymentForm.method = 'paypal'"
                 class="flex-1 p-4 border-2 rounded-xl transition-all text-left"
                 :class="paymentForm.method === 'paypal' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'"
@@ -451,7 +451,7 @@ const formatExpiry = (value: string) => {
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Número de tarjeta</label>
                 <div class="relative">
-                  <input 
+                  <input
                     :value="paymentForm.cardNumber"
                     @input="paymentForm.cardNumber = formatCardNumber($event.target.value)"
                     type="text"
@@ -464,7 +464,7 @@ const formatExpiry = (value: string) => {
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Titular de la tarjeta</label>
-                <input 
+                <input
                   v-model="paymentForm.cardHolder"
                   type="text"
                   class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -476,7 +476,7 @@ const formatExpiry = (value: string) => {
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Vencimiento</label>
                   <div class="relative">
-                    <input 
+                    <input
                       :value="paymentForm.expiry"
                       @input="paymentForm.expiry = formatExpiry($event.target.value)"
                       type="text"
@@ -489,7 +489,7 @@ const formatExpiry = (value: string) => {
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">CVC</label>
                   <div class="relative">
-                    <input 
+                    <input
                       v-model="paymentForm.cvc"
                       type="text"
                       maxlength="4"
@@ -502,7 +502,7 @@ const formatExpiry = (value: string) => {
               </div>
 
               <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer">
-                <input 
+                <input
                   v-model="paymentForm.saveCard"
                   type="checkbox"
                   class="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
@@ -535,7 +535,7 @@ const formatExpiry = (value: string) => {
           <!-- Order Summary -->
           <div class="lg:pl-8 lg:border-l border-gray-200">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Resumen del pedido</h3>
-            
+
             <!-- Experience -->
             <div v-if="experienceName" class="flex items-start gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
               <MapPin class="w-5 h-5 text-primary-600 mt-0.5" />
@@ -548,10 +548,10 @@ const formatExpiry = (value: string) => {
             <!-- Extras -->
             <div class="space-y-3 mb-6">
               <h4 class="font-medium text-gray-900">Servicios adicionales</h4>
-              
+
               <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition-colors">
                 <div class="flex items-center gap-3">
-                  <input 
+                  <input
                     v-model="extras.insurance"
                     type="checkbox"
                     class="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
@@ -563,10 +563,10 @@ const formatExpiry = (value: string) => {
                 </div>
                 <span class="font-medium text-gray-900">$45</span>
               </label>
-              
+
               <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition-colors">
                 <div class="flex items-center gap-3">
-                  <input 
+                  <input
                     v-model="extras.flexibleCancel"
                     type="checkbox"
                     class="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
@@ -578,10 +578,10 @@ const formatExpiry = (value: string) => {
                 </div>
                 <span class="font-medium text-gray-900">$25</span>
               </label>
-              
+
               <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition-colors">
                 <div class="flex items-center gap-3">
-                  <input 
+                  <input
                     v-model="extras.prioritySupport"
                     type="checkbox"
                     class="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
@@ -615,7 +615,7 @@ const formatExpiry = (value: string) => {
             </div>
 
             <!-- Submit Button -->
-            <button 
+            <button
               @click="submitBooking"
               :disabled="!canProceed || isProcessing"
               class="w-full mt-6 py-4 bg-gradient-to-r from-primary-600 to-accent-600 text-white rounded-xl font-bold text-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -636,7 +636,7 @@ const formatExpiry = (value: string) => {
 
     <!-- Footer Navigation -->
     <div v-if="currentStep < 4" class="flex justify-between p-6 border-t border-gray-200 bg-gray-50">
-      <button 
+      <button
         v-if="currentStep > 1"
         @click="prevStep"
         class="px-6 py-3 bg-white border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
@@ -645,8 +645,8 @@ const formatExpiry = (value: string) => {
         Anterior
       </button>
       <div v-else></div>
-      
-      <button 
+
+      <button
         v-if="currentStep < 3"
         @click="nextStep"
         :disabled="!canProceed"

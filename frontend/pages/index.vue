@@ -5,9 +5,9 @@
       <!-- Background -->
       <div class="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-800 to-emerald-900"></div>
       <div class="absolute inset-0">
-        <NuxtImg 
-          src="https://images.unsplash.com/photo-1518638150340-f706e86654de?w=1920&q=80" 
-          alt="Costa Rica" 
+        <NuxtImg
+          src="https://images.unsplash.com/photo-1518638150340-f706e86654de?w=1920&q=80"
+          alt="Costa Rica"
           class="w-full h-full object-cover"
           width="1920"
           height="1080"
@@ -15,11 +15,11 @@
         />
       </div>
       <div class="absolute inset-0 bg-gradient-to-t from-primary-950/90 via-primary-900/60 to-transparent"></div>
-      
+
       <!-- Decorative Elements -->
       <div class="absolute top-20 left-10 w-72 h-72 bg-primary-400/10 rounded-full blur-3xl"></div>
       <div class="absolute bottom-20 right-10 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl"></div>
-      
+
       <!-- Content -->
       <div class="relative z-10 container mx-auto px-4 py-20">
         <div class="max-w-4xl mx-auto text-center">
@@ -27,12 +27,12 @@
             <MapPin class="w-4 h-4 text-primary-300" />
             {{ $t('hero.badge') }}
           </span>
-          
+
           <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight tracking-tight">
             {{ $t('hero.action') }}
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-300 to-emerald-300">Costa Rica</span>
           </h1>
-          
+
           <p class="text-xl md:text-2xl text-white/90 mb-12 max-w-2xl mx-auto leading-relaxed">
             {{ $t('hero.subtitle.main') }}
           </p>
@@ -42,31 +42,31 @@
             <div class="grid md:grid-cols-5 gap-3">
               <div class="md:col-span-2 p-4">
                 <label class="text-xs text-gray-700 font-semibold block mb-2 uppercase tracking-wide">{{ $t('hero.search.destination.label') }}</label>
-                <input 
-                  v-model="search.destino" 
-                  type="text" 
+                <input
+                  v-model="search.destino"
+                  type="text"
                   placeholder="¿A dónde quieres ir?"
                   class="w-full text-gray-800 placeholder-gray-400 outline-none font-medium bg-transparent text-base"
                 />
               </div>
               <div class="p-4 border-l border-gray-100">
                 <label class="text-xs text-gray-700 font-semibold block mb-2 uppercase tracking-wide">{{ $t('hero.search.checkIn') }}</label>
-                <input 
-                  v-model="search.checkin" 
-                  type="date" 
+                <input
+                  v-model="search.checkin"
+                  type="date"
                   class="w-full text-gray-800 outline-none font-medium bg-transparent text-base"
                 />
               </div>
               <div class="p-4 border-l border-gray-100">
                 <label class="text-xs text-gray-700 font-semibold block mb-2 uppercase tracking-wide">{{ $t('hero.search.checkOut') }}</label>
-                <input 
-                  v-model="search.checkout" 
-                  type="date" 
+                <input
+                  v-model="search.checkout"
+                  type="date"
                   class="w-full text-gray-800 outline-none font-medium bg-transparent text-base"
                 />
               </div>
-              <button 
-                @click="buscar" 
+              <button
+                @click="buscar"
                 class="bg-primary-600 text-white font-bold py-4 px-8 rounded-xl hover:bg-primary-700 active:bg-primary-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
               >
                 <Search class="w-5 h-5" />
@@ -137,16 +137,16 @@
               Explora las regiones más impresionantes del país
             </p>
           </div>
-          
+
           <div class="grid md:grid-cols-3 gap-8">
-            <NuxtLink 
-              v-for="dest in landingData?.destinations" 
-              :key="dest.id" 
-              :to="`/destinos/${dest.slug}`" 
+            <NuxtLink
+              v-for="dest in landingData?.destinations"
+              :key="dest.id"
+              :to="`/destinos/${dest.slug}`"
               class="group relative h-80 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer"
             >
-              <NuxtImg 
-                :src="dest.image || 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&q=80'" 
+              <NuxtImg
+                :src="dest.image || 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&q=80'"
                 :alt="dest.name"
                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 width="800"
@@ -203,17 +203,17 @@
               Alojamientos de primera categoría para tu estancia perfecta
             </p>
           </div>
-          
+
           <div class="grid md:grid-cols-3 gap-8">
-            <NuxtLink 
-              v-for="prop in landingData?.properties" 
-              :key="prop.id" 
-              :to="`/hoteles/${prop.slug}`" 
+            <NuxtLink
+              v-for="prop in landingData?.properties"
+              :key="prop.id"
+              :to="`/hoteles/${prop.slug}`"
               class="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer"
             >
               <div class="relative h-56 overflow-hidden">
-                <NuxtImg 
-                  :src="prop.cover_image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80'" 
+                <NuxtImg
+                  :src="prop.cover_image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80'"
                   :alt="prop.name"
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   width="800"
@@ -277,17 +277,17 @@
               Vive aventuras inolvidables con nuestros tours mejor valorados
             </p>
           </div>
-          
+
           <div class="grid md:grid-cols-3 gap-8">
-            <NuxtLink 
-              v-for="tour in landingData?.tours" 
-              :key="tour.id" 
-              :to="`/tours/${tour.slug}`" 
+            <NuxtLink
+              v-for="tour in landingData?.tours"
+              :key="tour.id"
+              :to="`/tours/${tour.slug}`"
               class="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer border border-gray-100"
             >
               <div class="relative h-56 overflow-hidden">
-                <NuxtImg 
-                  :src="tour.cover_image || 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80'" 
+                <NuxtImg
+                  :src="tour.cover_image || 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80'"
                   :alt="tour.name"
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   width="800"
@@ -362,7 +362,7 @@
               Tu próxima aventura te espera con brazos abiertos
             </p>
           </div>
-          
+
           <div class="grid md:grid-cols-4 gap-8">
             <div class="text-center group">
               <div class="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-6 text-4xl group-hover:bg-white/20 transition-colors border border-white/10">
@@ -429,16 +429,16 @@
 </template>
 
 <script setup lang="ts">
-import { 
-  Search, 
-  MapPin, 
-  Mountain, 
-  Building2, 
-  Compass, 
-  FileText, 
-  Star, 
-  ArrowRight, 
-  Clock 
+import {
+  Search,
+  MapPin,
+  Mountain,
+  Building2,
+  Compass,
+  FileText,
+  Star,
+  ArrowRight,
+  Clock
 } from 'lucide-vue-next'
 
 // Components

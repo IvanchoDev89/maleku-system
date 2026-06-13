@@ -2,9 +2,21 @@
 Vendor model and related schemas.
 Represents business vendors offering properties, tours, and services.
 """
+
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Float, Integer, Enum, Numeric
+from sqlalchemy import (
+    Column,
+    String,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Text,
+    Float,
+    Integer,
+    Enum,
+    Numeric,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -14,7 +26,7 @@ from app.models.base import Base, VendorStatus
 class Vendor(Base):
     """
     Vendor model representing business partners on the platform.
-    
+
     Attributes:
         id: Unique identifier (UUID)
         user_id: Associated user account ID
@@ -37,10 +49,16 @@ class Vendor(Base):
         created_at: Creation timestamp
         updated_at: Last update timestamp
     """
+
     __tablename__ = "vendors"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
     business_name = Column(String(255), nullable=False)
     business_slug = Column(String(255), unique=True, index=True, nullable=False)
     business_type = Column(String(50), nullable=False)
@@ -58,14 +76,23 @@ class Vendor(Base):
     is_verified = Column(Boolean, default=False, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     status = Column(Enum(VendorStatus), default=VendorStatus.PENDING, nullable=False)
-    
+
     # Soft Delete
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    
+
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
-    
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
     # Relationships
     user = relationship("User", back_populates="vendor", uselist=False)
     properties = relationship("Property", back_populates="vendor")

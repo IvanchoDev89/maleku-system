@@ -16,7 +16,7 @@
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div v-for="(stat, index) in statsCards" :key="index" 
+      <div v-for="(stat, index) in statsCards" :key="index"
         class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
         <div class="flex items-start justify-between">
           <div>
@@ -86,7 +86,7 @@
           <NuxtLink to="/admin/vendors" class="text-primary text-sm hover:underline">Ver todos →</NuxtLink>
         </div>
         <div class="space-y-4">
-          <div v-for="(vendor, index) in topVendors.slice(0, 5)" :key="vendor.vendor_id" 
+          <div v-for="(vendor, index) in topVendors.slice(0, 5)" :key="vendor.vendor_id"
             class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
             <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
               :class="index === 0 ? 'bg-yellow-400 text-black' : index === 1 ? 'bg-gray-300 text-black' : index === 2 ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-600'">
@@ -111,7 +111,7 @@
           <NuxtLink to="/admin/bookings" class="text-primary text-sm hover:underline">Ver todas →</NuxtLink>
         </div>
         <div class="space-y-3">
-          <div v-for="booking in recentBookings" :key="booking.id" 
+          <div v-for="booking in recentBookings" :key="booking.id"
             class="flex items-center justify-between p-3 border-b border-gray-100 last:border-0">
             <div>
               <p class="font-medium text-gray-900 text-sm">{{ booking.user_name }}</p>
@@ -273,13 +273,13 @@ const loadAnalytics = async () => {
       api.get('/admin/analytics/bookings/by-status'),
       api.get('/bookings?page_size=5')
     ])
-    
+
     stats.value = overview
     revenueData.value = revenue
     topVendors.value = vendors
     bookingsByStatus.value = status
     recentBookings.value = bookings.items?.slice(0, 5) || []
-    
+
     updateCharts()
   } catch (error) {
     console.error('Error loading analytics:', error)

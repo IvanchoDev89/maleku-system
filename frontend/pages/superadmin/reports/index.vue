@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { 
-  DollarSign, 
-  ClipboardList, 
-  Users, 
-  Store, 
+import {
+  DollarSign,
+  ClipboardList,
+  Users,
+  Store,
   PieChart,
   Download,
   FileText,
@@ -76,8 +76,8 @@ const generateReport = (reportId: string) => {
 
     <!-- Report Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div 
-        v-for="report in reportTypes" 
+      <div
+        v-for="report in reportTypes"
         :key="report.id"
         class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-all group"
       >
@@ -85,7 +85,7 @@ const generateReport = (reportId: string) => {
           <div :class="[report.bg, report.color, 'w-12 h-12 rounded-xl flex items-center justify-center']">
             <component :is="report.icon" class="w-6 h-6" />
           </div>
-          <button 
+          <button
             @click="generateReport(report.id)"
             class="text-amber-600 hover:text-amber-700 text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all"
           >

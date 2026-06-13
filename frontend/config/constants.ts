@@ -15,7 +15,7 @@ export const DESTINATIONS = {
     { slug: 'caribe', key: 'caribe' },
     { slug: 'valle-central', key: 'vallecentral' }
   ] as const,
-  
+
   // Slugs for footer display (ordered)
   footerSlugs: ['guanacaste', 'fortuna', 'monteverde', 'manuelantonio'] as const
 }
@@ -30,7 +30,7 @@ export const SERVICES = {
     { key: 'flights', icon: '✈️' },
     { key: 'packages', icon: '📦' }
   ] as const,
-  
+
   // Keys for footer display
   footerKeys: ['hotels', 'tours', 'flights', 'packages'] as const
 }
@@ -59,7 +59,7 @@ export const DEFAULT_IMAGES = {
     caribe: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80',
     valleCentral: 'https://images.unsplash.com/photo-1588708885923-98c04a8e4c3f?w=800&q=80'
   },
-  
+
   // Generic fallbacks
   generic: {
     hotel: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80',
@@ -77,12 +77,12 @@ export const CACHE_TTL = {
   vendorList: 300,        // 5 minutes
   blogList: 300,          // 5 minutes
   destinationList: 600,   // 10 minutes
-  
+
   // Details
   vendorDetail: 600,      // 10 minutes
   blogDetail: 600,        // 10 minutes
   propertyDetail: 300,    // 5 minutes
-  
+
   // Featured/High traffic
   featured: 180,          // 3 minutes
   landing: 120            // 2 minutes

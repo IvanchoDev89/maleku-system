@@ -84,14 +84,14 @@ const shareBooking = () => {
 
         <!-- Actions -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <NuxtLink 
+          <NuxtLink
             to="/dashboard/traveler"
             class="px-8 py-4 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
           >
             <MapPin class="w-5 h-5" />
             Ver mi viaje
           </NuxtLink>
-          <button 
+          <button
             @click="shareBooking"
             class="px-8 py-4 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
           >
@@ -104,7 +104,7 @@ const shareBooking = () => {
       <!-- Help Section -->
       <div class="mt-8 text-center">
         <p class="text-gray-500 text-sm">
-          ¿Necesitas ayuda? 
+          ¿Necesitas ayuda?
           <a href="mailto:soporte@costaricatravel.com" class="text-primary-600 hover:underline">
             Contacta a nuestro equipo
           </a>

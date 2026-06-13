@@ -1,6 +1,6 @@
 export default defineEventHandler(async (event) => {
   const baseUrl = 'https://costaricatravel.dev'
-  
+
   const staticPages = [
     { loc: '/', changefreq: 'daily', priority: 1.0 },
     { loc: '/destinos', changefreq: 'weekly', priority: 0.8 },
@@ -18,13 +18,13 @@ export default defineEventHandler(async (event) => {
     { loc: '/terminos', changefreq: 'monthly', priority: 0.2 },
     { loc: '/search', changefreq: 'monthly', priority: 0.3 },
   ]
-  
+
   let dynamicPages: { loc: string; changefreq: string; priority: number }[] = []
 
   try {
     const { public: { apiBase } } = useRuntimeConfig()
     const apiUrl = (apiBase as string || '').replace(/\/api\/v1$/, '')
-    
+
     if (apiUrl) {
       const [destinations, properties, tours, blogPosts] = await Promise.all([
         $fetch<{ items: { slug: string }[] }>(`${apiUrl}/api/v1/destinations?page_size=100`).catch(() => null),
@@ -65,9 +65,9 @@ export default defineEventHandler(async (event) => {
   } catch {
     // API unavailable — fall back to static pages only
   }
-  
+
   const allPages = [...staticPages, ...dynamicPages]
-  
+
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
          xmlns:xhtml="http://www.w3.org/1999/xhtml">
@@ -80,7 +80,7 @@ export default defineEventHandler(async (event) => {
     <xhtml:link rel="alternate" hreflang="fr" href="${baseUrl}/fr${page.loc}"/>
   </url>`).join('\n')}
 </urlset>`
-  
+
   event.node.res.setHeader('content-type', 'application/xml')
   return sitemap
 })

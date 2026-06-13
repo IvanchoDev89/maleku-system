@@ -6,7 +6,7 @@
         <h1 class="text-2xl font-bold text-gray-900">Aprobación de Proveedores</h1>
         <p class="text-gray-500 mt-1">Revisar y aprobar nuevos vendors pendientes</p>
       </div>
-      <NuxtLink 
+      <NuxtLink
         to="/superadmin/vendors"
         class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
       >
@@ -37,8 +37,8 @@
 
     <!-- Pending Vendors List -->
     <div v-else class="space-y-4">
-      <div 
-        v-for="vendor in pendingVendors" 
+      <div
+        v-for="vendor in pendingVendors"
         :key="vendor.id"
         class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
       >
@@ -63,13 +63,13 @@
               </div>
             </div>
             <div class="flex gap-2">
-              <button 
+              <button
                 @click="selectedVendor = vendor; showRejectModal = true"
                 class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
               >
                 Rechazar
               </button>
-              <button 
+              <button
                 @click="confirmApproveVendor(vendor)"
                 class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
@@ -158,8 +158,8 @@
               <span>⚠️</span> Alertas de Cumplimiento
             </h4>
             <div class="space-y-2">
-              <div 
-                v-for="flag in vendor.compliance_flags" 
+              <div
+                v-for="flag in vendor.compliance_flags"
                 :key="flag"
                 class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg"
               >
@@ -173,7 +173,7 @@
           <div class="md:col-span-2">
             <h4 class="font-semibold text-gray-900 mb-3">Verificación de Documentos</h4>
             <div class="flex items-center gap-4">
-              <div 
+              <div
                 class="flex items-center gap-2 px-4 py-2 rounded-lg"
                 :class="vendor.documents_verified ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'"
               >
@@ -182,7 +182,7 @@
                   {{ vendor.documents_verified ? 'Documentos Verificados' : 'Pendiente de Verificación' }}
                 </span>
               </div>
-              <button 
+              <button
                 v-if="!vendor.documents_verified"
                 @click="requestDocuments(vendor)"
                 class="text-sm text-blue-600 hover:underline"
@@ -200,21 +200,21 @@
       <p class="text-gray-600 mb-4">
         Estás rechazando a <strong>{{ selectedVendor?.business_name }}</strong>
       </p>
-      
+
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Razón del rechazo *</label>
-          <textarea 
+          <textarea
             v-model="rejectReason"
             rows="3"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg"
             placeholder="Explica por qué se rechaza este vendor..."
           ></textarea>
         </div>
-        
+
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Notas adicionales</label>
-          <textarea 
+          <textarea
             v-model="rejectNotes"
             rows="2"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -222,15 +222,15 @@
           ></textarea>
         </div>
       </div>
-      
+
       <template #footer>
-        <button 
+        <button
           @click="showRejectModal = false"
           class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
         >
           Cancelar
         </button>
-        <button 
+        <button
           @click="rejectVendor"
           class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
           :disabled="!rejectReason"
@@ -329,21 +329,21 @@ const executeApproveVendor = async (vendor: any) => {
 
 const rejectVendor = async () => {
   if (!selectedVendor.value || !rejectReason.value) return
-  
+
   try {
     await api.post(`/superadmin/vendors/${selectedVendor.value.id}/approval`, {
       action: 'reject',
       reason: rejectReason.value,
       notes: rejectNotes.value,
     })
-    
+
     // Remove from list
     pendingVendors.value = pendingVendors.value.filter(v => v.id !== selectedVendor.value.id)
     showRejectModal.value = false
     rejectReason.value = ''
     rejectNotes.value = ''
     selectedVendor.value = null
-    
+
     toast.success('Vendor rechazado')
   } catch (error) {
     console.error('Error rejecting vendor:', error)

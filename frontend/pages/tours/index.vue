@@ -10,7 +10,7 @@
           <p class="text-white/80 text-lg mb-8">
             Encuentra y reserva los mejores tours en Costa Rica
           </p>
-          
+
           <!-- Search Bar -->
           <div class="bg-white rounded-2xl shadow-elevated p-4">
             <div class="flex flex-col md:flex-row gap-3">
@@ -73,7 +73,7 @@
                   <strong class="text-gray-900">{{ totalCount }}</strong> experiencias encontradas
                 </span>
               </div>
-              
+
               <!-- View Toggle (placeholder for map view) -->
               <div class="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm border border-gray-200">
                 <button class="px-3 py-1.5 rounded-md bg-primary-50 text-primary-700 font-medium text-sm">
@@ -156,10 +156,10 @@
 </template>
 
 <script setup lang="ts">
-import { 
-  Search, 
-  Loader2, 
-  AlertCircle, 
+import {
+  Search,
+  Loader2,
+  AlertCircle,
   SearchX,
   Grid3X3,
   Map

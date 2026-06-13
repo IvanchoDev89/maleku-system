@@ -4,10 +4,10 @@
  * Incluye: categorías, dificultad, precio, duración, rating, región
  */
 import { ref, computed } from 'vue'
-import { 
-  SlidersHorizontal, 
-  X, 
-  ChevronDown, 
+import {
+  SlidersHorizontal,
+  X,
+  ChevronDown,
   Star,
   MapPin,
   Clock,
@@ -86,7 +86,7 @@ const isDurationActive = (min: number, max: number) => {
       class="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-primary-600 text-white rounded-full shadow-floating flex items-center justify-center gap-2 hover:bg-primary-700 transition-colors"
     >
       <SlidersHorizontal class="w-6 h-6" />
-      <span 
+      <span
         v-if="activeFiltersCount > 0"
         class="absolute -top-1 -right-1 w-6 h-6 bg-accent-500 text-white text-xs font-bold rounded-full flex items-center justify-center"
       >
@@ -137,8 +137,8 @@ const isDurationActive = (min: number, max: number) => {
               <Tag class="w-4 h-4 text-primary-600" />
               Categoría
             </span>
-            <ChevronDown 
-              class="w-5 h-5 text-gray-400 transition-transform" 
+            <ChevronDown
+              class="w-5 h-5 text-gray-400 transition-transform"
               :class="{ 'rotate-180': expandedSections.category }"
             />
           </button>
@@ -169,8 +169,8 @@ const isDurationActive = (min: number, max: number) => {
               <DollarSign class="w-4 h-4 text-primary-600" />
               Precio
             </span>
-            <ChevronDown 
-              class="w-5 h-5 text-gray-400 transition-transform" 
+            <ChevronDown
+              class="w-5 h-5 text-gray-400 transition-transform"
               :class="{ 'rotate-180': expandedSections.price }"
             />
           </button>
@@ -199,8 +199,8 @@ const isDurationActive = (min: number, max: number) => {
               <Clock class="w-4 h-4 text-primary-600" />
               Duración
             </span>
-            <ChevronDown 
-              class="w-5 h-5 text-gray-400 transition-transform" 
+            <ChevronDown
+              class="w-5 h-5 text-gray-400 transition-transform"
               :class="{ 'rotate-180': expandedSections.duration }"
             />
           </button>
@@ -229,8 +229,8 @@ const isDurationActive = (min: number, max: number) => {
               <Mountain class="w-4 h-4 text-primary-600" />
               Dificultad
             </span>
-            <ChevronDown 
-              class="w-5 h-5 text-gray-400 transition-transform" 
+            <ChevronDown
+              class="w-5 h-5 text-gray-400 transition-transform"
               :class="{ 'rotate-180': expandedSections.difficulty }"
             />
           </button>
@@ -243,7 +243,7 @@ const isDurationActive = (min: number, max: number) => {
                 class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left"
                 :class="isDifficultyActive(diff.value) ? 'bg-primary-50' : 'hover:bg-gray-50'"
               >
-                <span 
+                <span
                   class="px-2 py-1 rounded text-xs font-semibold"
                   :class="diff.color"
                 >
@@ -264,8 +264,8 @@ const isDurationActive = (min: number, max: number) => {
               <Star class="w-4 h-4 text-primary-600" />
               Calificación
             </span>
-            <ChevronDown 
-              class="w-5 h-5 text-gray-400 transition-transform" 
+            <ChevronDown
+              class="w-5 h-5 text-gray-400 transition-transform"
               :class="{ 'rotate-180': expandedSections.rating }"
             />
           </button>
@@ -279,8 +279,8 @@ const isDurationActive = (min: number, max: number) => {
                 :class="isRatingActive(stars) ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50 text-gray-700'"
               >
                 <div class="flex items-center gap-0.5">
-                  <Star 
-                    v-for="n in 5" 
+                  <Star
+                    v-for="n in 5"
                     :key="n"
                     class="w-4 h-4"
                     :class="n <= stars ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'"
@@ -302,8 +302,8 @@ const isDurationActive = (min: number, max: number) => {
               <MapPin class="w-4 h-4 text-primary-600" />
               Región
             </span>
-            <ChevronDown 
-              class="w-5 h-5 text-gray-400 transition-transform" 
+            <ChevronDown
+              class="w-5 h-5 text-gray-400 transition-transform"
               :class="{ 'rotate-180': expandedSections.region }"
             />
           </button>
@@ -344,5 +344,3 @@ const isDurationActive = (min: number, max: number) => {
     <!-- (Shortened for brevity - similar content as desktop in a slide-over panel) -->
   </div>
 </template>
-
-

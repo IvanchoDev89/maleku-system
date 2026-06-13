@@ -329,14 +329,14 @@ class Property(Base):
 async def rate_limit(request: Request, call_next):
     client_ip = request.client.host
     key = f"rate_limit:{client_ip}"
-    
+
     current = await redis.incr(key)
     if current == 1:
         await redis.expire(key, 60)
-    
+
     if current > 60:
         raise HTTPException(429, "Too many requests")
-    
+
     return await call_next(request)
 ```
 
@@ -354,14 +354,14 @@ async def rate_limit(request: Request, call_next):
 
 ```sql
 -- GIN Index para búsqueda rápida
-CREATE INDEX idx_properties_search ON properties 
+CREATE INDEX idx_properties_search ON properties
 USING GIN(search_vector);
 
 -- Trigger para actualizar search_vector
 CREATE OR REPLACE FUNCTION update_search_vector()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.search_vector := 
+  NEW.search_vector :=
     setweight(to_tsvector('spanish', COALESCE(NEW.name, '')), 'A') ||
     setweight(to_tsvector('spanish', COALESCE(NEW.description, '')), 'B') ||
     setweight(to_tsvector('spanish', COALESCE(NEW.location->>'city', '')), 'C');
@@ -515,7 +515,7 @@ Level 4: Database Cache (PostgreSQL shared_buffers)
          /
         /  \     E2E Tests (Playwright)
        /    \    └── Critical user journeys
-      /──────\   
+      /──────\
      /        \  Integration Tests
     /          \ └── API endpoints, DB queries
    /────────────\

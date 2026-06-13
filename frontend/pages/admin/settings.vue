@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-      <button 
-        v-for="cat in categories" 
+      <button
+        v-for="cat in categories"
         :key="cat.key"
         @click="activeCategory = cat.key"
         class="px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all shadow-sm"
@@ -172,8 +172,8 @@
       </div>
 
       <div class="flex justify-end">
-        <button 
-          @click="saveSettings" 
+        <button
+          @click="saveSettings"
           class="bg-primary hover:bg-primary-700 text-white px-6 py-3 rounded-xl font-bold shadow-md hover:shadow-lg transition-all"
           :disabled="saving"
         >

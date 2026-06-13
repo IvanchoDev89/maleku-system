@@ -7,11 +7,11 @@
           <span class="logo-icon">🌴</span>
           <span class="logo-text">Costa Rica Travel</span>
         </NuxtLink>
-        
+
         <div class="search-bar">
-          <input 
-            v-model="searchQuery" 
-            type="text" 
+          <input
+            v-model="searchQuery"
+            type="text"
             placeholder="Buscar hoteles, tours, destinos..."
             @keyup.enter="performSearch"
           />
@@ -63,8 +63,8 @@
           <div v-if="filters.type === 'property' || filters.type === 'all'" class="filter-section">
             <h3>Tipo de Alojamiento</h3>
             <div class="filter-chips">
-              <button 
-                v-for="type in propertyTypes" 
+              <button
+                v-for="type in propertyTypes"
                 :key="type.value"
                 :class="{ active: filters.propertyType === type.value }"
                 @click="filters.propertyType = filters.propertyType === type.value ? '' : type.value"
@@ -94,8 +94,8 @@
           <div class="filter-section">
             <h3>Amenidades</h3>
             <div class="filter-chips">
-              <button 
-                v-for="amenity in amenityOptions" 
+              <button
+                v-for="amenity in amenityOptions"
                 :key="amenity"
                 :class="{ active: filters.amenities.includes(amenity) }"
                 @click="toggleAmenity(amenity)"
@@ -120,7 +120,7 @@
       <!-- Map -->
       <div class="map-wrapper">
         <div id="map" ref="mapContainer"></div>
-        
+
         <!-- Loading Overlay -->
         <div v-if="loading" class="loading-overlay">
           <div class="loader"></div>
@@ -150,7 +150,7 @@
     <Transition name="slide-up">
       <div v-if="selectedItem" class="property-panel">
         <button @click="selectedItem = null" class="close-btn">×</button>
-        
+
         <div class="property-content">
           <div class="property-image">
             <NuxtImg :src="selectedItem.cover_image || '/images/placeholder.jpg'" :alt="selectedItem.name" width="800" height="400" format="webp" />
@@ -158,29 +158,29 @@
               {{ selectedItem.property_type || selectedItem.category }}
             </span>
           </div>
-          
+
           <div class="property-info">
             <h3>{{ selectedItem.name }}</h3>
-            
+
             <div class="property-location">
               📍 {{ selectedItem.city || selectedItem.location }}
             </div>
-            
+
             <div class="property-rating" v-if="selectedItem.rating">
               ⭐ {{ selectedItem.rating.toFixed(1) }} ({{ selectedItem.total_reviews }} reseñas)
             </div>
-            
+
             <div class="property-price">
               <span class="price">${{ selectedItem.base_price || selectedItem.price }}</span>
               <span class="per-night">/ noche</span>
             </div>
-            
+
             <div v-if="selectedItem.amenities?.length" class="property-amenities">
               <span v-for="amenity in selectedItem.amenities.slice(0, 4)" :key="amenity" class="amenity-tag">
                 {{ amenity }}
               </span>
             </div>
-            
+
             <div class="property-actions">
               <NuxtLink :to="`/hoteles/${selectedItem.slug}`" class="view-btn">
                 Ver Detalles →
@@ -233,7 +233,7 @@ const amenityOptions = ['WiFi', 'Piscina', 'Parking', 'A/C', 'Desayuno', 'Playa'
 
 const regions = [
   'Guanacaste',
-  'Puntarenas', 
+  'Puntarenas',
   'Alajuela',
   'Cartago',
   'Heredia',
@@ -282,7 +282,7 @@ const fetchMapData = async () => {
     const data = await api.get<any>('/search/map')
     properties.value = data.properties || []
     tours.value = data.tours || []
-    
+
     await nextTick()
     initMap()
   } catch (e) {
@@ -294,10 +294,10 @@ const fetchMapData = async () => {
 
 const initMap = async () => {
   if (!mapContainer.value || typeof window === 'undefined') return
-  
+
   // Dynamically import Leaflet to avoid SSR issues
   const L = await import('leaflet')
-  
+
   // Fix default marker icons
   delete (L.Icon.Default.prototype as any)._getIconUrl
   L.Icon.Default.mergeOptions({
@@ -305,28 +305,28 @@ const initMap = async () => {
     iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png'
   })
-  
+
   // Initialize map centered on Costa Rica
   map = L.map('map').setView([9.7489, -83.7534], 8)
-  
+
   // Add tile layer (OpenStreetMap)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map)
-  
+
   // Add markers
   updateMarkers()
 }
 
 const updateMarkers = async () => {
   if (!map) return
-  
+
   const L = await import('leaflet')
-  
+
   // Clear existing markers
   markers.forEach(m => map.removeLayer(m))
   markers = []
-  
+
   // Add property markers
   filteredProperties.value.forEach(p => {
     if (p.latitude && p.longitude) {
@@ -336,15 +336,15 @@ const updateMarkers = async () => {
         iconSize: [40, 40],
         iconAnchor: [20, 40]
       })
-      
+
       const marker = L.marker([p.latitude, p.longitude], { icon })
         .addTo(map)
         .on('click', () => selectProperty(p))
-      
+
       markers.push(marker)
     }
   })
-  
+
   // Add tour markers
   filteredTours.value.forEach(t => {
     if (t.latitude && t.longitude) {
@@ -354,15 +354,15 @@ const updateMarkers = async () => {
         iconSize: [40, 40],
         iconAnchor: [20, 40]
       })
-      
+
       const marker = L.marker([t.latitude, t.longitude], { icon })
         .addTo(map)
         .on('click', () => selectTour(t))
-      
+
       markers.push(marker)
     }
   })
-  
+
   // Fit bounds if markers exist
   if (markers.length > 0) {
     const group = L.featureGroup(markers)
@@ -386,8 +386,8 @@ const performSearch = () => {
   if (searchQuery.value) {
     // Filter by search query
     const query = searchQuery.value.toLowerCase()
-    properties.value = properties.value.filter(p => 
-      p.name.toLowerCase().includes(query) || 
+    properties.value = properties.value.filter(p =>
+      p.name.toLowerCase().includes(query) ||
       p.city?.toLowerCase().includes(query) ||
       p.region?.toLowerCase().includes(query)
     )

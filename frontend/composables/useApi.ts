@@ -29,18 +29,18 @@ export const useApi = () => {
   ): Promise<T> => {
     const auth = useAuthStore()
     const token = auth.token
-    
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...options.headers
     }
-    
+
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
     }
 
     let url = `${baseURL}${endpoint}`
-    
+
     if (options.params) {
       const params = new URLSearchParams(options.params)
       url += `?${params}`
@@ -76,7 +76,7 @@ export const useApi = () => {
 
       console.error(`API Error [${options.method || 'GET'} ${endpoint}]:`, error)
       useToast().add(`API Error: ${error?.status || ''} ${endpoint}`.trim(), 'error')
-      
+
       if (error.response) {
         throw {
           status: error.response.status,
@@ -95,12 +95,12 @@ export const useApi = () => {
   ): Promise<T> => {
     const auth = useAuthStore()
     const token = auth.token
-    
+
     const headers: Record<string, string> = {}
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
     }
-    
+
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 30000)
 
@@ -156,21 +156,21 @@ export const useApi = () => {
   }
 
   return {
-    get: <T>(endpoint: string, params?: Record<string, any>) => 
+    get: <T>(endpoint: string, params?: Record<string, any>) =>
       fetchApi<T>(endpoint, { method: 'GET', params }),
-    
-    post: <T>(endpoint: string, body?: any) => 
+
+    post: <T>(endpoint: string, body?: any) =>
       fetchApi<T>(endpoint, { method: 'POST', body }),
-    
-    put: <T>(endpoint: string, body?: any) => 
+
+    put: <T>(endpoint: string, body?: any) =>
       fetchApi<T>(endpoint, { method: 'PUT', body }),
-    
-    patch: <T>(endpoint: string, body?: any) => 
+
+    patch: <T>(endpoint: string, body?: any) =>
       fetchApi<T>(endpoint, { method: 'PATCH', body }),
-    
-    delete: <T>(endpoint: string) => 
+
+    delete: <T>(endpoint: string) =>
       fetchApi<T>(endpoint, { method: 'DELETE' }),
-    
+
     upload: uploadFile,
     uploadMultiple: uploadFiles
   }

@@ -7,14 +7,14 @@
         <p class="text-gray-500 mt-1">Registro completo de actividad y seguridad</p>
       </div>
       <div class="flex gap-3">
-        <button 
+        <button
           @click="exportLogs"
           class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
         >
           <span>📥</span>
           <span>Exportar</span>
         </button>
-        <button 
+        <button
           @click="showFilters = !showFilters"
           class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
         >
@@ -50,18 +50,18 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100">
       <div class="border-b border-gray-200">
         <div class="flex">
-          <button 
-            v-for="tab in tabs" 
+          <button
+            v-for="tab in tabs"
             :key="tab.id"
             @click="activeTab = tab.id"
             class="px-6 py-4 text-sm font-medium border-b-2 transition-colors"
-            :class="activeTab === tab.id 
-              ? 'border-slate-900 text-slate-900' 
+            :class="activeTab === tab.id
+              ? 'border-slate-900 text-slate-900'
               : 'border-transparent text-gray-500 hover:text-gray-700'"
           >
             {{ tab.label }}
-            <span 
-              v-if="tab.badge > 0" 
+            <span
+              v-if="tab.badge > 0"
               class="ml-2 px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-xs"
             >
               {{ tab.badge }}
@@ -75,9 +75,9 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
-            <input 
+            <input
               v-model="filters.user_email"
-              type="text" 
+              type="text"
               placeholder="Email..."
               class="w-full px-3 py-2 border border-gray-300 rounded-lg"
             >
@@ -96,7 +96,7 @@
           </div>
         </div>
         <div class="mt-4 flex justify-end">
-          <button 
+          <button
             @click="applyFilters"
             class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800"
           >
@@ -135,7 +135,7 @@
                 </div>
               </td>
               <td class="px-4 py-3">
-                <span 
+                <span
                   class="px-2 py-1 text-xs font-semibold rounded-full"
                   :class="getActionBadgeClass(log.action)"
                 >
@@ -148,7 +148,7 @@
               </td>
               <td class="px-4 py-3">
                 <p class="text-sm text-gray-600">{{ log.changes_summary || '-' }}</p>
-                <button 
+                <button
                   v-if="log.old_values || log.new_values"
                   @click="showLogDetails(log)"
                   class="text-xs text-blue-600 hover:underline mt-1"
@@ -189,7 +189,7 @@
                 <p class="text-sm font-medium text-gray-900">{{ log.user_email || 'Anónimo' }}</p>
               </td>
               <td class="px-4 py-3">
-                <span 
+                <span
                   class="px-2 py-1 text-xs font-semibold rounded-full"
                   :class="getSecurityActionClass(log.action)"
                 >
@@ -197,7 +197,7 @@
                 </span>
               </td>
               <td class="px-4 py-3">
-                <span 
+                <span
                   class="px-2 py-1 text-xs font-semibold rounded-full"
                   :class="getSeverityClass(log.severity)"
                 >
@@ -246,12 +246,12 @@
           <p class="font-medium">{{ selectedLog.ip_address }}</p>
         </div>
       </div>
-      
+
       <div v-if="selectedLog.old_values" class="mb-4">
         <p class="text-sm font-medium text-gray-700 mb-2">Valores Anteriores</p>
         <pre class="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto">{{ JSON.stringify(selectedLog.old_values, null, 2) }}</pre>
       </div>
-      
+
       <div v-if="selectedLog.new_values" class="mb-4">
         <p class="text-sm font-medium text-gray-700 mb-2">Valores Nuevos</p>
         <pre class="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto">{{ JSON.stringify(selectedLog.new_values, null, 2) }}</pre>
@@ -327,7 +327,7 @@ const loadAuditLogs = async () => {
     if (filters.value.action) params.append('action', filters.value.action)
     if (filters.value.entity_type) params.append('entity_type', filters.value.entity_type)
     params.append('limit', '100')
-    
+
     const response = await api.get(`/superadmin/audit/logs?${params}`)
     auditLogs.value = response
   } catch (error) {
@@ -339,7 +339,7 @@ const loadSecurityLogs = async () => {
   try {
     const params = new URLSearchParams()
     params.append('limit', '100')
-    
+
     const response = await api.get(`/superadmin/audit/security?${params}`)
     securityLogs.value = response
   } catch (error) {
@@ -363,7 +363,7 @@ const exportLogs = async () => {
       start_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
       end_date: new Date().toISOString(),
     })
-    
+
     // Download file
     const blob = new Blob([response.data], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)

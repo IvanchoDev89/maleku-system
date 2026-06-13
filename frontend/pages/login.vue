@@ -99,13 +99,13 @@ const handleLogin = async () => {
   error.value = ''
 
   const result = await auth.login(form.email, form.password)
-  
+
   if (result.success && result.user) {
     router.push(getRedirectUrl(result.user.role))
   } else {
     error.value = result.error || 'Error al iniciar sesión'
   }
-  
+
   loading.value = false
 }
 </script>

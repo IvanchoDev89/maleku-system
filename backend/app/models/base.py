@@ -2,6 +2,7 @@
 Base model and shared enums for all database models.
 This module provides the declarative base and common enums used across the application.
 """
+
 import enum
 from app.core.database import Base
 
@@ -11,6 +12,7 @@ __all__ = ["Base", "UserRole", "VendorStatus", "BookingStatus", "BlogPostStatus"
 
 class UserRole(enum.Enum):
     """User role enumeration for access control."""
+
     SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
     AGENT = "agent"
@@ -21,6 +23,7 @@ class UserRole(enum.Enum):
 
 class VendorStatus(enum.Enum):
     """Vendor account status enumeration."""
+
     PENDING = "pending"
     ACTIVE = "active"
     SUSPENDED = "suspended"
@@ -29,6 +32,7 @@ class VendorStatus(enum.Enum):
 
 class BookingStatus(enum.Enum):
     """Booking status enumeration for lifecycle management."""
+
     PENDING = "pending"
     CONFIRMED = "confirmed"
     CANCELLED = "cancelled"
@@ -38,6 +42,7 @@ class BookingStatus(enum.Enum):
 
 class BlogPostStatus(enum.Enum):
     """Blog post publication status enumeration."""
+
     DRAFT = "draft"
     PUBLISHED = "published"
     ARCHIVED = "archived"
@@ -45,6 +50,7 @@ class BlogPostStatus(enum.Enum):
 
 class TourType(enum.Enum):
     """Tour type enumeration for categorization."""
+
     ADVENTURE = "adventure"
     CULTURAL = "cultural"
     NATURE = "nature"

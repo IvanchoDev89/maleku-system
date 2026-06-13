@@ -4,7 +4,7 @@ import type { Campaign, CampaignCreate, Template, CampaignAnalytics, MarketingOv
 export const useMarketing = () => {
   const api = useApi()
   const asyncAction = useAsyncAction<null>({ defaultValue: null })
-  
+
   // State
   const campaigns = ref<Campaign[]>([])
   const templates = ref<Template[]>([])
@@ -13,9 +13,9 @@ export const useMarketing = () => {
   const vendorStats = ref<VendorAnalytics | null>(null)
   const inboxMessages = ref<InboxMessage[]>([])
   const emailPrefs = ref<EmailPreferences | null>(null)
-  
+
   // ============ Super Admin Methods ============
-  
+
   /**
    * List all campaigns (Super Admin)
    */
@@ -32,15 +32,15 @@ export const useMarketing = () => {
     })
     return result ?? []
   }
-  
+
   const createCampaign = async (data: CampaignCreate) => {
     return asyncAction.execute(() => api.post('/marketing/admin/campaigns', data))
   }
-  
+
   const sendCampaign = async (campaignId: string) => {
     return asyncAction.execute(() => api.post(`/marketing/admin/campaigns/${campaignId}/send`, {}))
   }
-  
+
   const getCampaignAnalytics = async (campaignId: string) => {
     return asyncAction.execute(async () => {
       const response = await api.get<CampaignAnalytics>(`/marketing/admin/campaigns/${campaignId}/analytics`)
@@ -48,7 +48,7 @@ export const useMarketing = () => {
       return response
     })
   }
-  
+
   const listTemplates = async (params?: {
     template_type?: string
     include_system?: boolean
@@ -59,7 +59,7 @@ export const useMarketing = () => {
       return response
     }) ?? []
   }
-  
+
   const createTemplate = async (data: {
     name: string
     description?: string
@@ -68,7 +68,7 @@ export const useMarketing = () => {
   }) => {
     return asyncAction.execute(() => api.post('/marketing/admin/templates', data))
   }
-  
+
   const getMarketingOverview = async (): Promise<MarketingOverview | null> => {
     return asyncAction.execute(async () => {
       const response = await api.get<MarketingOverview>('/marketing/admin/analytics/overview')
@@ -76,9 +76,9 @@ export const useMarketing = () => {
       return response
     })
   }
-  
+
   // ============ Vendor Methods ============
-  
+
   const listVendorCampaigns = async (params?: {
     page?: number
     limit?: number
@@ -89,11 +89,11 @@ export const useMarketing = () => {
       return response
     }) ?? []
   }
-  
+
   const createVendorCampaign = async (data: CampaignCreate) => {
     return asyncAction.execute(() => api.post('/marketing/vendor/campaigns', data))
   }
-  
+
   const getVendorAnalytics = async (): Promise<VendorAnalytics | null> => {
     return asyncAction.execute(async () => {
       const response = await api.get<VendorAnalytics>('/marketing/vendor/analytics')
@@ -101,9 +101,9 @@ export const useMarketing = () => {
       return response
     })
   }
-  
+
   // ============ Inbox Methods ============
-  
+
   const getInbox = async (params?: {
     page?: number
     limit?: number
@@ -115,7 +115,7 @@ export const useMarketing = () => {
       return response
     })
   }
-  
+
   const sendInboxMessage = async (data: {
     vendor_id?: string
     subject: string
@@ -127,7 +127,7 @@ export const useMarketing = () => {
   }) => {
     return asyncAction.execute(() => api.post('/marketing/inbox/send', data))
   }
-  
+
   const getUnreadCount = async (): Promise<number> => {
     const result = await asyncAction.execute(async () => {
       const response = await api.get<{ unread_count: number }>('/marketing/inbox/unread-count')
@@ -135,9 +135,9 @@ export const useMarketing = () => {
     }, { silent: true, defaultValue: 0 })
     return result ?? 0
   }
-  
+
   // ============ Email Preferences ============
-  
+
   const getEmailPreferences = async (): Promise<EmailPreferences | null> => {
     return asyncAction.execute(async () => {
       const response = await api.get<EmailPreferences>('/marketing/preferences')
@@ -145,11 +145,11 @@ export const useMarketing = () => {
       return response
     })
   }
-  
+
   const updateEmailPreferences = async (prefs: Partial<EmailPreferences>) => {
     return asyncAction.execute(() => api.put('/marketing/preferences', prefs))
   }
-  
+
   return {
     // State
     campaigns: computed(() => campaigns.value),
@@ -161,7 +161,7 @@ export const useMarketing = () => {
     emailPrefs: computed(() => emailPrefs.value),
     loading: computed(() => asyncAction.pending.value),
     error: computed(() => asyncAction.error.value),
-    
+
     // Super Admin
     listAllCampaigns,
     createCampaign,
@@ -170,17 +170,17 @@ export const useMarketing = () => {
     listTemplates,
     createTemplate,
     getMarketingOverview,
-    
+
     // Vendor
     listVendorCampaigns,
     createVendorCampaign,
     getVendorAnalytics,
-    
+
     // Inbox
     getInbox,
     sendInboxMessage,
     getUnreadCount,
-    
+
     // Preferences
     getEmailPreferences,
     updateEmailPreferences

@@ -29,60 +29,60 @@ log_error() {
 
 deploy_backend() {
     log_info "Deploying Backend to Railway..."
-    
+
     cd backend
-    
+
     # Check if railway CLI is installed
     if ! command -v railway &> /dev/null; then
         log_warn "Railway CLI not found. Installing..."
         npm install -g @railway/cli
     fi
-    
+
     # Check if logged in
     if ! railway whoami &> /dev/null; then
         log_error "Not logged in to Railway. Run: railway login"
         exit 1
     fi
-    
+
     # Link to project if not already linked
     if [ ! -f .railway.json ]; then
         log_info "Linking to Railway project..."
         railway link
     fi
-    
+
     # Deploy
     log_info "Pushing to Railway..."
     railway up --detach
-    
+
     # Run migrations
     log_info "Running database migrations..."
     railway run alembic upgrade head
-    
+
     log_info "Backend deployed successfully!"
     cd ..
 }
 
 deploy_frontend() {
     log_info "Deploying Frontend to Vercel..."
-    
+
     cd frontend
-    
+
     # Check if vercel CLI is installed
     if ! command -v vercel &> /dev/null; then
         log_warn "Vercel CLI not found. Installing..."
         npm install -g vercel
     fi
-    
+
     # Check if logged in
     if ! vercel whoami &> /dev/null; then
         log_error "Not logged in to Vercel. Run: vercel login"
         exit 1
     fi
-    
+
     # Deploy
     log_info "Building and deploying to Vercel..."
     vercel --prod
-    
+
     log_info "Frontend deployed successfully!"
     cd ..
 }

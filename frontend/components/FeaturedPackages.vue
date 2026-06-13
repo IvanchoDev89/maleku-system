@@ -87,15 +87,15 @@ onMounted(async () => {
 
       <!-- Packages Grid -->
       <div class="grid md:grid-cols-3 gap-8">
-        <div 
-          v-for="pkg in packages" 
+        <div
+          v-for="pkg in packages"
           :key="pkg.id"
           class="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
         >
           <!-- Image -->
           <div class="relative h-56 overflow-hidden">
-            <NuxtImg 
-              :src="pkg.image" 
+            <NuxtImg
+              :src="pkg.image"
               :alt="pkg.name"
               class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               width="600"
@@ -116,11 +116,11 @@ onMounted(async () => {
           <!-- Content -->
           <div class="p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-2">{{ pkg.name }}</h3>
-            
+
             <!-- Destinations -->
             <div class="flex flex-wrap gap-2 mb-4">
-              <span 
-                v-for="dest in pkg.destinations" 
+              <span
+                v-for="dest in pkg.destinations"
                 :key="dest"
                 class="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded"
               >
@@ -130,8 +130,8 @@ onMounted(async () => {
 
             <!-- Includes -->
             <ul class="space-y-1 mb-6">
-              <li 
-                v-for="item in pkg.includes" 
+              <li
+                v-for="item in pkg.includes"
                 :key="item"
                 class="flex items-center gap-2 text-sm text-gray-700"
               >
@@ -162,8 +162,8 @@ onMounted(async () => {
 
       <!-- View All -->
       <div class="text-center mt-12">
-        <NuxtLink 
-          to="/paquetes" 
+        <NuxtLink
+          to="/paquetes"
           class="inline-flex items-center gap-2 px-8 py-4 border-2 border-primary-600 text-primary-600 font-bold rounded-full hover:bg-primary-600 hover:text-white transition-all"
         >
           {{ $t('packages.viewAll') }}

@@ -4,6 +4,7 @@ Tests for BOLA-vendor-None crash protection (OWASP API1:2023).
 Verifies that a VENDOR-role user WITHOUT a Vendor profile gets a clean 403
 (not a 500/AttributeError) when trying to update or delete a resource.
 """
+
 import pytest
 import uuid
 
@@ -63,6 +64,7 @@ async def _make_resource(db_session, model, vendor_id):
 async def _other_vendor_id(db_session) -> uuid.UUID:
     """Create a vendor profile for 'someone else' and return its id."""
     from app.models import Vendor
+
     other = User(
         email=f"other-vendor-{uuid.uuid4().hex[:6]}@example.com",
         password_hash="x",
@@ -92,6 +94,7 @@ from app.models import User, UserRole  # noqa: E402
 # ---------------------------------------------------------------------------
 # Tours
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_vendor_without_profile_cannot_update_tour(
@@ -123,6 +126,7 @@ async def test_vendor_without_profile_cannot_delete_tour(
 # Properties
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_vendor_without_profile_cannot_update_property(
     vendor_no_profile_client, db_session
@@ -152,6 +156,7 @@ async def test_vendor_without_profile_cannot_delete_property(
 # Vehicles
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_vendor_without_profile_cannot_update_vehicle(
     vendor_no_profile_client, db_session
@@ -180,6 +185,7 @@ async def test_vendor_without_profile_cannot_delete_vehicle(
 # ---------------------------------------------------------------------------
 # Boats
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_vendor_without_profile_cannot_update_boat(

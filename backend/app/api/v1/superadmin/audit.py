@@ -2,6 +2,7 @@
 Super Admin Audit & Security Logging endpoints.
 Provides access to comprehensive audit trails and security logs.
 """
+
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from uuid import UUID
@@ -24,6 +25,7 @@ router = APIRouter()
 # Response Models
 class AuditLogItem(BaseModel):
     """Audit log entry."""
+
     id: str
     user_id: Optional[str]
     user_email: Optional[str]
@@ -42,6 +44,7 @@ class AuditLogItem(BaseModel):
 
 class SecurityLogItem(BaseModel):
     """Security log entry."""
+
     id: str
     user_id: Optional[str]
     user_email: Optional[str]
@@ -57,6 +60,7 @@ class SecurityLogItem(BaseModel):
 
 class LogSummary(BaseModel):
     """Summary statistics for logs."""
+
     total_audit_logs: int
     total_security_logs: int
     today_audit_logs: int
@@ -67,13 +71,17 @@ class LogSummary(BaseModel):
 
 class ClientEventCreate(BaseModel):
     """Client-side event reported by the frontend (route access, etc)."""
-    event_type: str = Field(..., max_length=100, description="e.g. superadmin_access_denied")
+
+    event_type: str = Field(
+        ..., max_length=100, description="e.g. superadmin_access_denied"
+    )
     path: str = Field(..., max_length=500)
     metadata: Optional[dict] = None
     severity: Optional[str] = Field(None, max_length=20)
 
 
 # Endpoints
+
 
 @router.post("/logs", response_model=dict, status_code=201)
 async def create_client_event(
@@ -133,7 +141,9 @@ async def create_client_event(
         db.add(security_log)
 
     await db.commit()
-    logger.info(f"Client event recorded: {event_type} from {client_ip} for user {current_user.id}")
+    logger.info(
+        f"Client event recorded: {event_type} from {client_ip} for user {current_user.id}"
+    )
     return {"status": "recorded", "event_type": event_type}
 
 
@@ -145,36 +155,38 @@ async def get_audit_logs(
     entity_id: Optional[UUID] = Query(None, description="Filter by specific entity"),
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
-    search: Optional[str] = Query(None, max_length=200, description="Search in summary or entity name"),
+    search: Optional[str] = Query(
+        None, max_length=200, description="Search in summary or entity name"
+    ),
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Query audit logs with comprehensive filtering.
     """
     query = select(AuditLog)
-    
+
     # Apply filters
     if user_id:
         query = query.where(AuditLog.user_id == user_id)
-    
+
     if action:
         query = query.where(AuditLog.action == action)
-    
+
     if entity_type:
         query = query.where(AuditLog.entity_type == entity_type)
-    
+
     if entity_id:
         query = query.where(AuditLog.entity_id == entity_id)
-    
+
     if date_from:
         query = query.where(AuditLog.created_at >= date_from)
-    
+
     if date_to:
         query = query.where(AuditLog.created_at <= date_to)
-    
+
     if search:
         safe_search = escape_like_pattern(search)
         search_filter = f"%{safe_search}%"
@@ -184,16 +196,16 @@ async def get_audit_logs(
                 AuditLog.entity_name.ilike(search_filter),
             )
         )
-    
+
     # Order by created_at desc
     query = query.order_by(desc(AuditLog.created_at))
-    
+
     # Apply pagination
     query = query.offset(offset).limit(limit)
-    
+
     result = await db.execute(query)
     logs = result.scalars().all()
-    
+
     return [
         {
             "id": str(log.id),
@@ -223,11 +235,11 @@ async def get_audit_logs_count(
     date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Get total count of audit logs with filters."""
     query = select(func.count(AuditLog.id))
-    
+
     if user_id:
         query = query.where(AuditLog.user_id == user_id)
     if action:
@@ -238,10 +250,10 @@ async def get_audit_logs_count(
         query = query.where(AuditLog.created_at >= date_from)
     if date_to:
         query = query.where(AuditLog.created_at <= date_to)
-    
+
     result = await db.execute(query)
     count = result.scalar() or 0
-    
+
     return {"count": count}
 
 
@@ -249,15 +261,15 @@ async def get_audit_logs_count(
 async def get_audit_log_detail(
     log_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Get detailed information about a specific audit log entry."""
     result = await db.execute(select(AuditLog).where(AuditLog.id == log_id))
     log = result.scalar_one_or_none()
-    
+
     if not log:
         raise HTTPException(status_code=404, detail="Log entry not found")
-    
+
     return {
         "id": str(log.id),
         "user_id": str(log.user_id) if log.user_id else None,
@@ -280,48 +292,52 @@ async def get_audit_log_detail(
 async def get_security_logs(
     user_id: Optional[UUID] = Query(None, description="Filter by user"),
     action: Optional[SecurityAction] = Query(None, description="Filter by action type"),
-    severity: Optional[str] = Query(None, max_length=20, description="Filter by severity: info, warning, critical"),
-    ip_address: Optional[str] = Query(None, max_length=45, description="Filter by IP address"),
+    severity: Optional[str] = Query(
+        None, max_length=20, description="Filter by severity: info, warning, critical"
+    ),
+    ip_address: Optional[str] = Query(
+        None, max_length=45, description="Filter by IP address"
+    ),
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Query security logs with comprehensive filtering.
     """
     query = select(SecurityLog)
-    
+
     # Apply filters
     if user_id:
         query = query.where(SecurityLog.user_id == user_id)
-    
+
     if action:
         query = query.where(SecurityLog.action == action)
-    
+
     if severity:
         query = query.where(SecurityLog.severity == severity)
-    
+
     if ip_address:
         query = query.where(SecurityLog.ip_address == ip_address)
-    
+
     if date_from:
         query = query.where(SecurityLog.created_at >= date_from)
-    
+
     if date_to:
         query = query.where(SecurityLog.created_at <= date_to)
-    
+
     # Order by created_at desc
     query = query.order_by(desc(SecurityLog.created_at))
-    
+
     # Apply pagination
     query = query.offset(offset).limit(limit)
-    
+
     result = await db.execute(query)
     logs = result.scalars().all()
-    
+
     return [
         {
             "id": str(log.id),
@@ -345,14 +361,14 @@ async def get_failed_login_attempts(
     hours: int = Query(24, ge=1, le=168, description="Look back period in hours"),
     group_by_ip: bool = Query(False, description="Group results by IP address"),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Get failed login attempts for security monitoring.
     Useful for detecting brute force attacks.
     """
     from_time = datetime.now(timezone.utc) - timedelta(hours=hours)
-    
+
     if group_by_ip:
         # Group by IP to find suspicious patterns
         result = await db.execute(
@@ -368,12 +384,14 @@ async def get_failed_login_attempts(
             .having(func.count(SecurityLog.id) >= 3)  # Only show IPs with 3+ failures
             .order_by(desc("attempt_count"))
         )
-        
+
         return [
             {
                 "ip_address": str(row.ip_address) if row.ip_address else None,
                 "attempt_count": row.attempt_count,
-                "emails_attempted": list(set(row.emails_attempted)) if row.emails_attempted else [],
+                "emails_attempted": list(set(row.emails_attempted))
+                if row.emails_attempted
+                else [],
                 "last_attempt": row.last_attempt,
             }
             for row in result.all()
@@ -387,7 +405,7 @@ async def get_failed_login_attempts(
             .order_by(desc(SecurityLog.created_at))
             .limit(100)
         )
-        
+
         logs = result.scalars().all()
         return [
             {
@@ -405,7 +423,7 @@ async def get_failed_login_attempts(
 @router.get("/summary", response_model=LogSummary)
 async def get_logs_summary(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Get summary statistics for audit and security logs.
@@ -413,25 +431,25 @@ async def get_logs_summary(
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     day_ago = now - timedelta(hours=24)
-    
+
     # Total counts
     total_audit_result = await db.execute(select(func.count(AuditLog.id)))
     total_audit = total_audit_result.scalar() or 0
-    
+
     total_security_result = await db.execute(select(func.count(SecurityLog.id)))
     total_security = total_security_result.scalar() or 0
-    
+
     # Today's counts
     today_audit_result = await db.execute(
         select(func.count(AuditLog.id)).where(AuditLog.created_at >= today_start)
     )
     today_audit = today_audit_result.scalar() or 0
-    
+
     today_security_result = await db.execute(
         select(func.count(SecurityLog.id)).where(SecurityLog.created_at >= today_start)
     )
     today_security = today_security_result.scalar() or 0
-    
+
     # Failed logins in last 24h
     failed_logins_result = await db.execute(
         select(func.count(SecurityLog.id))
@@ -439,7 +457,7 @@ async def get_logs_summary(
         .where(SecurityLog.created_at >= day_ago)
     )
     failed_logins = failed_logins_result.scalar() or 0
-    
+
     # Critical events in last 24h
     critical_events_result = await db.execute(
         select(func.count(SecurityLog.id))
@@ -447,7 +465,7 @@ async def get_logs_summary(
         .where(SecurityLog.created_at >= day_ago)
     )
     critical_events = critical_events_result.scalar() or 0
-    
+
     return {
         "total_audit_logs": total_audit,
         "total_security_logs": total_security,
@@ -465,7 +483,7 @@ async def export_logs(
     date_to: Optional[datetime] = Query(None),
     format: str = Query("json", description="Export format: json, csv"),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Export logs for external analysis or compliance.
@@ -488,7 +506,11 @@ async def export_logs(
         entity_id=None,
         entity_name=f"{log_type}_logs",
         changes_summary=f"Exported {log_type} logs from {date_from} to {date_to}",
-        extra_data={"format": format, "date_from": date_from.isoformat() if date_from else None, "date_to": date_to.isoformat() if date_to else None},
+        extra_data={
+            "format": format,
+            "date_from": date_from.isoformat() if date_from else None,
+            "date_to": date_to.isoformat() if date_to else None,
+        },
     )
     await db.commit()
 
@@ -521,14 +543,18 @@ async def export_logs(
         return StreamingResponse(
             csv_stream(),
             media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename={log_type}_export.csv"},
+            headers={
+                "Content-Disposition": f"attachment; filename={log_type}_export.csv"
+            },
         )
 
     # JSON streaming
     async def json_stream():
         yield "["
         for i, row in enumerate(rows):
-            d = {c.name: getattr(row, c.name, None) for c in model_cls.__table__.columns}
+            d = {
+                c.name: getattr(row, c.name, None) for c in model_cls.__table__.columns
+            }
             for col in ("old_values", "new_values", "extra_data"):
                 if col in d and isinstance(d[col], (dict, list)):
                     d[col] = json.dumps(d[col], default=str, ensure_ascii=False)
@@ -544,5 +570,3 @@ async def export_logs(
         media_type="application/json",
         headers={"Content-Disposition": f"attachment; filename={log_type}_export.json"},
     )
-
-

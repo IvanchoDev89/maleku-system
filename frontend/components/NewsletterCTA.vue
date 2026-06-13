@@ -15,9 +15,9 @@ const isError = ref(false)
 
 const handleSubmit = async () => {
   if (!email.value) return
-  
+
   const result = await subscribeNewsletter(email.value, firstName.value || undefined)
-  
+
   if (result.success) {
     isSubmitted.value = true
     isError.value = false
@@ -63,19 +63,19 @@ const handleSubmit = async () => {
           leave-from="opacity-100 translate-y-0"
           leave-to="opacity-0 -translate-y-4"
         >
-          <form 
+          <form
             v-if="!isSubmitted"
             @submit.prevent="handleSubmit"
             class="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto"
           >
-            <input 
+            <input
               v-model="email"
               type="email"
               placeholder="Tu correo electrónico"
               required
               class="flex-1 px-6 py-4 bg-white text-gray-900 rounded-full focus:ring-4 focus:ring-primary-300 focus:outline-none"
             />
-            <button 
+            <button
               type="submit"
               :disabled="pending"
               class="px-8 py-4 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
@@ -85,7 +85,7 @@ const handleSubmit = async () => {
           </form>
 
           <!-- Success/Error Message -->
-          <div 
+          <div
             v-else
             :class="isError ? 'bg-red-500/20' : 'bg-white/20'"
             class="backdrop-blur-sm rounded-2xl p-8 max-w-lg mx-auto"

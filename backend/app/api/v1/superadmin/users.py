@@ -2,6 +2,7 @@
 Super Admin User Management endpoints.
 Provides comprehensive CRUD for users with audit logging.
 """
+
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from uuid import UUID
@@ -22,6 +23,7 @@ router = APIRouter()
 # Request/Response Models
 class UserListItem(BaseModel):
     """User item for list view."""
+
     id: str
     email: str
     full_name: str
@@ -38,6 +40,7 @@ class UserListItem(BaseModel):
 
 class UserDetail(BaseModel):
     """Detailed user information."""
+
     id: str
     email: str
     full_name: str
@@ -55,6 +58,7 @@ class UserDetail(BaseModel):
 
 class UserCreateRequest(BaseModel):
     """Request to create a new user."""
+
     email: EmailStr
     password: str
     full_name: str
@@ -65,6 +69,7 @@ class UserCreateRequest(BaseModel):
 
 class UserUpdateRequest(BaseModel):
     """Request to update a user."""
+
     email: Optional[EmailStr] = None
     full_name: Optional[str] = None
     phone: Optional[str] = None
@@ -75,6 +80,7 @@ class UserUpdateRequest(BaseModel):
 
 class UserActivityItem(BaseModel):
     """User activity log item."""
+
     id: str
     action: str
     entity_type: str
@@ -96,44 +102,43 @@ async def list_users(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     List all users with filtering and pagination.
     """
     query = select(User)
-    
+
     # Apply filters
     if search:
         safe_search = escape_like_pattern(search)
         search_filter = f"%{safe_search}%"
         query = query.where(
-            (User.email.ilike(search_filter)) | 
-            (User.full_name.ilike(search_filter))
+            (User.email.ilike(search_filter)) | (User.full_name.ilike(search_filter))
         )
-    
+
     if role:
         query = query.where(User.role == role)
-    
+
     if is_active is not None:
         query = query.where(User.is_active == is_active)
-    
+
     if is_verified is not None:
         query = query.where(User.is_verified == is_verified)
-    
+
     # Apply sorting
     sort_column = getattr(User, sort_by, User.created_at)
     if sort_order == "desc":
         query = query.order_by(desc(sort_column))
     else:
         query = query.order_by(sort_column)
-    
+
     # Apply pagination
     query = query.offset(offset).limit(limit)
-    
+
     result = await db.execute(query)
     users = result.scalars().all()
-    
+
     # Build response with counts
     response = []
     for user in users:
@@ -142,27 +147,29 @@ async def list_users(
             select(func.count()).select_from(Vendor).where(Vendor.user_id == user.id)
         )
         vendor_count = vendor_count_result.scalar() or 0
-        
+
         booking_count_result = await db.execute(
             select(func.count()).select_from(Booking).where(Booking.user_id == user.id)
         )
         booking_count = booking_count_result.scalar() or 0
-        
-        response.append({
-            "id": str(user.id),
-            "email": user.email,
-            "full_name": user.full_name,
-            "role": user.role.value,
-            "is_active": user.is_active,
-            "is_verified": user.is_verified,
-            "phone": user.phone,
-            "avatar_url": user.avatar_url,
-            "last_login": user.last_login,
-            "created_at": user.created_at,
-            "vendor_count": vendor_count,
-            "booking_count": booking_count,
-        })
-    
+
+        response.append(
+            {
+                "id": str(user.id),
+                "email": user.email,
+                "full_name": user.full_name,
+                "role": user.role.value,
+                "is_active": user.is_active,
+                "is_verified": user.is_verified,
+                "phone": user.phone,
+                "avatar_url": user.avatar_url,
+                "last_login": user.last_login,
+                "created_at": user.created_at,
+                "vendor_count": vendor_count,
+                "booking_count": booking_count,
+            }
+        )
+
     return response
 
 
@@ -172,30 +179,29 @@ async def get_user_count(
     role: Optional[UserRole] = Query(None),
     is_active: Optional[bool] = Query(None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Get total count of users with filters."""
     from sqlalchemy import func
-    
+
     query = select(func.count(User.id))
-    
+
     if search:
         safe_search = escape_like_pattern(search)
         search_filter = f"%{safe_search}%"
         query = query.where(
-            (User.email.ilike(search_filter)) | 
-            (User.full_name.ilike(search_filter))
+            (User.email.ilike(search_filter)) | (User.full_name.ilike(search_filter))
         )
-    
+
     if role:
         query = query.where(User.role == role)
-    
+
     if is_active is not None:
         query = query.where(User.is_active == is_active)
-    
+
     result = await db.execute(query)
     count = result.scalar() or 0
-    
+
     return {"count": count}
 
 
@@ -203,20 +209,19 @@ async def get_user_count(
 async def get_user_detail(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Get detailed information about a specific user.
     """
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
-    
+
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    
+
     return {
         "id": str(user.id),
         "email": user.email,
@@ -238,22 +243,19 @@ async def get_user_detail(
 async def create_user(
     request: UserCreateRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Create a new user.
     Only Super Admin can create users with admin/agent roles.
     """
     # Check if email already exists
-    existing_result = await db.execute(
-        select(User).where(User.email == request.email)
-    )
+    existing_result = await db.execute(select(User).where(User.email == request.email))
     if existing_result.scalar_one_or_none():
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
-    
+
     # Create user
     new_user = User(
         email=request.email,
@@ -266,10 +268,10 @@ async def create_user(
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc),
     )
-    
+
     db.add(new_user)
     await db.flush()
-    
+
     # Log the action
     await log_create(
         db=db,
@@ -284,9 +286,9 @@ async def create_user(
             "is_active": new_user.is_active,
         },
     )
-    
+
     await db.commit()
-    
+
     return {
         "id": str(new_user.id),
         "email": new_user.email,
@@ -309,20 +311,19 @@ async def update_user(
     user_id: UUID,
     request: UserUpdateRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Update a user.
     """
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
-    
+
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    
+
     # Store old values for audit
     old_values = {
         "email": user.email,
@@ -332,10 +333,10 @@ async def update_user(
         "is_active": user.is_active,
         "is_verified": user.is_verified,
     }
-    
+
     # Track what changed
     changes = []
-    
+
     # Update fields
     if request.email is not None and request.email != user.email:
         # Check if new email is available
@@ -344,42 +345,41 @@ async def update_user(
         )
         if existing_result.scalar_one_or_none():
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already in use"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Email already in use"
             )
         user.email = request.email
         changes.append(f"email: {old_values['email']} -> {request.email}")
-    
+
     if request.full_name is not None:
         if request.full_name != user.full_name:
             changes.append(f"full_name: {user.full_name} -> {request.full_name}")
         user.full_name = request.full_name
-    
+
     if request.phone is not None:
         if request.phone != user.phone:
             changes.append("phone updated")
         user.phone = request.phone
-    
+
     if request.role is not None:
         if request.role != user.role:
             changes.append(f"role: {user.role.value} -> {request.role.value}")
         user.role = request.role
-    
+
     if request.is_active is not None:
         if request.is_active != user.is_active:
             status_text = "activated" if request.is_active else "deactivated"
             changes.append(f"account {status_text}")
         user.is_active = request.is_active
-    
+
     if request.is_verified is not None:
         if request.is_verified != user.is_verified:
             changes.append(f"verification: {user.is_verified} -> {request.is_verified}")
         user.is_verified = request.is_verified
-    
+
     user.updated_at = datetime.now(timezone.utc)
-    
+
     await db.flush()
-    
+
     # Log the action
     new_values = {
         "email": user.email,
@@ -389,7 +389,7 @@ async def update_user(
         "is_active": user.is_active,
         "is_verified": user.is_verified,
     }
-    
+
     await log_update(
         db=db,
         user=current_user,
@@ -398,11 +398,13 @@ async def update_user(
         entity_name=user.full_name,
         old_values=old_values,
         new_values=new_values,
-        changes_summary=f"Updated user: {', '.join(changes)}" if changes else "No changes made",
+        changes_summary=f"Updated user: {', '.join(changes)}"
+        if changes
+        else "No changes made",
     )
-    
+
     await db.commit()
-    
+
     return {
         "id": str(user.id),
         "email": user.email,
@@ -424,7 +426,7 @@ async def update_user(
 async def delete_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Delete a user permanently.
@@ -432,27 +434,26 @@ async def delete_user(
     """
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
-    
+
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    
+
     # Cannot delete yourself
     if user.id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete your own account"
+            detail="Cannot delete your own account",
         )
-    
+
     # Cannot delete other super_admins
     if user.role == UserRole.SUPER_ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot delete Super Admin accounts"
+            detail="Cannot delete Super Admin accounts",
         )
-    
+
     # Store data for audit before deletion
     old_values = {
         "email": user.email,
@@ -460,13 +461,13 @@ async def delete_user(
         "role": user.role.value,
         "created_at": user.created_at.isoformat(),
     }
-    
+
     entity_name = user.full_name
-    
+
     # Delete user
     await db.delete(user)
     await db.flush()
-    
+
     # Log the action
     await log_delete(
         db=db,
@@ -476,7 +477,7 @@ async def delete_user(
         entity_name=entity_name,
         old_values=old_values,
     )
-    
+
     await db.commit()
 
 
@@ -486,13 +487,13 @@ async def get_user_activity(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Get activity history for a specific user.
     """
     from app.models import AuditLog
-    
+
     result = await db.execute(
         select(AuditLog)
         .where(AuditLog.user_id == user_id)
@@ -500,9 +501,9 @@ async def get_user_activity(
         .offset(offset)
         .limit(limit)
     )
-    
+
     logs = result.scalars().all()
-    
+
     return [
         {
             "id": str(log.id),
@@ -521,7 +522,7 @@ async def get_user_activity(
 async def impersonate_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Generate an impersonation token to log in as another user.
@@ -529,27 +530,26 @@ async def impersonate_user(
     """
     result = await db.execute(select(User).where(User.id == user_id))
     target_user = result.scalar_one_or_none()
-    
+
     if not target_user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    
+
     # Cannot impersonate super admins
     if target_user.role == UserRole.SUPER_ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot impersonate Super Admin accounts"
+            detail="Cannot impersonate Super Admin accounts",
         )
-    
+
     # Cannot impersonate inactive users
     if not target_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot impersonate inactive users"
+            detail="Cannot impersonate inactive users",
         )
-    
+
     # Log the impersonation attempt
     await AuditService.log_action(
         db=db,
@@ -560,17 +560,17 @@ async def impersonate_user(
         entity_name=target_user.full_name,
         changes_summary=f"Started impersonating user: {target_user.email}",
     )
-    
+
     await db.commit()
-    
+
     # Generate a special impersonation token
     from app.core.security import create_access_token
-    
+
     impersonation_token = create_access_token(
         subject=str(target_user.id),
-        expires_delta=timedelta(hours=1)  # Short-lived token
+        expires_delta=timedelta(hours=1),  # Short-lived token
     )
-    
+
     return {
         "message": f"Impersonating user: {target_user.full_name}",
         "target_user": {
@@ -589,37 +589,38 @@ async def impersonate_user(
 async def block_user(
     user_id: UUID,
     reason: str = Query(..., max_length=500, description="Reason for blocking"),
-    duration_hours: Optional[int] = Query(None, description="Block duration in hours (null for permanent)"),
+    duration_hours: Optional[int] = Query(
+        None, description="Block duration in hours (null for permanent)"
+    ),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Block/suspend a user account.
     """
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
-    
+
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    
+
     if user.role == UserRole.SUPER_ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot block Super Admin accounts"
+            detail="Cannot block Super Admin accounts",
         )
-    
+
     user.is_active = False
-    
+
     if duration_hours:
         user.locked_until = datetime.now(timezone.utc) + timedelta(hours=duration_hours)
     else:
         user.locked_until = None  # Permanent
-    
+
     await db.flush()
-    
+
     # Log the action
     await AuditService.log_action(
         db=db,
@@ -628,12 +629,14 @@ async def block_user(
         entity_type="user",
         entity_id=user.id,
         entity_name=user.full_name,
-        changes_summary=f"User blocked: {reason}. Duration: {duration_hours} hours" if duration_hours else f"User permanently blocked: {reason}",
+        changes_summary=f"User blocked: {reason}. Duration: {duration_hours} hours"
+        if duration_hours
+        else f"User permanently blocked: {reason}",
         metadata={"reason": reason, "duration_hours": duration_hours},
     )
-    
+
     await db.commit()
-    
+
     return {
         "message": f"User {user.email} has been blocked",
         "reason": reason,
@@ -646,28 +649,28 @@ async def block_user(
 async def unblock_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Unblock/reactivate a user account.
     """
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
-    
+
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    
+
     user.is_active = True
     user.locked_until = None
     user.failed_login_attempts = 0
-    
+
     await db.flush()
-    
+
     # Log the action
     from app.services.audit_service import AuditService
+
     await AuditService.log_action(
         db=db,
         user=current_user,
@@ -677,11 +680,9 @@ async def unblock_user(
         entity_name=user.full_name,
         changes_summary="User account unblocked/reactivated",
     )
-    
+
     await db.commit()
-    
+
     return {
         "message": f"User {user.email} has been unblocked",
     }
-
-

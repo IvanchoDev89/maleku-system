@@ -6,8 +6,8 @@
         <h1 class="text-2xl font-bold text-gray-900">{{ $t('superadmin.users.title') }}</h1>
         <p class="text-gray-500 mt-1">{{ $t('superadmin.users.subtitle') }}</p>
       </div>
-      <NuxtLink 
-        to="/superadmin/users/create" 
+      <NuxtLink
+        to="/superadmin/users/create"
         class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
       >
         <Plus class="w-4 h-4" />
@@ -21,9 +21,9 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
           <div class="relative">
-            <input 
+            <input
               v-model="filters.search"
-              type="text" 
+              type="text"
               placeholder="Nombre o email..."
               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
               @input="debouncedSearch"
@@ -31,7 +31,7 @@
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           </div>
         </div>
-        
+
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Rol</label>
           <UiSelect v-model="filters.role" :options="roleOptions" placeholder="Todos los roles" @update:model-value="loadUsers" />
@@ -77,7 +77,7 @@
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span 
+                <span
                   class="px-2 py-1 text-xs font-semibold rounded-full"
                   :class="getRoleBadgeClass(user.role)"
                 >
@@ -85,13 +85,13 @@
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span 
+                <span
                   class="px-2 py-1 text-xs font-semibold rounded-full"
                   :class="user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
                 >
                   {{ user.is_active ? $t('superadmin.users.status.active') : $t('superadmin.users.status.inactive') }}
                 </span>
-                <span 
+                <span
                   v-if="!user.is_verified"
                   class="ml-1 px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"
                 >
@@ -113,21 +113,21 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="flex items-center justify-end gap-2">
-                  <button 
+                  <button
                     @click="confirmImpersonateUser(user)"
                     class="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
                     :title="$t('superadmin.users.impersonate')"
                   >
                     <UserCircle class="w-5 h-5" />
                   </button>
-                  <NuxtLink 
+                  <NuxtLink
                     :to="`/superadmin/users/${user.id}`"
                     class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
                     :title="$t('superadmin.users.view')"
                   >
                     <Eye class="w-5 h-5" />
                   </NuxtLink>
-                  <button 
+                  <button
                     @click="confirmToggleUserStatus(user)"
                     class="p-2 rounded-lg transition-colors"
                     :class="user.is_active ? 'text-red-600 hover:text-red-900 hover:bg-red-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'"
@@ -146,7 +146,7 @@
       <div v-if="loading" class="flex items-center justify-center py-12">
         <Loader2 class="w-8 h-8 animate-spin text-slate-600" />
       </div>
-      
+
       <!-- Empty State -->
       <div v-else-if="users.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
         <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -162,7 +162,7 @@
           {{ $t('superadmin.users.showing', { count: users.length, total: totalCount }) }}
         </div>
         <div class="flex gap-2">
-          <button 
+          <button
             @click="currentPage--"
             :disabled="currentPage === 1"
             class="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
@@ -172,7 +172,7 @@
           <span class="px-3 py-1 text-sm text-gray-600">
             {{ $t('superadmin.users.page', { page: currentPage }) }}
           </span>
-          <button 
+          <button
             @click="currentPage++"
             :disabled="users.length < pageSize"
             class="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
@@ -285,7 +285,7 @@ const loadUsers = async () => {
       limit: pageSize.toString(),
       offset: ((currentPage.value - 1) * pageSize).toString(),
     })
-    
+
     if (filters.value.search) params.append('search', filters.value.search)
     if (filters.value.role) params.append('role', filters.value.role)
     if (filters.value.is_active) params.append('is_active', filters.value.is_active)
@@ -337,7 +337,7 @@ const formatTimeAgo = (timestamp: string) => {
   const date = new Date(timestamp)
   const now = new Date()
   const diff = Math.floor((now.getTime() - date.getTime()) / 1000)
-  
+
   if (diff < 60) return 'hace un momento'
   if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`
   if (diff < 86400) return `hace ${Math.floor(diff / 3600)} h`
@@ -357,11 +357,11 @@ const executeImpersonateUser = async (user: any) => {
   const response = await api.post(`/superadmin/users/${user.id}/impersonate`)
   sessionStorage.setItem('impersonation_token', response.impersonation_token)
   sessionStorage.setItem('original_user', JSON.stringify(useAuthStore().user))
-  
+
   const auth = useAuthStore()
   auth.token = response.impersonation_token
   auth.user = response.target_user
-  
+
   navigateTo('/dashboard')
 }
 

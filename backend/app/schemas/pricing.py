@@ -1,6 +1,7 @@
 """
 Pricing Rule Schemas - Precios Dinámicos
 """
+
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 from datetime import datetime

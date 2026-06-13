@@ -36,8 +36,8 @@
 
         <!-- Posts Grid -->
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <article 
-            v-for="post in filteredPosts" 
+          <article
+            v-for="post in filteredPosts"
             :key="post.id"
           class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow"
         >
@@ -64,8 +64,8 @@
         <div class="mt-12">
           <h3 class="text-xl font-bold mb-4">Categorías</h3>
           <div class="flex flex-wrap gap-2">
-            <button 
-              v-for="cat in categories" 
+            <button
+              v-for="cat in categories"
               :key="cat"
               @click="filterByCategory(cat)"
               class="px-4 py-2 bg-white rounded-full text-sm hover:bg-primary hover:text-white transition-colors"

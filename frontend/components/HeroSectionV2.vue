@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { 
-  MapPin, 
-  Calendar, 
-  Users, 
-  Search, 
-  Map, 
-  ArrowRight, 
-  Check 
+import {
+  MapPin,
+  Calendar,
+  Users,
+  Search,
+  Map,
+  ArrowRight,
+  Check
 } from 'lucide-vue-next'
 import { DESTINATIONS } from '~/config/constants'
 
@@ -52,10 +52,10 @@ let liveInterval: ReturnType<typeof setInterval>
 
 onMounted(() => {
   setTimeout(() => showSearch.value = true, 300)
-  
+
   // Actualizar con valor aleatorio solo en cliente (evita hydration mismatch)
   liveActivity.value.usersOnline = MOCK_ACTIVITY_BASE + Math.floor(Math.random() * 30)
-  
+
   liveInterval = setInterval(() => {
     liveActivity.value.usersOnline = MOCK_ACTIVITY_BASE + Math.floor(Math.random() * 30)
   }, 10000)
@@ -69,17 +69,17 @@ const handleSearch = async () => {
   if (!searchForm.value.destination) {
     return
   }
-  
+
   isSearching.value = true
-  
+
   await new Promise(resolve => setTimeout(resolve, 500))
-  
+
   const query = new URLSearchParams({
     destination: searchForm.value.destination,
     dates: searchForm.value.dates,
     travelers: searchForm.value.travelers
   }).toString()
-  
+
   window.location.href = `/tours?${query}`
 }
 </script>
@@ -100,7 +100,7 @@ const handleSearch = async () => {
       >
         <source src="https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-beach-with-waves-1089-large.mp4" type="video/mp4">
       </video>
-      <NuxtImg 
+      <NuxtImg
         v-show="!isVideoLoaded"
         src="https://images.unsplash.com/photo-1518638150340-f706e86654de?w=1920&q=80"
         class="absolute inset-0 w-full h-full object-cover"
@@ -116,14 +116,14 @@ const handleSearch = async () => {
     <!-- Content -->
     <div class="relative z-10 container mx-auto px-4 pt-20 pb-32">
       <div class="max-w-5xl mx-auto text-center">
-        
+
         <!-- Live Activity Badge -->
         <Transition
           enter="transition-all duration-700 ease-out"
           enter-from="opacity-0 -translate-y-4"
           enter-to="opacity-100 translate-y-0"
         >
-          <div 
+          <div
             v-show="showSearch"
             class="inline-flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-white text-sm mb-6 border border-white/20"
           >
@@ -146,7 +146,7 @@ const handleSearch = async () => {
           enter-from="opacity-0 translate-y-8 scale-95"
           enter-to="opacity-100 translate-y-0 scale-100"
         >
-          <h1 
+          <h1
             v-show="showSearch"
             class="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-[1.1] tracking-tight"
           >
@@ -163,7 +163,7 @@ const handleSearch = async () => {
           enter-from="opacity-0 translate-y-6"
           enter-to="opacity-100 translate-y-0"
         >
-          <p 
+          <p
             v-show="showSearch"
             class="text-xl md:text-2xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed font-light"
           >
@@ -178,7 +178,7 @@ const handleSearch = async () => {
           enter-from="opacity-0 translate-y-8 scale-95"
           enter-to="opacity-100 translate-y-0 scale-100"
         >
-          <div 
+          <div
             v-show="showSearch"
             class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-floating p-2 md:p-4 mb-8 max-w-4xl mx-auto"
           >
@@ -189,7 +189,7 @@ const handleSearch = async () => {
                   {{ t('hero.search.destination.label') }}
                 </label>
                 <div class="relative">
-                  <select 
+                  <select
                     v-model="searchForm.destination"
                     class="w-full px-4 py-3.5 bg-gray-50 border-2 border-transparent hover:border-primary-200 focus:border-primary-500 focus:bg-white rounded-xl transition-all duration-200 appearance-none cursor-pointer text-gray-800 font-medium"
                   >
@@ -208,7 +208,7 @@ const handleSearch = async () => {
                   {{ t('hero.search.dates.label') }}
                 </label>
                 <div class="relative">
-                  <input 
+                  <input
                     v-model="searchForm.dates"
                     type="text"
                     :placeholder="t('hero.search.dates.placeholder')"
@@ -226,7 +226,7 @@ const handleSearch = async () => {
                   {{ t('hero.search.travelers.label') }}
                 </label>
                 <div class="relative">
-                  <select 
+                  <select
                     v-model="searchForm.travelers"
                     class="w-full px-4 py-3.5 bg-gray-50 border-2 border-transparent hover:border-primary-200 focus:border-primary-500 focus:bg-white rounded-xl transition-all duration-200 appearance-none cursor-pointer text-gray-800 font-medium"
                   >
@@ -240,7 +240,7 @@ const handleSearch = async () => {
 
               <!-- Search Button -->
               <div class="flex items-end">
-                <button 
+                <button
                   @click="handleSearch"
                   :disabled="isSearching"
                   class="w-full px-6 py-3.5 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-bold rounded-xl transition-all duration-300 shadow-elevated hover:shadow-floating active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed group"
@@ -258,12 +258,12 @@ const handleSearch = async () => {
                 </button>
               </div>
             </div>
-            
+
             <!-- Quick Links -->
             <div class="flex flex-wrap items-center justify-center gap-2 mt-3 pt-3 border-t border-gray-100">
               <span class="text-xs text-gray-500">{{ t('hero.search.popular') }}</span>
-              <NuxtLink 
-                v-for="dest in destinations.slice(0, 3)" 
+              <NuxtLink
+                v-for="dest in destinations.slice(0, 3)"
                 :key="dest.name"
                 :to="`/destinos/${dest.slug}`"
                 class="text-xs px-3 py-1 bg-gray-100 hover:bg-primary-100 text-gray-600 hover:text-primary-700 rounded-full transition-colors"
@@ -280,21 +280,21 @@ const handleSearch = async () => {
           enter-from="opacity-0 translate-y-6"
           enter-to="opacity-100 translate-y-0"
         >
-          <div 
+          <div
             v-show="showSearch"
             class="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <NuxtLink 
-              to="/planificador" 
+            <NuxtLink
+              to="/planificador"
               class="group btn btn-lg bg-white/95 text-gray-900 hover:bg-white rounded-full shadow-elevated hover:shadow-floating transition-all duration-300"
             >
               <Map class="w-5 h-5 text-primary-600 group-hover:scale-110 transition-transform" />
               <span>{{ t('hero.cta.planner') }}</span>
               <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </NuxtLink>
-            
-            <NuxtLink 
-              to="/destinos" 
+
+            <NuxtLink
+              to="/destinos"
               class="group btn btn-lg bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white/20 hover:border-white/40 rounded-full transition-all duration-300"
             >
               <span>{{ t('hero.cta.explore') }}</span>
@@ -309,7 +309,7 @@ const handleSearch = async () => {
           enter-from="opacity-0 translate-y-4"
           enter-to="opacity-100 translate-y-0"
         >
-          <div 
+          <div
             v-show="showSearch"
             class="mt-10 flex flex-wrap items-center justify-center gap-6 md:gap-8 text-white/80 text-sm"
           >
@@ -319,7 +319,7 @@ const handleSearch = async () => {
               </div>
               <span class="text-white/90">{{ t('hero.trust.cancelation') }}</span>
             </div>
-            
+
             <div class="flex items-center gap-2">
               <div class="w-8 h-8 bg-secondary-500/20 rounded-full flex items-center justify-center">
                 <svg class="w-4 h-4 text-secondary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -328,7 +328,7 @@ const handleSearch = async () => {
               </div>
               <span class="text-white/90">{{ t('hero.trust.bestPrice') }}</span>
             </div>
-            
+
             <div class="flex items-center gap-2">
               <div class="w-8 h-8 bg-primary-500/20 rounded-full flex items-center justify-center">
                 <Users class="w-4 h-4 text-primary-300" />
@@ -342,7 +342,7 @@ const handleSearch = async () => {
 
     <!-- Scroll Indicator -->
     <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 animate-bounce-slow">
-      <div 
+      <div
         class="w-12 h-12 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center cursor-pointer hover:bg-white/20 transition-colors"
         role="button"
         tabindex="0"

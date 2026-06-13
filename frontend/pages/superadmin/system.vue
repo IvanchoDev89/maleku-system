@@ -7,14 +7,14 @@
         <p class="text-gray-500 mt-1">Configuración, mantenimiento y monitoreo</p>
       </div>
       <div class="flex gap-3">
-        <button 
+        <button
           v-if="maintenanceMode"
           @click="confirmToggleMaintenance"
           class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
           <Rocket class="w-4 h-4 mr-2" /> Desactivar Mantenimiento
         </button>
-        <button 
+        <button
           v-else
           @click="confirmToggleMaintenance"
           class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -25,8 +25,8 @@
     </div>
 
     <!-- Maintenance Banner -->
-    <div 
-      v-if="maintenanceMode" 
+    <div
+      v-if="maintenanceMode"
       class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between"
     >
       <div class="flex items-center gap-3">
@@ -50,7 +50,7 @@
             <p class="text-sm text-gray-500">API Server</p>
             <p class="text-2xl font-bold text-gray-900 mt-1">{{ systemHealth.api.status }}</p>
           </div>
-          <div 
+          <div
             class="w-3 h-3 rounded-full"
             :class="systemHealth.api.status === 'healthy' ? 'bg-green-500' : 'bg-red-500'"
           ></div>
@@ -74,7 +74,7 @@
             <p class="text-sm text-gray-500">Base de Datos</p>
             <p class="text-2xl font-bold text-gray-900 mt-1">{{ systemHealth.database.status }}</p>
           </div>
-          <div 
+          <div
             class="w-3 h-3 rounded-full"
             :class="systemHealth.database.status === 'connected' ? 'bg-green-500' : 'bg-red-500'"
           ></div>
@@ -98,7 +98,7 @@
             <p class="text-sm text-gray-500">Cache (Redis)</p>
             <p class="text-2xl font-bold text-gray-900 mt-1">{{ systemHealth.cache.status }}</p>
           </div>
-          <div 
+          <div
             class="w-3 h-3 rounded-full"
             :class="systemHealth.cache.status === 'connected' ? 'bg-green-500' : 'bg-yellow-500'"
           ></div>
@@ -174,7 +174,7 @@
       </div>
       <div class="p-6">
         <div class="flex gap-4">
-          <button 
+          <button
             @click="runBackup"
             class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
             :disabled="backupInProgress"
@@ -182,14 +182,14 @@
             <Database class="w-4 h-4 mr-1" />
             <span>{{ backupInProgress ? 'Generando...' : 'Backup Ahora' }}</span>
           </button>
-          <button 
+          <button
             @click="confirmOptimize"
             class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
           >
             <Activity class="w-4 h-4 mr-1" />
             <span>Optimizar</span>
           </button>
-          <button 
+          <button
             @click="showMigrations = true"
             class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
           >
@@ -202,8 +202,8 @@
         <div v-if="backups.length > 0" class="mt-6">
           <h4 class="font-medium text-gray-900 mb-3">Backups Recientes</h4>
           <div class="space-y-2">
-            <div 
-              v-for="backup in backups" 
+            <div
+              v-for="backup in backups"
               :key="backup.id"
               class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
             >
@@ -216,7 +216,7 @@
               </div>
               <div class="flex items-center gap-3">
                 <span class="text-sm text-gray-500">{{ backup.size }}</span>
-                <button 
+                <button
                   @click="downloadBackup(backup)"
                   class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                 >
@@ -236,21 +236,21 @@
       </div>
       <div class="p-6">
         <div class="flex gap-4">
-          <button 
+          <button
             @click="confirmClearCache('all')"
             class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
             <Trash2 class="w-4 h-4 mr-1" />
             Limpiar Todo
           </button>
-          <button 
+          <button
             @click="confirmClearCache('api')"
             class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
           >
             <RefreshCw class="w-4 h-4 mr-1" />
             Limpiar API
           </button>
-          <button 
+          <button
             @click="confirmClearCache('static')"
             class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
           >
@@ -272,7 +272,7 @@
             <p class="font-medium text-gray-900">Forzar Logout Global</p>
             <p class="text-sm text-gray-500">Cerrar todas las sesiones activas de todos los usuarios</p>
           </div>
-          <button 
+          <button
             @click="confirmForceLogout"
             class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
@@ -284,7 +284,7 @@
             <p class="font-medium text-gray-900">Resetear Cache de Sesiones</p>
             <p class="text-sm text-gray-500">Invalidar todos los tokens JWT activos</p>
           </div>
-          <button 
+          <button
             @click="confirmResetSessions"
             class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
@@ -309,28 +309,28 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useHead } from '#app'
-import { 
-  Rocket, 
-  Wrench, 
-  AlertTriangle, 
-  RefreshCw, 
-  Database, 
-  Server, 
-  Activity, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  ArrowRight, 
-  Download, 
-  Trash2, 
-  AlertCircle, 
-  Power, 
-  Save, 
-  Shield, 
-  Settings, 
-  Users, 
-  FileText, 
-  Globe 
+import {
+  Rocket,
+  Wrench,
+  AlertTriangle,
+  RefreshCw,
+  Database,
+  Server,
+  Activity,
+  CheckCircle,
+  XCircle,
+  Clock,
+  ArrowRight,
+  Download,
+  Trash2,
+  AlertCircle,
+  Power,
+  Save,
+  Shield,
+  Settings,
+  Users,
+  FileText,
+  Globe
 } from 'lucide-vue-next'
 
 // @ts-expect-error Nuxt auto-import
@@ -403,7 +403,7 @@ const loadSystemHealth = async () => {
       ...systemHealth.value,
       ...health,
     }
-    
+
     // Check maintenance mode
     const env = await api.get('/superadmin/system/environment')
     maintenanceMode.value = env.maintenance_mode || false

@@ -142,11 +142,11 @@ if [ "${BASH_SOURCE[0]}" == "${0}" ]; then
     echo -e "${GREEN}Presiona Ctrl+C para detener el seguimiento${NC}"
     echo -e "${YELLOW}(Los servidores seguirán corriendo en background)${NC}"
     echo ""
-    
+
     # Mostrar logs en tiempo real
     tail -f /tmp/backend.log /tmp/frontend.log 2>/dev/null &
     TAIL_PID=$!
-    
+
     # Esperar Ctrl+C
     trap "kill $TAIL_PID 2>/dev/null; exit 0" INT
     wait

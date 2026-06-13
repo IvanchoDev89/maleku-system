@@ -1,6 +1,7 @@
 """
 Unit tests for Destination schemas
 """
+
 import pytest
 from uuid import uuid4
 
@@ -8,11 +9,12 @@ from uuid import uuid4
 class TestDestinationSchemas:
     def test_destination_create_valid(self):
         from app.schemas import DestinationCreate
+
         data = DestinationCreate(
             name="Guanacaste",
             description="Beautiful beaches",
             region="Pacific",
-            province="Guanacaste"
+            province="Guanacaste",
         )
         assert data.name == "Guanacaste"
         assert data.region == "Pacific"
@@ -20,6 +22,7 @@ class TestDestinationSchemas:
 
     def test_destination_create_minimal(self):
         from app.schemas import DestinationCreate
+
         data = DestinationCreate(name="San José", region="Central Valley")
         assert data.name == "San José"
         assert data.description is None
@@ -27,17 +30,20 @@ class TestDestinationSchemas:
 
     def test_destination_create_name_too_short(self):
         from app.schemas import DestinationCreate
+
         with pytest.raises(ValueError):
             DestinationCreate(name="X", region="Test")
 
     def test_destination_update_partial(self):
         from app.schemas import DestinationUpdate
+
         data = DestinationUpdate(description="Nice beaches and forests")
         assert data.description == "Nice beaches and forests"
         assert data.name is None
 
     def test_destination_response(self):
         from app.schemas import DestinationResponse
+
         data = DestinationResponse(
             id=uuid4(),
             name="Manuel Antonio",
@@ -54,12 +60,16 @@ class TestDestinationSchemas:
 class TestDestinationImports:
     def test_router_import(self):
         from app.api.v1.destinations import router
+
         assert router
 
     def test_schemas_import(self):
         from app.schemas import (
-            DestinationCreate, DestinationUpdate, DestinationResponse
+            DestinationCreate,
+            DestinationUpdate,
+            DestinationResponse,
         )
+
         assert DestinationCreate
         assert DestinationUpdate
         assert DestinationResponse

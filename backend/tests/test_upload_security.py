@@ -8,6 +8,7 @@ Verifies:
 - BOLA fix: non-admin users cannot delete uploads
 - SVG is no longer accepted (stored-XSS mitigation)
 """
+
 import io
 import pytest
 from PIL import Image
@@ -35,8 +36,12 @@ async def test_upload_rejects_svg_extension(client, auth_token=None):
     """SVG uploads must be rejected (stored XSS prevention)."""
     svg_content = b'<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
     files = {"file": ("evil.svg", io.BytesIO(svg_content), "image/svg+xml")}
-    resp = await client.post("/api/v1/upload/image", files=files, data={"folder": "general"})
-    assert resp.status_code == 400, f"Expected 400 for SVG, got {resp.status_code}: {resp.text}"
+    resp = await client.post(
+        "/api/v1/upload/image", files=files, data={"folder": "general"}
+    )
+    assert resp.status_code == 400, (
+        f"Expected 400 for SVG, got {resp.status_code}: {resp.text}"
+    )
 
 
 @pytest.mark.asyncio
@@ -52,7 +57,9 @@ async def test_upload_rejects_polyglot_file(client, sample_user_data):
         headers={"Authorization": f"Bearer {(await _login(client, sample_user_data))}"},
     )
     # 400 because PIL refuses to parse the bytes as a real PNG
-    assert resp.status_code == 400, f"Expected 400 for polyglot, got {resp.status_code}: {resp.text}"
+    assert resp.status_code == 400, (
+        f"Expected 400 for polyglot, got {resp.status_code}: {resp.text}"
+    )
 
 
 @pytest.mark.asyncio
@@ -106,11 +113,13 @@ async def test_delete_upload_requires_admin(
 # helpers
 # ---------------------------------------------------------------------------
 
+
 async def _login(client, sample_user_data) -> str:
     """Register a fresh user and return the access token."""
     payload = sample_user_data.copy()
     # Use a unique email to avoid clashing with other tests
     import uuid as _uuid
+
     payload["email"] = f"upload-{_uuid.uuid4().hex[:8]}@example.com"
     reg = await client.post("/api/v1/auth/register", json=payload)
     assert reg.status_code == 200, reg.text

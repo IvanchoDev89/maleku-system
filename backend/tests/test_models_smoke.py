@@ -10,6 +10,7 @@ These tests are not full integration tests; they're a cheap guard against
 typos and import-time bugs. They run with the session-scoped engine fixture
 in conftest.py.
 """
+
 import pytest
 
 from app.core.database import Base

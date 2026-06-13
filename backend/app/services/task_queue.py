@@ -24,14 +24,22 @@ class TaskQueue:
         except Exception as e:
             logger.error(f"Background email failed: {e}")
 
-    async def log_audit_async(self, audit_service, action: str, entity_type: str, entity_id: str, user_id: str, details: dict | None = None):
+    async def log_audit_async(
+        self,
+        audit_service,
+        action: str,
+        entity_type: str,
+        entity_id: str,
+        user_id: str,
+        details: dict | None = None,
+    ):
         try:
             await audit_service.log_action(
                 action=action,
                 entity_type=entity_type,
                 entity_id=entity_id,
                 user_id=user_id,
-                details=details
+                details=details,
             )
         except Exception as e:
             logger.error(f"Background audit log failed: {e}")

@@ -141,7 +141,7 @@ async def create_example(
     current_user: User = Depends(deps.get_current_user),
 ):
     """Create new example.
-    
+
     - **example_in**: Example data
     - Returns: Created example
     """

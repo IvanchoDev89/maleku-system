@@ -3,10 +3,10 @@
     <div class="flex justify-between items-center mb-6">
       <div class="flex gap-4">
         <div class="relative">
-          <input 
-            v-model="searchQuery" 
-            type="text" 
-            placeholder="Buscar proveedores..." 
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Buscar proveedores..."
             class="pl-11 pr-4 py-2.5 bg-white text-gray-700 rounded-xl border border-gray-200 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 w-64"
             @input="debouncedSearch"
           />
@@ -16,16 +16,16 @@
             </svg>
           </span>
         </div>
-        
+
         <UiSelect v-model="filters.business_type" :options="businessTypeFilterOptions" placeholder="Todos los tipos" @update:model-value="fetchVendors" />
-        
+
         <UiSelect v-model="filters.is_verified" :options="verifiedFilterOptions" placeholder="Verificación" @update:model-value="fetchVendors" />
-        
+
         <UiSelect v-model="filters.is_active" :options="activeFilterOptions" placeholder="Estado" @update:model-value="fetchVendors" />
       </div>
-      
+
       <div class="flex gap-3">
-        <button 
+        <button
           @click="exportVendors"
           class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center gap-2"
         >
@@ -91,7 +91,7 @@
               <div class="text-gray-500 text-sm">{{ vendor.owner?.email || '' }}</div>
             </td>
             <td class="p-4">
-              <button 
+              <button
                 @click="toggleVerified(vendor)"
                 class="flex items-center gap-2"
                 :class="vendor.is_verified ? 'text-green-600' : 'text-gray-400'"
@@ -106,7 +106,7 @@
               </button>
             </td>
             <td class="p-4">
-              <button 
+              <button
                 @click="toggleActive(vendor)"
                 class="flex items-center gap-2"
               >
@@ -129,8 +129,8 @@
             </td>
             <td class="p-4">
               <div class="flex gap-2">
-                <NuxtLink 
-                  :to="`/admin/vendors/${vendor.id}`" 
+                <NuxtLink
+                  :to="`/admin/vendors/${vendor.id}`"
                   class="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
                   title="Ver detalles"
                 >
@@ -139,8 +139,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 </NuxtLink>
-                <button 
-                  @click="editVendor(vendor)" 
+                <button
+                  @click="editVendor(vendor)"
                   class="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
                   title="Editar"
                 >
@@ -148,8 +148,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-                <button 
-                  @click="deleteVendor(vendor)" 
+                <button
+                  @click="deleteVendor(vendor)"
                   class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                   title="Eliminar"
                 >
@@ -162,20 +162,20 @@
           </tr>
         </tbody>
       </table>
-      
+
       <div v-if="pagination.total > pagination.limit" class="px-4 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
         <div class="text-sm text-gray-500">
           Mostrando {{ (pagination.page - 1) * pagination.limit + 1 }} - {{ Math.min(pagination.page * pagination.limit, pagination.total) }} de {{ pagination.total }}
         </div>
         <div class="flex gap-2">
-          <button 
+          <button
             @click="changePage(pagination.page - 1)"
             :disabled="!pagination.has_prev"
             class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
           >
             Anterior
           </button>
-          <button 
+          <button
             @click="changePage(pagination.page + 1)"
             :disabled="!pagination.has_next"
             class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
@@ -190,63 +190,63 @@
       <form class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Negocio</label>
-          <input 
-            v-model="editForm.business_name" 
-            type="text" 
+          <input
+            v-model="editForm.business_name"
+            type="text"
             class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
           />
         </div>
-        
+
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Negocio</label>
           <UiSelect v-model="editForm.business_type" :options="businessTypeEditOptions" />
         </div>
-        
+
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-          <textarea 
-            v-model="editForm.description" 
+          <textarea
+            v-model="editForm.description"
             rows="3"
             class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
           ></textarea>
         </div>
-        
+
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-            <input 
-              v-model="editForm.phone" 
-              type="text" 
+            <input
+              v-model="editForm.phone"
+              type="text"
               class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input 
-              v-model="editForm.email" 
-              type="email" 
+            <input
+              v-model="editForm.email"
+              type="email"
               class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
         </div>
-        
+
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-          <input 
-            v-model="editForm.address" 
-            type="text" 
+          <input
+            v-model="editForm.address"
+            type="text"
             class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
           />
         </div>
       </form>
       <template #footer>
-        <button 
+        <button
           @click="showEditModal = false"
           class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
         >
           Cancelar
         </button>
-        <button 
+        <button
           @click="saveVendor"
           :disabled="saving"
           class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
@@ -363,12 +363,12 @@ const fetchVendors = async () => {
       limit: pagination.value.limit,
       offset: (pagination.value.page - 1) * pagination.value.limit
     }
-    
+
     if (searchQuery.value) params.search = searchQuery.value
     if (filters.value.business_type) params.business_type = filters.value.business_type
     if (filters.value.is_verified) params.is_verified = filters.value.is_verified
     if (filters.value.is_active) params.is_active = filters.value.is_active
-    
+
     const response = await api.get('/admin/vendors', params)
     vendors.value = response.items
     pagination.value = {

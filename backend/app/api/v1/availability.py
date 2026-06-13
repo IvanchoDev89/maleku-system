@@ -1,6 +1,7 @@
 """
 Availability API - Endpoints para consultar disponibilidad de habitaciones y tours
 """
+
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, Query
@@ -13,10 +14,11 @@ from app.services.availability_service import (
     check_room_availability,
     get_room_availability_calendar,
     check_tour_availability,
-    get_next_available_dates
+    get_next_available_dates,
 )
 
 router = APIRouter()
+
 
 class DeleteResponse(BaseModel):
     message: str
@@ -63,7 +65,6 @@ class PresignedUrlResponse(BaseModel):
     fields: dict
 
 
-
 class AvailabilityCheckRequest(BaseModel):
     room_id: UUID
     check_in: datetime
@@ -82,8 +83,7 @@ class AvailabilityCalendarResponse(BaseModel):
 
 @router.post("/rooms/check", response_model=AvailabilityCheckResponse)
 async def check_availability(
-    data: AvailabilityCheckRequest,
-    db: AsyncSession = Depends(get_db)
+    data: AvailabilityCheckRequest, db: AsyncSession = Depends(get_db)
 ):
     """
     Check if a room is available for specific dates.
@@ -93,9 +93,9 @@ async def check_availability(
         db=db,
         room_id=str(data.room_id),
         check_in=data.check_in,
-        check_out=data.check_out
+        check_out=data.check_out,
     )
-    
+
     alternative_dates = []
     if not is_available:
         # Suggest next available dates
@@ -105,12 +105,11 @@ async def check_availability(
             room_id=str(data.room_id),
             nights=nights,
             from_date=data.check_in,
-            max_results=3
+            max_results=3,
         )
-    
+
     return AvailabilityCheckResponse(
-        available=is_available,
-        alternative_dates=alternative_dates
+        available=is_available, alternative_dates=alternative_dates
     )
 
 
@@ -119,25 +118,19 @@ async def get_room_calendar(
     room_id: UUID,
     start_date: datetime = Query(..., description="Start date (ISO format)"),
     days: int = Query(30, ge=1, le=90, description="Number of days to check"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Get availability calendar for a room.
     Returns daily availability status for the requested period.
     """
     end_date = start_date + timedelta(days=days)
-    
+
     calendar = await get_room_availability_calendar(
-        db=db,
-        room_id=str(room_id),
-        start_date=start_date,
-        end_date=end_date
+        db=db, room_id=str(room_id), start_date=start_date, end_date=end_date
     )
-    
-    return AvailabilityCalendarResponse(
-        room_id=room_id,
-        dates=calendar
-    )
+
+    return AvailabilityCalendarResponse(room_id=room_id, dates=calendar)
 
 
 @router.post("/tours/check", response_model=AvailabilityCheckResponse)
@@ -145,7 +138,7 @@ async def check_tour_availability_endpoint(
     tour_id: UUID,
     booking_date: datetime,
     participants: int = Query(1, ge=1),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Check if a tour is available for a specific date and number of participants.
@@ -154,15 +147,15 @@ async def check_tour_availability_endpoint(
         db=db,
         tour_id=str(tour_id),
         booking_date=booking_date,
-        participants=participants
+        participants=participants,
     )
-    
+
     return {
         "available": is_available,
         "message": reason if not is_available else "Available",
         "tour_id": tour_id,
         "date": booking_date.isoformat(),
-        "participants": participants
+        "participants": participants,
     }
 
 
@@ -172,7 +165,7 @@ async def get_next_available(
     nights: int = Query(1, ge=1, description="Number of nights needed"),
     from_date: Optional[datetime] = None,
     max_results: int = Query(5, ge=1, le=10),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Get next available date ranges for a room.
@@ -180,17 +173,13 @@ async def get_next_available(
     """
     if from_date is None:
         from_date = datetime.now(timezone.utc)
-    
+
     available_ranges = await get_next_available_dates(
         db=db,
         room_id=str(room_id),
         nights=nights,
         from_date=from_date,
-        max_results=max_results
+        max_results=max_results,
     )
-    
-    return {
-        "room_id": room_id,
-        "nights": nights,
-        "available_ranges": available_ranges
-    }
+
+    return {"room_id": room_id, "nights": nights, "available_ranges": available_ranges}

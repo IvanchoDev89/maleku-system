@@ -3,10 +3,10 @@
     <div class="flex justify-between items-center mb-6">
       <div class="flex gap-4">
         <div class="relative">
-          <input 
-            v-model="searchQuery" 
-            type="text" 
-            placeholder="Buscar destinos..." 
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Buscar destinos..."
             class="pl-11 pr-4 py-2.5 bg-white text-gray-700 rounded-xl border border-gray-200 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 w-64"
             @input="debouncedSearch"
           />
@@ -16,11 +16,11 @@
             </svg>
           </span>
         </div>
-        
+
         <UiSelect v-model="filters.is_active" :options="activeFilterOptions" placeholder="Todos" @update:model-value="fetchDestinations" />
       </div>
-      
-      <button 
+
+      <button
         @click="showCreateModal = true"
         class="bg-primary hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all"
       >
@@ -36,11 +36,11 @@
         </svg>
         Cargando...
       </div>
-      
+
       <div v-else-if="destinations.length === 0" class="col-span-full py-12 text-center text-gray-400">
         No hay destinos
       </div>
-      
+
       <div v-for="dest in destinations" :key="dest.id" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
         <div class="aspect-video bg-gray-100 relative overflow-hidden">
           <NuxtImg v-if="dest.image_url" :src="dest.image_url" :alt="dest.name" class="w-full h-full object-cover" width="400" height="200" format="webp" />

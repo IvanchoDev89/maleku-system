@@ -31,7 +31,7 @@
           {{ post?.category }}
         </span>
         <h1 class="text-4xl md:text-5xl font-bold mt-4">{{ post?.title }}</h1>
-        
+
         <div class="flex items-center gap-6 mt-6 text-gray-500">
           <span class="flex items-center gap-2">
             <span class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white">A</span>
@@ -50,15 +50,15 @@
       <!-- Article Content -->
       <article class="prose prose-lg max-w-none">
         <p class="lead text-xl text-gray-600 mb-8">{{ post?.excerpt }}</p>
-        
+
         <div v-html="sanitizeHtml(post?.content)"></div>
       </article>
 
       <!-- Tags -->
       <div class="mt-12 pt-8 border-t">
         <div class="flex flex-wrap gap-2">
-          <span 
-            v-for="tag in post?.tags" 
+          <span
+            v-for="tag in post?.tags"
             :key="tag"
             class="px-4 py-2 bg-gray-100 rounded-full text-sm"
           >
@@ -79,8 +79,8 @@
       <section class="mt-16">
         <h3 class="text-2xl font-bold mb-6">Artículos Relacionados</h3>
         <div class="grid md:grid-cols-3 gap-6">
-          <NuxtLink 
-            v-for="related in relatedPosts" 
+          <NuxtLink
+            v-for="related in relatedPosts"
             :key="related.id"
             :to="`/blog/${related.slug}`"
             class="group"

@@ -2,6 +2,7 @@
 Super Admin System & Infrastructure endpoints.
 Provides health checks, database stats, and system monitoring.
 """
+
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends
@@ -19,6 +20,7 @@ router = APIRouter()
 # Response Models
 class SystemHealth(BaseModel):
     """System health status."""
+
     status: str
     api_status: str
     database_status: str
@@ -29,6 +31,7 @@ class SystemHealth(BaseModel):
 
 class DatabaseStats(BaseModel):
     """Database statistics."""
+
     total_size_mb: float
     tables: list
     connection_count: int
@@ -37,6 +40,7 @@ class DatabaseStats(BaseModel):
 
 class CacheStats(BaseModel):
     """Cache statistics."""
+
     type: str
     status: str
     hits: int
@@ -48,6 +52,7 @@ class CacheStats(BaseModel):
 
 class QueueStats(BaseModel):
     """Queue/worker statistics."""
+
     queued_jobs: int
     processing_jobs: int
     failed_jobs: int
@@ -57,6 +62,7 @@ class QueueStats(BaseModel):
 
 class BackupInfo(BaseModel):
     """Backup information."""
+
     id: str
     type: str
     status: str
@@ -69,7 +75,7 @@ class BackupInfo(BaseModel):
 @router.get("/health", response_model=SystemHealth)
 async def get_system_health(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Get overall system health status.
@@ -80,13 +86,13 @@ async def get_system_health(
         db_status = "connected"
     except (OSError, RuntimeError):
         db_status = "error"
-    
+
     # Overall status
     if db_status == "connected":
         overall_status = "healthy"
     else:
         overall_status = "degraded"
-    
+
     return {
         "status": overall_status,
         "api_status": "operational",
@@ -100,7 +106,7 @@ async def get_system_health(
 @router.get("/database/stats", response_model=dict)
 async def get_database_stats(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Get database statistics including size and table information.
@@ -113,11 +119,11 @@ async def get_database_stats(
         """)
     )
     size_row = size_result.fetchone()
-    
+
     # Get table statistics
     tables_result = await db.execute(
         text("""
-            SELECT 
+            SELECT
                 schemaname,
                 tablename,
                 pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
@@ -138,17 +144,19 @@ async def get_database_stats(
         }
         for row in tables_result.fetchall()
     ]
-    
+
     # Get connection count
     connections_result = await db.execute(
         text("SELECT count(*) as count FROM pg_stat_activity")
     )
     connections = connections_result.scalar()
-    
+
     return {
         "total_size": size_row.size if size_row else "unknown",
         "total_size_bytes": size_row.size_bytes if size_row else 0,
-        "total_size_mb": round((size_row.size_bytes / (1024 * 1024)), 2) if size_row else 0,
+        "total_size_mb": round((size_row.size_bytes / (1024 * 1024)), 2)
+        if size_row
+        else 0,
         "tables": tables,
         "connection_count": connections,
         "slow_queries": [],  # Would need to track query performance
@@ -158,14 +166,14 @@ async def get_database_stats(
 @router.get("/database/connections", response_model=dict)
 async def get_database_connections(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Get active database connections.
     """
     result = await db.execute(
         text("""
-            SELECT 
+            SELECT
                 pid,
                 usename as username,
                 application_name,
@@ -179,20 +187,26 @@ async def get_database_connections(
             ORDER BY backend_start DESC
         """)
     )
-    
+
     connections = []
     for row in result.fetchall():
-        connections.append({
-            "pid": row.pid,
-            "username": row.username,
-            "application": row.application_name,
-            "client_address": str(row.client_address) if row.client_address else None,
-            "backend_start": row.backend_start,
-            "state": row.state,
-            "query_start": row.query_start,
-            "query": row.query[:200] if row.query else None,  # Truncate long queries
-        })
-    
+        connections.append(
+            {
+                "pid": row.pid,
+                "username": row.username,
+                "application": row.application_name,
+                "client_address": str(row.client_address)
+                if row.client_address
+                else None,
+                "backend_start": row.backend_start,
+                "state": row.state,
+                "query_start": row.query_start,
+                "query": row.query[:200]
+                if row.query
+                else None,  # Truncate long queries
+            }
+        )
+
     return {
         "count": len(connections),
         "connections": connections,
@@ -200,9 +214,7 @@ async def get_database_connections(
 
 
 @router.get("/cache/stats", response_model=dict)
-async def get_cache_stats(
-    current_user: User = Depends(require_superadmin())
-):
+async def get_cache_stats(current_user: User = Depends(require_superadmin())):
     """
     Get cache statistics.
     Placeholder - would integrate with actual cache (Redis/Memcached).
@@ -221,9 +233,7 @@ async def get_cache_stats(
 
 
 @router.get("/queue/stats", response_model=dict)
-async def get_queue_stats(
-    current_user: User = Depends(require_superadmin())
-):
+async def get_queue_stats(current_user: User = Depends(require_superadmin())):
     """
     Get background job queue statistics.
     Placeholder - would integrate with actual queue system (Celery/RQ).
@@ -242,9 +252,7 @@ async def get_queue_stats(
 
 
 @router.get("/backups", response_model=dict)
-async def get_backups(
-    current_user: User = Depends(require_superadmin())
-):
+async def get_backups(current_user: User = Depends(require_superadmin())):
     """
     List available backups.
     Placeholder - would integrate with actual backup system.
@@ -259,9 +267,7 @@ async def get_backups(
 
 
 @router.post("/backups/trigger", response_model=dict)
-async def trigger_backup(
-    current_user: User = Depends(require_superadmin())
-):
+async def trigger_backup(current_user: User = Depends(require_superadmin())):
     """
     Manually trigger a database backup.
     Placeholder - would integrate with actual backup system.
@@ -278,23 +284,23 @@ async def trigger_backup(
 @router.get("/metrics", response_model=dict)
 async def get_system_metrics(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Get key system metrics for monitoring dashboards.
     """
     now = datetime.now(timezone.utc)
     day_ago = now - timedelta(hours=24)
-    
+
     # User metrics
     total_users_result = await db.execute(select(func.count(User.id)))
     total_users = total_users_result.scalar() or 0
-    
+
     new_users_result = await db.execute(
         select(func.count(User.id)).where(User.created_at >= day_ago)
     )
     new_users_24h = new_users_result.scalar() or 0
-    
+
     # Active users (logged in within 24h)
     active_users_result = await db.execute(
         select(func.count(User.id)).where(User.last_login >= day_ago)
@@ -329,7 +335,9 @@ async def _get_db_connection_count(db: AsyncSession) -> Optional[int]:
     """Query active database connection count."""
     try:
         result = await db.execute(
-            text("SELECT count(*) FROM pg_stat_activity WHERE datname = current_database()")
+            text(
+                "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database()"
+            )
         )
         return result.scalar()
     except Exception:
@@ -340,7 +348,7 @@ async def _get_db_connection_count(db: AsyncSession) -> Optional[int]:
 async def toggle_maintenance_mode(
     enabled: bool,
     message: Optional[str] = None,
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """
     Enable or disable maintenance mode.
@@ -348,7 +356,7 @@ async def toggle_maintenance_mode(
     """
     # This is a placeholder - actual implementation would update a config or cache
     status = "enabled" if enabled else "disabled"
-    
+
     return {
         "maintenance_mode": enabled,
         "status": status,
@@ -359,29 +367,41 @@ async def toggle_maintenance_mode(
 
 
 @router.get("/environment", response_model=dict)
-async def get_environment_info(
-    current_user: User = Depends(require_superadmin())
-):
+async def get_environment_info(current_user: User = Depends(require_superadmin())):
     """
     Get environment and configuration information.
     Shows non-sensitive configuration values.
     """
     from app.core.config import settings
-    
+
     return {
-        "environment": settings.ENVIRONMENT if hasattr(settings, "ENVIRONMENT") else "unknown",
+        "environment": settings.ENVIRONMENT
+        if hasattr(settings, "ENVIRONMENT")
+        else "unknown",
         "debug_mode": settings.DEBUG if hasattr(settings, "DEBUG") else False,
         "database_url_masked": settings.DATABASE_URL.replace(
             settings.DATABASE_URL.split("://")[1].split(":")[0], "***"
-        ) if hasattr(settings, "DATABASE_URL") else None,
+        )
+        if hasattr(settings, "DATABASE_URL")
+        else None,
         "features": {
-            "email_enabled": bool(settings.SENDGRID_API_KEY) if hasattr(settings, "SENDGRID_API_KEY") else False,
-            "stripe_enabled": bool(settings.STRIPE_SECRET_KEY) if hasattr(settings, "STRIPE_SECRET_KEY") else False,
-            "aws_enabled": bool(settings.AWS_ACCESS_KEY_ID) if hasattr(settings, "AWS_ACCESS_KEY_ID") else False,
+            "email_enabled": bool(settings.SENDGRID_API_KEY)
+            if hasattr(settings, "SENDGRID_API_KEY")
+            else False,
+            "stripe_enabled": bool(settings.STRIPE_SECRET_KEY)
+            if hasattr(settings, "STRIPE_SECRET_KEY")
+            else False,
+            "aws_enabled": bool(settings.AWS_ACCESS_KEY_ID)
+            if hasattr(settings, "AWS_ACCESS_KEY_ID")
+            else False,
         },
         "security": {
-            "token_expiry_minutes": settings.ACCESS_TOKEN_EXPIRE_MINUTES if hasattr(settings, "ACCESS_TOKEN_EXPIRE_MINUTES") else 30,
-            "refresh_token_expiry_days": settings.REFRESH_TOKEN_EXPIRE_DAYS if hasattr(settings, "REFRESH_TOKEN_EXPIRE_DAYS") else 7,
+            "token_expiry_minutes": settings.ACCESS_TOKEN_EXPIRE_MINUTES
+            if hasattr(settings, "ACCESS_TOKEN_EXPIRE_MINUTES")
+            else 30,
+            "refresh_token_expiry_days": settings.REFRESH_TOKEN_EXPIRE_DAYS
+            if hasattr(settings, "REFRESH_TOKEN_EXPIRE_DAYS")
+            else 7,
         },
         "note": "Sensitive values are masked. Full configuration requires server access.",
     }

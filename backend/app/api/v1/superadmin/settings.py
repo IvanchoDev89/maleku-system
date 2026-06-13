@@ -4,6 +4,7 @@ Super Admin Settings Management API
 Global system configuration management for SUPER_ADMIN only.
 Handles environment variables, integrations, email templates, and feature flags.
 """
+
 from typing import List, Optional
 from datetime import datetime, timezone
 
@@ -27,7 +28,7 @@ def _serialize_for_audit(data: dict) -> dict:
     for k, v in data.items():
         if isinstance(v, datetime):
             result[k] = v.isoformat()
-        elif hasattr(v, 'isoformat'):
+        elif hasattr(v, "isoformat"):
             result[k] = str(v)
         else:
             result[k] = v
@@ -36,6 +37,7 @@ def _serialize_for_audit(data: dict) -> dict:
 
 class SettingsResponse(BaseModel):
     """Public settings response (safe to expose)"""
+
     site_name: str
     site_url: str
     support_email: str
@@ -45,12 +47,13 @@ class SettingsResponse(BaseModel):
     enable_registration: bool
     require_email_verification: bool
     timezone: str = "America/Costa_Rica"
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
 class SettingsUpdate(BaseModel):
     """Settings update request"""
+
     site_name: Optional[str] = Field(None, max_length=100)
     site_url: Optional[str] = Field(None, max_length=200)
     support_email: Optional[str] = Field(None, max_length=100)
@@ -63,22 +66,24 @@ class SettingsUpdate(BaseModel):
 
 class IntegrationSettings(BaseModel):
     """Third-party integration settings"""
+
     stripe_enabled: bool = False
     stripe_publishable_key: str = ""
     stripe_webhook_configured: bool = False
-    
+
     cloudinary_enabled: bool = False
     cloudinary_cloud_name: str = ""
-    
+
     sendgrid_enabled: bool = False
     sendgrid_from_email: str = ""
-    
+
     google_analytics_enabled: bool = False
     google_analytics_id: str = ""
 
 
 class EmailTemplate(BaseModel):
     """Email template model"""
+
     id: str
     name: str
     subject: str
@@ -90,6 +95,7 @@ class EmailTemplate(BaseModel):
 
 class EmailTemplateUpdate(BaseModel):
     """Email template update"""
+
     subject: str = Field(..., max_length=200)
     body_html: str = Field(..., max_length=10000)
     body_text: Optional[str] = Field(None, max_length=5000)
@@ -97,6 +103,7 @@ class EmailTemplateUpdate(BaseModel):
 
 class FeatureFlag(BaseModel):
     """Feature flag model"""
+
     name: str
     enabled: bool
     description: str
@@ -114,7 +121,7 @@ _system_settings = {
     "maintenance_mode": False,
     "enable_registration": True,
     "require_email_verification": True,
-    "timezone": "America/Costa_Rica"
+    "timezone": "America/Costa_Rica",
 }
 
 _email_templates = [
@@ -125,7 +132,7 @@ _email_templates = [
         "body_html": "<h1>Bienvenido {{name}}</h1><p>Gracias por registrarte.</p>",
         "body_text": "Bienvenido {{name}}. Gracias por registrarte.",
         "variables": ["name", "email"],
-        "last_updated": datetime.now(timezone.utc)
+        "last_updated": datetime.now(timezone.utc),
     },
     {
         "id": "booking_confirmation",
@@ -134,7 +141,7 @@ _email_templates = [
         "body_html": "<h1>Reserva Confirmada</h1><p>Hola {{name}}, tu reserva #{{booking_id}} está confirmada.</p>",
         "body_text": "Reserva Confirmada. Hola {{name}}, tu reserva #{{booking_id}} está confirmada.",
         "variables": ["name", "booking_id", "service_name", "date"],
-        "last_updated": datetime.now(timezone.utc)
+        "last_updated": datetime.now(timezone.utc),
     },
     {
         "id": "password_reset",
@@ -143,21 +150,39 @@ _email_templates = [
         "body_html": "<h1>Restablecer Contraseña</h1><p>Haz clic <a href='{{reset_url}}'>aquí</a> para restablecer.</p>",
         "body_text": "Restablecer Contraseña. Visita: {{reset_url}}",
         "variables": ["reset_url", "expires_in"],
-        "last_updated": datetime.now(timezone.utc)
-    }
+        "last_updated": datetime.now(timezone.utc),
+    },
 ]
 
 _feature_flags = [
-    {"name": "new_search", "enabled": True, "description": "Nuevo sistema de búsqueda", "rollout_percentage": 100, "updated_at": datetime.now(timezone.utc)},
-    {"name": "new_booking_flow", "enabled": False, "description": "Nuevo flujo de reservas", "rollout_percentage": 0, "updated_at": datetime.now(timezone.utc)},
-    {"name": "reviews_system", "enabled": True, "description": "Sistema de reseñas", "rollout_percentage": 100, "updated_at": datetime.now(timezone.utc)},
+    {
+        "name": "new_search",
+        "enabled": True,
+        "description": "Nuevo sistema de búsqueda",
+        "rollout_percentage": 100,
+        "updated_at": datetime.now(timezone.utc),
+    },
+    {
+        "name": "new_booking_flow",
+        "enabled": False,
+        "description": "Nuevo flujo de reservas",
+        "rollout_percentage": 0,
+        "updated_at": datetime.now(timezone.utc),
+    },
+    {
+        "name": "reviews_system",
+        "enabled": True,
+        "description": "Sistema de reseñas",
+        "rollout_percentage": 100,
+        "updated_at": datetime.now(timezone.utc),
+    },
 ]
 
 
 @router.get("", response_model=SettingsResponse)
 async def get_settings(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Get current system settings (public safe)"""
     return SettingsResponse(**_system_settings)
@@ -167,20 +192,27 @@ async def get_settings(
 async def update_settings(
     data: SettingsUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Update system settings"""
     old_values = _system_settings.copy()
-    
-    allowed_fields = {'site_name', 'site_url', 'support_email', 'default_currency', 
-                     'commission_rate', 'maintenance_mode', 'enable_registration', 
-                     'require_email_verification'}
-    
+
+    allowed_fields = {
+        "site_name",
+        "site_url",
+        "support_email",
+        "default_currency",
+        "commission_rate",
+        "maintenance_mode",
+        "enable_registration",
+        "require_email_verification",
+    }
+
     update_data = data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         if key in allowed_fields:
             _system_settings[key] = value
-    
+
     await AuditService.log_action(
         db=db,
         user=current_user,
@@ -188,35 +220,37 @@ async def update_settings(
         entity_type="system_settings",
         old_values=_serialize_for_audit(old_values),
         new_values=_serialize_for_audit(_system_settings),
-        changes_summary=f"Settings updated by {current_user.email}"
+        changes_summary=f"Settings updated by {current_user.email}",
     )
-    
+
     return SettingsResponse(**_system_settings)
 
 
 @router.get("/integrations", response_model=IntegrationSettings)
 async def get_integrations(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Get third-party integration status (masked keys for security)"""
     return IntegrationSettings(
         stripe_enabled=bool(settings.STRIPE_SECRET_KEY),
-        stripe_publishable_key=settings.STRIPE_PUBLISHABLE_KEY[:10] + "..." if settings.STRIPE_PUBLISHABLE_KEY else "",
+        stripe_publishable_key=settings.STRIPE_PUBLISHABLE_KEY[:10] + "..."
+        if settings.STRIPE_PUBLISHABLE_KEY
+        else "",
         stripe_webhook_configured=bool(settings.STRIPE_WEBHOOK_SECRET),
         cloudinary_enabled=bool(settings.CLOUDINARY_CLOUD_NAME),
         cloudinary_cloud_name=settings.CLOUDINARY_CLOUD_NAME,
         sendgrid_enabled=False,  # Add to settings later
         sendgrid_from_email="",
         google_analytics_enabled=False,
-        google_analytics_id=""
+        google_analytics_id="",
     )
 
 
 @router.get("/email-templates", response_model=List[EmailTemplate])
 async def get_email_templates(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Get all email templates"""
     return [EmailTemplate(**t) for t in _email_templates]
@@ -226,7 +260,7 @@ async def get_email_templates(
 async def get_email_template(
     template_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Get specific email template"""
     template = next((t for t in _email_templates if t["id"] == template_id), None)
@@ -240,21 +274,21 @@ async def update_email_template(
     template_id: str,
     data: EmailTemplateUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Update email template"""
     template = next((t for t in _email_templates if t["id"] == template_id), None)
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
-    
+
     audit_old = template.copy()
-    
+
     template["subject"] = data.subject
     template["body_html"] = data.body_html
     if data.body_text:
         template["body_text"] = data.body_text
     template["last_updated"] = datetime.now(timezone.utc)
-    
+
     await AuditService.log_action(
         db=db,
         user=current_user,
@@ -263,16 +297,16 @@ async def update_email_template(
         entity_id=None,
         old_values=_serialize_for_audit(audit_old),
         new_values=_serialize_for_audit(template),
-        changes_summary=f"Email template '{template_id}' updated"
+        changes_summary=f"Email template '{template_id}' updated",
     )
-    
+
     return EmailTemplate(**template)
 
 
 @router.get("/feature-flags", response_model=List[FeatureFlag])
 async def get_feature_flags(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Get all feature flags"""
     return [FeatureFlag(**f) for f in _feature_flags]
@@ -284,19 +318,19 @@ async def update_feature_flag(
     enabled: bool = Body(...),
     rollout_percentage: int = Body(100, ge=0, le=100),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Update feature flag status"""
     flag = next((f for f in _feature_flags if f["name"] == flag_name), None)
     if not flag:
         raise HTTPException(status_code=404, detail="Feature flag not found")
-    
+
     audit_old = flag.copy()
-    
+
     flag["enabled"] = enabled
     flag["rollout_percentage"] = rollout_percentage
     flag["updated_at"] = datetime.now(timezone.utc)
-    
+
     await AuditService.log_action(
         db=db,
         user=current_user,
@@ -305,9 +339,9 @@ async def update_feature_flag(
         entity_id=None,
         old_values=_serialize_for_audit(audit_old),
         new_values=_serialize_for_audit(flag),
-        changes_summary=f"Feature flag '{flag_name}' set to {enabled} ({rollout_percentage}%)"
+        changes_summary=f"Feature flag '{flag_name}' set to {enabled} ({rollout_percentage}%)",
     )
-    
+
     return FeatureFlag(**flag)
 
 
@@ -316,11 +350,11 @@ async def toggle_maintenance_mode(
     enabled: bool = Body(..., embed=True),
     message: str = Body("", max_length=500),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Toggle maintenance mode - CRITICAL ACTION"""
     _system_settings["maintenance_mode"] = enabled
-    
+
     await AuditService.log_action(
         db=db,
         user=current_user,
@@ -328,10 +362,10 @@ async def toggle_maintenance_mode(
         entity_type="maintenance_mode",
         old_values={"maintenance_mode": not enabled},
         new_values={"maintenance_mode": enabled, "message": message},
-        changes_summary=f"Maintenance mode {'ENABLED' if enabled else 'DISABLED'} by super admin"
+        changes_summary=f"Maintenance mode {'ENABLED' if enabled else 'DISABLED'} by super admin",
     )
-    
+
     return {
         "maintenance_mode": enabled,
-        "message": message or "Site under maintenance. Please check back soon."
+        "message": message or "Site under maintenance. Please check back soon.",
     }

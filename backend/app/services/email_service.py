@@ -7,6 +7,7 @@ Tres modos (en orden de prioridad):
    alcanzable (MailHog local, Mailtrap, SES, etc.)
 3. **Simulated** - log a consola con el payload completo (sin servicio externo)
 """
+
 import asyncio
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -21,6 +22,7 @@ logger = get_logger(__name__)
 
 class EmailError(Exception):
     """Custom email error"""
+
     pass
 
 
@@ -48,7 +50,9 @@ class EmailService:
         if settings.RESEND_API_KEY:
             resend.api_key = settings.RESEND_API_KEY
             self.resend_configured = True
-        elif getattr(settings, "USE_SMTP_IN_DEV", False) and getattr(settings, "SMTP_HOST", None):
+        elif getattr(settings, "USE_SMTP_IN_DEV", False) and getattr(
+            settings, "SMTP_HOST", None
+        ):
             self.smtp_configured = True
 
     @property
@@ -56,17 +60,23 @@ class EmailService:
         """True if at least one transport is configured (Resend or SMTP)."""
         return self.resend_configured or self.smtp_configured
 
-    def _build_email_template(self, title: str, content: str, show_signature: bool = True) -> str:
+    def _build_email_template(
+        self, title: str, content: str, show_signature: bool = True
+    ) -> str:
         """Build consistent email template with brand styling."""
-        signature_html = f"""
-                <p>Pura Vida!<br>{self.BRAND['signature']}</p>
-        """ if show_signature else ""
+        signature_html = (
+            f"""
+                <p>Pura Vida!<br>{self.BRAND["signature"]}</p>
+        """
+            if show_signature
+            else ""
+        )
 
         return f"""
         <html>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h1 style="color: {self.BRAND['primary_color']};">{title}</h1>
+                <h1 style="color: {self.BRAND["primary_color"]};">{title}</h1>
 
                 {content}
 
@@ -82,9 +92,9 @@ class EmailService:
 
     def _build_details_box(self, title: str, items: List[tuple]) -> str:
         """Build a consistent details box for emails."""
-        items_html = "\n".join([
-            f"<p><strong>{label}:</strong> {value}</p>" for label, value in items
-        ])
+        items_html = "\n".join(
+            [f"<p><strong>{label}:</strong> {value}</p>" for label, value in items]
+        )
 
         return f"""
                 <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
@@ -96,12 +106,15 @@ class EmailService:
     def _validate_email(self, email: str) -> bool:
         """Validate email format to prevent header injection."""
         import re
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        return bool(re.match(pattern, email)) and '\n' not in email and '\r' not in email
+
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        return (
+            bool(re.match(pattern, email)) and "\n" not in email and "\r" not in email
+        )
 
     def _sanitize_for_log(self, value: str) -> str:
         """Sanitize string for safe logging."""
-        return value.replace('\n', ' ').replace('\r', ' ')[:100]
+        return value.replace("\n", " ").replace("\r", " ")[:100]
 
     async def _send_smtp(
         self,
@@ -136,8 +149,13 @@ class EmailService:
 
         try:
             await asyncio.to_thread(_do_send)
-            logger.info(f"[EMAIL via SMTP] To: {to}, Subject: {self._sanitize_for_log(subject)}")
-            return {"id": f"smtp-{int(asyncio.get_event_loop().time())}", "status": "sent"}
+            logger.info(
+                f"[EMAIL via SMTP] To: {to}, Subject: {self._sanitize_for_log(subject)}"
+            )
+            return {
+                "id": f"smtp-{int(asyncio.get_event_loop().time())}",
+                "status": "sent",
+            }
         except (OSError, smtplib.SMTPException) as e:
             logger.error(f"Failed SMTP send to {to}: {e}")
             raise EmailError(f"SMTP send failed: {e}") from e
@@ -201,7 +219,9 @@ class EmailService:
 
         if self.resend_configured:
             try:
-                return await self._send_resend(to, subject, html, text, reply_to, attachments)
+                return await self._send_resend(
+                    to, subject, html, text, reply_to, attachments
+                )
             except (RuntimeError, ValueError, ConnectionError) as e:
                 logger.error(f"Resend send failed to {to}: {e}")
                 raise EmailError(f"Email send failed: {e}") from e
@@ -216,7 +236,7 @@ class EmailService:
             f"(text len={len(text or '')}, html len={len(html or '')})"
         )
         return {"id": "simulated", "status": "simulated"}
-    
+
     async def send_booking_confirmation(
         self,
         to: str,
@@ -225,27 +245,30 @@ class EmailService:
         check_in: str,
         check_out: str,
         total_amount: float,
-        currency: str = "USD"
+        currency: str = "USD",
     ) -> Dict[str, Any]:
         """
         Send booking confirmation email.
         """
-        details = self._build_details_box("Booking Details", [
-            ("Confirmation Code", booking_code),
-            ("Property", property_name),
-            ("Check-in", check_in),
-            ("Check-out", check_out),
-            ("Total", f"{currency} ${total_amount:.2f}"),
-        ])
-        
+        details = self._build_details_box(
+            "Booking Details",
+            [
+                ("Confirmation Code", booking_code),
+                ("Property", property_name),
+                ("Check-in", check_in),
+                ("Check-out", check_out),
+                ("Total", f"{currency} ${total_amount:.2f}"),
+            ],
+        )
+
         content = f"""
                 <p>Your booking has been confirmed!</p>
                 {details}
-                <p>Thank you for choosing {self.BRAND['name']}!</p>
+                <p>Thank you for choosing {self.BRAND["name"]}!</p>
         """
-        
+
         html = self._build_email_template("Booking Confirmation", content)
-        
+
         text = f"""Booking Confirmation
 
 Your booking has been confirmed!
@@ -257,59 +280,53 @@ Booking Details:
 - Check-out: {check_out}
 - Total: {currency} ${total_amount:.2f}
 
-Thank you for choosing {self.BRAND['name']}!"""
-        
+Thank you for choosing {self.BRAND["name"]}!"""
+
         return await self.send_email(
-            to=to,
-            subject=f"Booking Confirmed - {booking_code}",
-            html=html,
-            text=text
+            to=to, subject=f"Booking Confirmed - {booking_code}", html=html, text=text
         )
-    
+
     async def send_payment_receipt(
         self,
         to: str,
         booking_code: str,
         payment_amount: float,
         currency: str = "USD",
-        payment_date: str = None
+        payment_date: str = None,
     ) -> Dict[str, Any]:
         """
         Send payment receipt email.
         """
-        details = self._build_details_box("Payment Details", [
-            ("Booking Code", booking_code),
-            ("Amount Paid", f"{currency} ${payment_amount:.2f}"),
-            ("Date", payment_date or "Today"),
-        ])
-        
+        details = self._build_details_box(
+            "Payment Details",
+            [
+                ("Booking Code", booking_code),
+                ("Amount Paid", f"{currency} ${payment_amount:.2f}"),
+                ("Date", payment_date or "Today"),
+            ],
+        )
+
         content = f"""
                 <p>Thank you for your payment!</p>
                 {details}
                 <p>Your booking is now confirmed.</p>
         """
-        
+
         html = self._build_email_template("Payment Receipt", content)
-        
+
         return await self.send_email(
-            to=to,
-            subject=f"Payment Receipt - {booking_code}",
-            html=html
+            to=to, subject=f"Payment Receipt - {booking_code}", html=html
         )
-    
-    async def send_welcome_email(
-        self,
-        to: str,
-        full_name: str
-    ) -> Dict[str, Any]:
+
+    async def send_welcome_email(self, to: str, full_name: str) -> Dict[str, Any]:
         """
         Send welcome email to new users.
         """
         content = f"""
                 <p>Hi {full_name},</p>
-                
-                <p>Thank you for joining {self.BRAND['name']}. We're excited to help you discover the beauty of Costa Rica.</p>
-                
+
+                <p>Thank you for joining {self.BRAND["name"]}. We're excited to help you discover the beauty of Costa Rica.</p>
+
                 <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
                     <h3 style="margin-top: 0;">What's Next?</h3>
                     <ul>
@@ -319,28 +336,22 @@ Thank you for choosing {self.BRAND['name']}!"""
                     </ul>
                 </div>
         """
-        
+
         html = self._build_email_template(f"Welcome to {self.BRAND['name']}!", content)
-        
+
         return await self.send_email(
-            to=to,
-            subject=f"Welcome to {self.BRAND['name']}!",
-            html=html
+            to=to, subject=f"Welcome to {self.BRAND['name']}!", html=html
         )
-    
-    async def send_vendor_welcome(
-        self,
-        to: str,
-        business_name: str
-    ) -> Dict[str, Any]:
+
+    async def send_vendor_welcome(self, to: str, business_name: str) -> Dict[str, Any]:
         """
         Send welcome email to new vendors.
         """
         content = f"""
                 <p>Hi {business_name},</p>
-                
-                <p>Thank you for registering as a vendor on {self.BRAND['name']}. We're excited to help you reach more travelers.</p>
-                
+
+                <p>Thank you for registering as a vendor on {self.BRAND["name"]}. We're excited to help you reach more travelers.</p>
+
                 <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
                     <h3 style="margin-top: 0;">Next Steps</h3>
                     <ol>
@@ -350,18 +361,20 @@ Thank you for choosing {self.BRAND['name']}!"""
                         <li>Start receiving bookings!</li>
                     </ol>
                 </div>
-                
-                <p>Questions? Reply to this email or contact our vendor support team at {self.BRAND['support_email']}.</p>
+
+                <p>Questions? Reply to this email or contact our vendor support team at {self.BRAND["support_email"]}.</p>
         """
-        
-        html = self._build_email_template(f"Welcome to {self.BRAND['name']} - Vendor Account", content)
-        
+
+        html = self._build_email_template(
+            f"Welcome to {self.BRAND['name']} - Vendor Account", content
+        )
+
         return await self.send_email(
             to=to,
             subject=f"Welcome to {self.BRAND['name']} - Vendor Account",
-            html=html
+            html=html,
         )
-    
+
     async def send_booking_notification_to_vendor(
         self,
         to: str,
@@ -370,41 +383,42 @@ Thank you for choosing {self.BRAND['name']}!"""
         guest_name: str,
         check_in: str,
         check_out: str,
-        total_amount: float
+        total_amount: float,
     ) -> Dict[str, Any]:
         """
         Notify vendor of new booking.
         """
-        details = self._build_details_box("Booking Details", [
-            ("Confirmation Code", booking_code),
-            ("Guest", guest_name),
-            ("Check-in", check_in),
-            ("Check-out", check_out),
-            ("Total Revenue", f"${total_amount:.2f}"),
-        ])
-        
+        details = self._build_details_box(
+            "Booking Details",
+            [
+                ("Confirmation Code", booking_code),
+                ("Guest", guest_name),
+                ("Check-in", check_in),
+                ("Check-out", check_out),
+                ("Total Revenue", f"${total_amount:.2f}"),
+            ],
+        )
+
         content = f"""
                 <p>Hi {business_name},</p>
-                
+
                 <p>You have a new booking. Please review and confirm it in your vendor dashboard.</p>
-                
+
                 {details}
-                
-                <p><a href="{self.BRAND['vendor_dashboard']}" 
-                      style="background: {self.BRAND['primary_color']}; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+
+                <p><a href="{self.BRAND["vendor_dashboard"]}"
+                      style="background: {self.BRAND["primary_color"]}; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
                       View in Dashboard
                    </a>
                 </p>
         """
-        
+
         html = self._build_email_template("New Booking!", content, show_signature=False)
-        
+
         return await self.send_email(
-            to=to,
-            subject=f"New Booking - {booking_code}",
-            html=html
+            to=to, subject=f"New Booking - {booking_code}", html=html
         )
-    
+
     def is_configured(self) -> bool:
         """Check if email service is configured"""
         return self.configured

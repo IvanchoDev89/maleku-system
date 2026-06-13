@@ -29,7 +29,7 @@
             </a>
           </div>
         </div>
-        
+
         <!-- Destinations -->
         <div>
           <h4 class="text-white font-bold text-lg mb-4">Destinos Populares</h4>
@@ -41,7 +41,7 @@
             <li><NuxtLink to="/destinos" class="text-primary-400 hover:text-primary-300 transition-colors font-medium flex items-center gap-2 mt-2"><ArrowRight class="w-4 h-4" /> Ver todos</NuxtLink></li>
           </ul>
         </div>
-        
+
         <!-- Services -->
         <div>
           <h4 class="text-white font-bold text-lg mb-4">Servicios</h4>
@@ -52,7 +52,7 @@
             <li><NuxtLink to="/planificador" class="text-gray-400 hover:text-primary-400 transition-colors flex items-center gap-2"><FileText class="w-4 h-4" /> Planificador</NuxtLink></li>
           </ul>
         </div>
-        
+
         <!-- Contact -->
         <div>
           <h4 class="text-white font-bold text-lg mb-4">Contacto</h4>
@@ -88,7 +88,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Bottom Bar -->
     <div class="border-t border-gray-800">
       <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center gap-4">

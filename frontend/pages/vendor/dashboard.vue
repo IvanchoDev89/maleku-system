@@ -81,7 +81,7 @@
           Ver todas →
         </NuxtLink>
       </div>
-      
+
       <div v-if="loadingBookings" class="space-y-3">
         <div v-for="i in 3" :key="i" class="flex gap-4 animate-pulse">
           <div class="h-4 bg-gray-200 rounded w-20" />
@@ -90,7 +90,7 @@
           <div class="h-4 bg-gray-200 rounded w-20" />
         </div>
       </div>
-      
+
       <div v-else-if="recentBookings.length === 0" class="text-center py-12">
         <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Icon name="lucide:calendar-x" class="w-8 h-8 text-gray-400" />
@@ -98,7 +98,7 @@
         <p class="text-gray-500 font-medium">No tienes reservas aún</p>
         <p class="text-gray-400 text-sm mt-1">Cuando recibas reservas aparecerán aquí</p>
       </div>
-      
+
       <div v-else class="overflow-x-auto">
         <table class="w-full">
           <thead>
@@ -112,8 +112,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr 
-              v-for="booking in recentBookings" 
+            <tr
+              v-for="booking in recentBookings"
               :key="booking.id"
               class="border-b border-gray-50 hover:bg-gray-50 transition-colors"
             >
@@ -134,7 +134,7 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <NuxtLink 
+      <NuxtLink
         to="/vendor/properties/new"
         class="group bg-gradient-to-br from-primary-600 to-primary-700 text-white rounded-xl p-6 hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5"
       >
@@ -145,7 +145,7 @@
         <p class="text-white/80 text-sm">Agrega un nuevo hotel o villa</p>
       </NuxtLink>
 
-      <NuxtLink 
+      <NuxtLink
         to="/vendor/tours/new"
         class="group bg-gradient-to-br from-accent-600 to-accent-700 text-white rounded-xl p-6 hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5"
       >
@@ -156,7 +156,7 @@
         <p class="text-white/80 text-sm">Crea un nuevo tour o experiencia</p>
       </NuxtLink>
 
-      <NuxtLink 
+      <NuxtLink
         to="/vendor/settings"
         class="group bg-gradient-to-br from-slate-700 to-slate-800 text-white rounded-xl p-6 hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5"
       >

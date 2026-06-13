@@ -4,6 +4,7 @@ Super Admin Content Management API
 Manages blog posts, static pages, SEO settings, and media library.
 Exclusive access for SUPER_ADMIN role.
 """
+
 from typing import List, Optional
 from datetime import datetime, timezone
 from enum import Enum
@@ -27,7 +28,7 @@ def _serialize_for_audit(data: dict) -> dict:
     for k, v in data.items():
         if isinstance(v, datetime):
             result[k] = v.isoformat()
-        elif hasattr(v, 'isoformat'):
+        elif hasattr(v, "isoformat"):
             result[k] = str(v)
         else:
             result[k] = v
@@ -43,6 +44,7 @@ class ContentStatus(str, Enum):
 
 class BlogPost(BaseModel):
     """Blog post model"""
+
     id: str
     title: str
     slug: str
@@ -63,6 +65,7 @@ class BlogPost(BaseModel):
 
 class BlogPostCreate(BaseModel):
     """Create blog post"""
+
     title: str = Field(..., min_length=5, max_length=200)
     excerpt: str = Field(..., max_length=500)
     content: str = Field(..., min_length=50)
@@ -76,6 +79,7 @@ class BlogPostCreate(BaseModel):
 
 class BlogPostUpdate(BaseModel):
     """Update blog post"""
+
     title: Optional[str] = Field(None, min_length=5, max_length=200)
     excerpt: Optional[str] = Field(None, max_length=500)
     content: Optional[str] = Field(None, min_length=50)
@@ -89,6 +93,7 @@ class BlogPostUpdate(BaseModel):
 
 class StaticPage(BaseModel):
     """Static page model"""
+
     id: str
     title: str
     slug: str
@@ -105,6 +110,7 @@ class StaticPage(BaseModel):
 
 class StaticPageUpdate(BaseModel):
     """Update static page"""
+
     title: Optional[str] = Field(None, max_length=200)
     content: Optional[str] = None
     meta_title: Optional[str] = Field(None, max_length=70)
@@ -116,6 +122,7 @@ class StaticPageUpdate(BaseModel):
 
 class SEOSettings(BaseModel):
     """Global SEO settings"""
+
     site_title_template: str = "{page_title} | {site_name}"
     default_meta_title: str = "Costa Rica Travel - Tours, Hotels & Vacation Packages"
     default_meta_description: str = "Discover the best of Costa Rica with our curated tours, hotels, and vacation packages."
@@ -128,6 +135,7 @@ class SEOSettings(BaseModel):
 
 class MediaFile(BaseModel):
     """Media file model"""
+
     id: str
     filename: str
     original_name: str
@@ -161,7 +169,7 @@ _blog_posts = [
         "published_at": datetime(2024, 1, 15, 10, 0, 0, tzinfo=timezone.utc),
         "created_at": datetime(2024, 1, 10, 8, 0, 0, tzinfo=timezone.utc),
         "updated_at": datetime(2024, 1, 15, 10, 0, 0, tzinfo=timezone.utc),
-        "views": 1250
+        "views": 1250,
     },
     {
         "id": "bp-002",
@@ -179,8 +187,8 @@ _blog_posts = [
         "published_at": None,
         "created_at": datetime(2024, 2, 1, 9, 0, 0, tzinfo=timezone.utc),
         "updated_at": datetime(2024, 2, 1, 9, 0, 0, tzinfo=timezone.utc),
-        "views": 0
-    }
+        "views": 0,
+    },
 ]
 
 _static_pages = [
@@ -196,7 +204,7 @@ _static_pages = [
         "show_in_footer": True,
         "show_in_header": False,
         "sort_order": 1,
-        "updated_at": datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        "updated_at": datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
     },
     {
         "id": "page-contact",
@@ -210,7 +218,7 @@ _static_pages = [
         "show_in_footer": True,
         "show_in_header": True,
         "sort_order": 2,
-        "updated_at": datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        "updated_at": datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
     },
     {
         "id": "page-terms",
@@ -224,8 +232,8 @@ _static_pages = [
         "show_in_footer": True,
         "show_in_header": False,
         "sort_order": 3,
-        "updated_at": datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-    }
+        "updated_at": datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+    },
 ]
 
 _seo_settings = SEOSettings()
@@ -244,7 +252,7 @@ _media_files = [
         "folder": "destinations",
         "uploaded_by": "admin@example.com",
         "uploaded_at": datetime(2024, 1, 15, 10, 0, 0, tzinfo=timezone.utc),
-        "used_in": ["bp-001", "page-about"]
+        "used_in": ["bp-001", "page-about"],
     },
     {
         "id": "media-002",
@@ -259,8 +267,8 @@ _media_files = [
         "folder": "videos",
         "uploaded_by": "admin@example.com",
         "uploaded_at": datetime(2024, 2, 1, 9, 0, 0, tzinfo=timezone.utc),
-        "used_in": []
-    }
+        "used_in": [],
+    },
 ]
 
 
@@ -273,7 +281,7 @@ async def list_blog_posts(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """List all blog posts with filtering"""
     posts = _blog_posts
@@ -286,15 +294,15 @@ async def list_blog_posts(
         posts = [p for p in posts if p["author_id"] == author_id]
     if search:
         posts = [p for p in posts if search.lower() in p["title"].lower()]
-    
-    return [BlogPost(**p) for p in posts[offset:offset + limit]]
+
+    return [BlogPost(**p) for p in posts[offset : offset + limit]]
 
 
 @router.get("/blog/{post_id}", response_model=BlogPost)
 async def get_blog_post(
     post_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Get single blog post"""
     post = next((p for p in _blog_posts if p["id"] == post_id), None)
@@ -307,11 +315,11 @@ async def get_blog_post(
 async def create_blog_post(
     data: BlogPostCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Create new blog post"""
     new_id = f"bp-{len(_blog_posts) + 1:03d}"
-    
+
     post = {
         "id": new_id,
         "title": data.title,
@@ -328,11 +336,11 @@ async def create_blog_post(
         "published_at": data.published_at,
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
-        "views": 0
+        "views": 0,
     }
-    
+
     _blog_posts.insert(0, post)
-    
+
     # Log action
     await AuditService.log_action(
         db=db,
@@ -341,9 +349,9 @@ async def create_blog_post(
         entity_type="blog_post",
         entity_id=None,
         new_values=_serialize_for_audit(post),
-        changes_summary=f"Blog post '{data.title}' created"
+        changes_summary=f"Blog post '{data.title}' created",
     )
-    
+
     return BlogPost(**post)
 
 
@@ -352,26 +360,37 @@ async def update_blog_post(
     post_id: str,
     data: BlogPostUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Update blog post"""
     post = next((p for p in _blog_posts if p["id"] == post_id), None)
     if not post:
         raise HTTPException(status_code=404, detail="Blog post not found")
-    
-    old_values = {k: v for k, v in post.items() if k in data.model_dump(exclude_unset=True)}
-    
+
+    old_values = {
+        k: v for k, v in post.items() if k in data.model_dump(exclude_unset=True)
+    }
+
     # SECURITY: Prevent mass assignment - only allow fields defined in BlogPostUpdate
-    allowed_fields = {'title', 'excerpt', 'content', 'featured_image', 'status', 
-                     'tags', 'meta_title', 'meta_description', 'published_at'}
-    
+    allowed_fields = {
+        "title",
+        "excerpt",
+        "content",
+        "featured_image",
+        "status",
+        "tags",
+        "meta_title",
+        "meta_description",
+        "published_at",
+    }
+
     update_data = data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         if key in allowed_fields and value is not None:
             post[key] = value
-    
+
     post["updated_at"] = datetime.now(timezone.utc)
-    
+
     await AuditService.log_action(
         db=db,
         user=current_user,
@@ -380,9 +399,9 @@ async def update_blog_post(
         entity_id=None,
         old_values=_serialize_for_audit(old_values),
         new_values=_serialize_for_audit(post),
-        changes_summary=f"Blog post '{post['title']}' updated"
+        changes_summary=f"Blog post '{post['title']}' updated",
     )
-    
+
     return BlogPost(**post)
 
 
@@ -390,15 +409,15 @@ async def update_blog_post(
 async def delete_blog_post(
     post_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Delete blog post"""
     post = next((p for p in _blog_posts if p["id"] == post_id), None)
     if not post:
         raise HTTPException(status_code=404, detail="Blog post not found")
-    
+
     _blog_posts.remove(post)
-    
+
     await AuditService.log_action(
         db=db,
         user=current_user,
@@ -406,16 +425,16 @@ async def delete_blog_post(
         entity_type="blog_post",
         entity_id=None,
         old_values=_serialize_for_audit(post),
-        changes_summary=f"Blog post '{post['title']}' deleted"
+        changes_summary=f"Blog post '{post['title']}' deleted",
     )
-    
+
     return None
 
 
 @router.get("/pages", response_model=List[StaticPage])
 async def list_static_pages(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """List all static pages"""
     return [StaticPage(**p) for p in _static_pages]
@@ -425,7 +444,7 @@ async def list_static_pages(
 async def get_static_page(
     page_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Get single static page"""
     page = next((p for p in _static_pages if p["id"] == page_id), None)
@@ -439,25 +458,27 @@ async def update_static_page(
     page_id: str,
     data: StaticPageUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Update static page"""
     page = next((p for p in _static_pages if p["id"] == page_id), None)
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
-    
-    old_values = {k: v for k, v in page.items() if k in data.model_dump(exclude_unset=True)}
-    
+
+    old_values = {
+        k: v for k, v in page.items() if k in data.model_dump(exclude_unset=True)
+    }
+
     # SECURITY: Prevent mass assignment - only allow fields defined in StaticPageUpdate
-    allowed_fields = {'title', 'content', 'meta_title', 'meta_description'}
-    
+    allowed_fields = {"title", "content", "meta_title", "meta_description"}
+
     update_data = data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         if key in allowed_fields and value is not None:
             page[key] = value
-    
+
     page["updated_at"] = datetime.now(timezone.utc)
-    
+
     await AuditService.log_action(
         db=db,
         user=current_user,
@@ -466,16 +487,16 @@ async def update_static_page(
         entity_id=None,
         old_values=_serialize_for_audit(old_values),
         new_values=_serialize_for_audit(page),
-        changes_summary=f"Static page '{page['title']}' updated"
+        changes_summary=f"Static page '{page['title']}' updated",
     )
-    
+
     return StaticPage(**page)
 
 
 @router.get("/seo", response_model=SEOSettings)
 async def get_seo_settings(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Get global SEO settings"""
     return _seo_settings
@@ -485,15 +506,15 @@ async def get_seo_settings(
 async def update_seo_settings(
     data: SEOSettings,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Update global SEO settings"""
     global _seo_settings
-    
+
     old_values = _seo_settings.model_dump()
-    
+
     _seo_settings = data
-    
+
     await AuditService.log_action(
         db=db,
         user=current_user,
@@ -502,9 +523,9 @@ async def update_seo_settings(
         entity_id=None,
         old_values=_serialize_for_audit(old_values),
         new_values=_serialize_for_audit(data.model_dump()),
-        changes_summary="SEO settings updated"
+        changes_summary="SEO settings updated",
     )
-    
+
     return _seo_settings
 
 
@@ -516,40 +537,40 @@ async def list_media(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """List media files"""
     media = _media_files
-    
+
     if folder:
         media = [m for m in media if m["folder"] == folder]
     if mime_type:
         media = [m for m in media if m["mime_type"].startswith(mime_type)]
     if search:
         media = [m for m in media if search.lower() in m["filename"].lower()]
-    
-    return [MediaFile(**m) for m in media[offset:offset + limit]]
+
+    return [MediaFile(**m) for m in media[offset : offset + limit]]
 
 
 @router.delete("/media/{media_id}", response_model=dict, status_code=200)
 async def delete_media(
     media_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_superadmin())
+    current_user: User = Depends(require_superadmin()),
 ):
     """Delete media file"""
     media = next((m for m in _media_files if m["id"] == media_id), None)
     if not media:
         raise HTTPException(status_code=404, detail="Media file not found")
-    
+
     if media["used_in"]:
         raise HTTPException(
-            status_code=400, 
-            detail=f"Media is used in {len(media['used_in'])} places. Remove references first."
+            status_code=400,
+            detail=f"Media is used in {len(media['used_in'])} places. Remove references first.",
         )
-    
+
     _media_files.remove(media)
-    
+
     await AuditService.log_action(
         db=db,
         user=current_user,
@@ -557,7 +578,7 @@ async def delete_media(
         entity_type="media",
         entity_id=None,
         old_values=_serialize_for_audit(media),
-        changes_summary=f"Media file '{media['filename']}' deleted"
+        changes_summary=f"Media file '{media['filename']}' deleted",
     )
-    
+
     return None

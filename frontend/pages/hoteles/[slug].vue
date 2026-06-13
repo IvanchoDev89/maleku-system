@@ -122,7 +122,7 @@
             <section class="mb-8">
               <h2 class="text-2xl font-bold text-gray-900 mb-4">Servicios Incluidos</h2>
               <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div 
+                <div
                   v-for="(amenity, index) in getAmenities()"
                   :key="amenity"
                   class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100"
@@ -187,17 +187,17 @@
                 <div class="space-y-4 mb-6">
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Check-in</label>
-                    <input 
-                      v-model="checkin" 
-                      type="date" 
+                    <input
+                      v-model="checkin"
+                      type="date"
                       class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                     />
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Check-out</label>
-                    <input 
-                      v-model="checkout" 
-                      type="date" 
+                    <input
+                      v-model="checkout"
+                      type="date"
                       class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                     />
                   </div>

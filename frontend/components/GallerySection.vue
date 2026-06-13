@@ -31,13 +31,13 @@ const galleryImages = [
 
       <!-- Masonry Grid -->
       <div class="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-[200px]">
-        <div 
-          v-for="(image, index) in galleryImages" 
+        <div
+          v-for="(image, index) in galleryImages"
           :key="index"
           :class="['relative overflow-hidden rounded-2xl group cursor-pointer', image.span]"
         >
-          <NuxtImg 
-            :src="image.src" 
+          <NuxtImg
+            :src="image.src"
             :alt="image.alt"
             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             width="600"
@@ -54,8 +54,8 @@ const galleryImages = [
 
       <!-- CTA -->
       <div class="text-center mt-12">
-        <a 
-          href="https://instagram.com/costaricatravel" 
+        <a
+          href="https://instagram.com/costaricatravel"
           target="_blank"
           rel="noopener noreferrer"
           class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 text-white font-bold rounded-full hover:shadow-lg transition-all"

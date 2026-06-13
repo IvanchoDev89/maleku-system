@@ -2,9 +2,9 @@
 API tests for core endpoints
 Tests authentication, properties, tours, destinations, search and bookings
 """
+
 import pytest
 from fastapi import status
-
 
 
 class TestAuth:
@@ -29,12 +29,15 @@ class TestAuth:
     async def test_login(self, client, sample_user_data):
         # First register
         await client.post("/api/v1/auth/register", json=sample_user_data)
-        
+
         # Then login
-        response = await client.post("/api/v1/auth/login", json={
-            "email": sample_user_data["email"],
-            "password": sample_user_data["password"]
-        })
+        response = await client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": sample_user_data["email"],
+                "password": sample_user_data["password"],
+            },
+        )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert "access_token" in data
@@ -42,11 +45,11 @@ class TestAuth:
     @pytest.mark.asyncio
     async def test_login_wrong_password(self, client, sample_user_data):
         await client.post("/api/v1/auth/register", json=sample_user_data)
-        
-        response = await client.post("/api/v1/auth/login", json={
-            "email": sample_user_data["email"],
-            "password": "WrongPassword1!"
-        })
+
+        response = await client.post(
+            "/api/v1/auth/login",
+            json={"email": sample_user_data["email"], "password": "WrongPassword1!"},
+        )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     @pytest.mark.asyncio
@@ -207,7 +210,10 @@ class TestRateLimiting:
         """Verify search endpoint handles requests"""
         for _ in range(5):
             response = await client.get("/api/v1/search/search?q=test")
-            assert response.status_code in [status.HTTP_200_OK, status.HTTP_429_TOO_MANY_REQUESTS]
+            assert response.status_code in [
+                status.HTTP_200_OK,
+                status.HTTP_429_TOO_MANY_REQUESTS,
+            ]
 
 
 class TestBookings:
@@ -216,15 +222,26 @@ class TestBookings:
     @pytest.mark.asyncio
     async def test_create_booking_unauthenticated(self, client):
         """Verify unauthenticated requests are rejected"""
-        response = await client.post("/api/v1/bookings/property", json={
-            "property_id": "00000000-0000-0000-0000-000000000000",
-            "check_in": "2025-06-01",
-            "check_out": "2025-06-05",
-            "guests": 2
-        })
-        assert response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        response = await client.post(
+            "/api/v1/bookings/property",
+            json={
+                "property_id": "00000000-0000-0000-0000-000000000000",
+                "check_in": "2025-06-01",
+                "check_out": "2025-06-05",
+                "guests": 2,
+            },
+        )
+        assert response.status_code in [
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_403_FORBIDDEN,
+        ]
 
     @pytest.mark.asyncio
     async def test_get_booking_status_unauthenticated(self, client):
-        response = await client.get("/api/v1/bookings/00000000-0000-0000-0000-000000000000/status")
-        assert response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_404_NOT_FOUND]
+        response = await client.get(
+            "/api/v1/bookings/00000000-0000-0000-0000-000000000000/status"
+        )
+        assert response.status_code in [
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_404_NOT_FOUND,
+        ]

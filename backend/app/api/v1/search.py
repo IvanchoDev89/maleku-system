@@ -89,9 +89,12 @@ class SearchResponse(BaseModel):
     blog: list[SearchResultItem]
 
 
-@router.get("/map", response_model=MapDataResponse,
-            summary="Get map data",
-            description="Returns properties and tours with coordinates for map display. Supports filters by type, category, region, and price range with pagination.")
+@router.get(
+    "/map",
+    response_model=MapDataResponse,
+    summary="Get map data",
+    description="Returns properties and tours with coordinates for map display. Supports filters by type, category, region, and price range with pagination.",
+)
 async def get_map_data(
     db: AsyncSession = Depends(get_db),
     property_type: str | None = None,
@@ -100,20 +103,22 @@ async def get_map_data(
     min_price: float | None = None,
     max_price: float | None = None,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200)
+    page_size: int = Query(50, ge=1, le=200),
 ) -> dict:
     """Get all properties and tours with coordinates for map display"""
-    
+
     if page_size > 200:
         page_size = 200
-    
+
     # Build property query
-    prop_query = select(Property).where(and_(
-        Property.is_active,
-        Property.latitude.isnot(None),
-        Property.longitude.isnot(None)
-    ))
-    
+    prop_query = select(Property).where(
+        and_(
+            Property.is_active,
+            Property.latitude.isnot(None),
+            Property.longitude.isnot(None),
+        )
+    )
+
     if property_type:
         prop_query = prop_query.where(Property.property_type == property_type)
     if category:
@@ -124,36 +129,38 @@ async def get_map_data(
         prop_query = prop_query.where(Property.base_price >= min_price)
     if max_price:
         prop_query = prop_query.where(Property.base_price <= max_price)
-    
+
     count_prop = select(func.count()).select_from(prop_query.subquery())
     total_properties = (await db.execute(count_prop)).scalar()
-    
+
     offset = (page - 1) * page_size
-    prop_query = prop_query.order_by(Property.created_at.desc()).offset(offset).limit(page_size)
+    prop_query = (
+        prop_query.order_by(Property.created_at.desc()).offset(offset).limit(page_size)
+    )
     prop_result = await db.execute(prop_query)
     properties = prop_result.scalars().all()
-    
+
     # Build tour query
-    tour_query = select(Tour).where(and_(
-        Tour.is_active,
-        Tour.latitude.isnot(None),
-        Tour.longitude.isnot(None)
-    ))
-    
+    tour_query = select(Tour).where(
+        and_(Tour.is_active, Tour.latitude.isnot(None), Tour.longitude.isnot(None))
+    )
+
     if category:
         tour_query = tour_query.where(Tour.category == category)
     if min_price:
         tour_query = tour_query.where(Tour.price >= min_price)
     if max_price:
         tour_query = tour_query.where(Tour.price <= max_price)
-    
+
     count_tour = select(func.count()).select_from(tour_query.subquery())
     total_tours = (await db.execute(count_tour)).scalar()
-    
-    tour_query = tour_query.order_by(Tour.created_at.desc()).offset(offset).limit(page_size)
+
+    tour_query = (
+        tour_query.order_by(Tour.created_at.desc()).offset(offset).limit(page_size)
+    )
     tour_result = await db.execute(tour_query)
     tours = tour_result.scalars().all()
-    
+
     return {
         "properties": [
             {
@@ -175,7 +182,7 @@ async def get_map_data(
                 "total_reviews": p.total_reviews,
                 "min_guests": p.min_guests,
                 "max_guests": p.max_guests,
-                "amenities": p.amenities[:8] if p.amenities else []
+                "amenities": p.amenities[:8] if p.amenities else [],
             }
             for p in properties
         ],
@@ -195,7 +202,7 @@ async def get_map_data(
                 "duration_hours": t.duration_hours,
                 "rating": t.rating,
                 "total_reviews": t.total_reviews,
-                "max_group_size": t.max_group_size
+                "max_group_size": t.max_group_size,
             }
             for t in tours
         ],
@@ -204,43 +211,44 @@ async def get_map_data(
             "page_size": page_size,
             "total_properties": total_properties,
             "total_tours": total_tours,
-            "total_pages": max((total_properties + page_size - 1) // page_size, 1)
-        }
+            "total_pages": max((total_properties + page_size - 1) // page_size, 1),
+        },
     }
 
 
-@router.get("/map/count", response_model=MapCountsResponse,
-            summary="Get map counts",
-            description="Returns aggregate counts for map markers: total properties/tours, grouped by region and category.")
-async def get_map_counts(
-    db: AsyncSession = Depends(get_db)
-) -> dict:
+@router.get(
+    "/map/count",
+    response_model=MapCountsResponse,
+    summary="Get map counts",
+    description="Returns aggregate counts for map markers: total properties/tours, grouped by region and category.",
+)
+async def get_map_counts(db: AsyncSession = Depends(get_db)) -> dict:
     """Get counts for map markers and stats"""
-    
+
     # Count properties by region
     prop_result = await db.execute(
         select(Property.region, func.count())
         .where(Property.is_active)
         .group_by(Property.region)
     )
-    
+
     regions = {}
     for row in prop_result.all():
         if row[0]:
             regions[row[0]] = row[1]
-    
+
     # Count tours by category
     tour_result = await db.execute(
         select(Tour.category, func.count())
         .where(Tour.is_active)
         .group_by(Tour.category)
     )
-    
+
     categories = {}
     for row in tour_result.all():
         if row[0]:
             categories[row[0].value] = row[1]
-    
+
     # Total counts
     total_properties = await db.execute(
         select(func.count()).select_from(Property).where(Property.is_active)
@@ -248,26 +256,29 @@ async def get_map_counts(
     total_tours = await db.execute(
         select(func.count()).select_from(Tour).where(Tour.is_active)
     )
-    
+
     return {
         "total_properties": total_properties.scalar() or 0,
         "total_tours": total_tours.scalar() or 0,
         "by_region": regions,
-        "by_category": categories
+        "by_category": categories,
     }
 
 
-@router.get("/search", response_model=SearchResponse,
-            summary="Global search",
-            description="Searches properties, tours, destinations, and blog in parallel using ILIKE pattern matching on names/titles.")
+@router.get(
+    "/search",
+    response_model=SearchResponse,
+    summary="Global search",
+    description="Searches properties, tours, destinations, and blog in parallel using ILIKE pattern matching on names/titles.",
+)
 async def global_search(
     q: str = Query(..., min_length=1, max_length=200),
     db: AsyncSession = Depends(get_db),
-    limit: int = Query(10, ge=1, le=50)
+    limit: int = Query(10, ge=1, le=50),
 ) -> dict:
     # Sanitize query input
     q = q.strip()[:200]
-    
+
     # Search properties, tours, destinations, blog in parallel
     pattern = f"%{escape_like_pattern(q)}%"
 
@@ -279,7 +290,13 @@ async def global_search(
             .limit(limit)
         )
         return [
-            {"id": str(p.id), "name": p.name, "slug": p.slug, "type": "property", "image": p.images[0] if p.images else None}
+            {
+                "id": str(p.id),
+                "name": p.name,
+                "slug": p.slug,
+                "type": "property",
+                "image": p.images[0] if p.images else None,
+            }
             for p in result.scalars().all()
         ]
 
@@ -291,7 +308,13 @@ async def global_search(
             .limit(limit)
         )
         return [
-            {"id": str(t.id), "name": t.name, "slug": t.slug, "type": "tour", "image": t.cover_image}
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug,
+                "type": "tour",
+                "image": t.cover_image,
+            }
             for t in result.scalars().all()
         ]
 
@@ -303,7 +326,13 @@ async def global_search(
             .limit(limit)
         )
         return [
-            {"id": str(d.id), "name": d.name, "slug": d.slug, "type": "destination", "image": d.image}
+            {
+                "id": str(d.id),
+                "name": d.name,
+                "slug": d.slug,
+                "type": "destination",
+                "image": d.image,
+            }
             for d in result.scalars().all()
         ]
 
@@ -315,7 +344,13 @@ async def global_search(
             .limit(limit)
         )
         return [
-            {"id": str(b.id), "title": b.title, "slug": b.slug, "type": "blog", "image": b.featured_image}
+            {
+                "id": str(b.id),
+                "title": b.title,
+                "slug": b.slug,
+                "type": "blog",
+                "image": b.featured_image,
+            }
             for b in result.scalars().all()
         ]
 
@@ -327,5 +362,5 @@ async def global_search(
         "properties": props,
         "tours": tours_res,
         "destinations": dests,
-        "blog": blog
+        "blog": blog,
     }

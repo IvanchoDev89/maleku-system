@@ -7,19 +7,19 @@
     <div class="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-primary-600 via-primary-700 to-emerald-700 overflow-hidden">
       <!-- Background Image -->
       <div class="absolute inset-0">
-        <NuxtImg 
-          src="https://images.unsplash.com/photo-1518638150340-f706e86654de?w=1200&q=85" 
-          alt="Costa Rica" 
+        <NuxtImg
+          src="https://images.unsplash.com/photo-1518638150340-f706e86654de?w=1200&q=85"
+          alt="Costa Rica"
           class="w-full h-full object-cover opacity-30"
           width="1200"
           height="800"
           format="webp"
         />
       </div>
-      
+
       <!-- Gradient Overlay -->
       <div class="absolute inset-0 bg-gradient-to-br from-primary-900/90 via-primary-800/70 to-emerald-900/80"></div>
-      
+
       <!-- Decorative Elements -->
       <div class="absolute top-20 left-20 w-64 h-64 bg-primary-400/20 rounded-full blur-3xl"></div>
       <div class="absolute bottom-32 right-20 w-80 h-80 bg-emerald-400/20 rounded-full blur-3xl"></div>
@@ -39,7 +39,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Features List -->
           <div class="space-y-6">
             <div class="flex items-start gap-4">
@@ -51,7 +51,7 @@
                 <p class="text-primary-200 text-sm">Desde playas paradisíacas hasta volcanes activos</p>
               </div>
             </div>
-            
+
             <div class="flex items-start gap-4">
               <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
                 <Shield class="w-6 h-6 text-primary-300" />
@@ -61,7 +61,7 @@
                 <p class="text-primary-200 text-sm">Pago protegido y cancelación gratis</p>
               </div>
             </div>
-            
+
             <div class="flex items-start gap-4">
               <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
                 <Star class="w-6 h-6 text-primary-300" />
@@ -72,7 +72,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Stats -->
           <div class="mt-12 grid grid-cols-3 gap-6">
             <div class="text-center">
@@ -104,7 +104,7 @@
             <span class="text-2xl font-bold text-primary-600">Costa Rica Travel</span>
           </NuxtLink>
         </div>
-        
+
         <slot />
       </div>
     </main>

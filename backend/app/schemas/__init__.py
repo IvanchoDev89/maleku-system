@@ -7,18 +7,33 @@ import re
 
 def sanitize_slug(value: str) -> str:
     """Remove dangerous characters from slug"""
-    return re.sub(r'[^a-z0-9\-]', '', value.lower().replace(' ', '-'))
+    return re.sub(r"[^a-z0-9\-]", "", value.lower().replace(" ", "-"))
 
 
 def sanitize_html(value: str) -> str:
     """Remove HTML tags"""
-    return re.sub(r'<[^>]+>', '', value)
+    return re.sub(r"<[^>]+>", "", value)
 
 
 def is_dangerous_sql(value: str) -> bool:
     """Check for SQL injection patterns"""
-    dangerous = ['DROP', 'DELETE', 'INSERT', 'UPDATE', 'ALTER', 'CREATE', 'TRUNCATE', 
-                 '--', '/*', '*/', 'xp_', 'sp_', '@@', ' char ', ' nchar ']
+    dangerous = [
+        "DROP",
+        "DELETE",
+        "INSERT",
+        "UPDATE",
+        "ALTER",
+        "CREATE",
+        "TRUNCATE",
+        "--",
+        "/*",
+        "*/",
+        "xp_",
+        "sp_",
+        "@@",
+        " char ",
+        " nchar ",
+    ]
     upper = value.upper()
     return any(d in upper for d in dangerous)
 
@@ -27,11 +42,11 @@ def is_weak_password(value: str) -> bool:
     """Check password strength"""
     if len(value) < 8:
         return True
-    if not re.search(r'[A-Z]', value):
+    if not re.search(r"[A-Z]", value):
         return True
-    if not re.search(r'[a-z]', value):
+    if not re.search(r"[a-z]", value):
         return True
-    if not re.search(r'[0-9]', value):
+    if not re.search(r"[0-9]", value):
         return True
     return False
 
@@ -42,24 +57,26 @@ class UserBase(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=255)
     phone: Optional[str] = Field(None, min_length=8, max_length=20)
 
-    @field_validator('full_name', 'phone')
+    @field_validator("full_name", "phone")
     @classmethod
     def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
-                raise ValueError('Invalid characters in input')
+                raise ValueError("Invalid characters in input")
         return v
 
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8)
 
-    @field_validator('password')
+    @field_validator("password")
     @classmethod
     def validate_password(cls, v: str) -> str:
         if is_weak_password(v):
-            raise ValueError('Password must be 8+ chars with uppercase, lowercase, and numbers')
+            raise ValueError(
+                "Password must be 8+ chars with uppercase, lowercase, and numbers"
+            )
         return v
 
 
@@ -68,26 +85,30 @@ class UserUpdate(BaseModel):
     phone: Optional[str] = Field(None, min_length=8, max_length=20)
     avatar_url: Optional[str] = None
 
-    @field_validator('full_name', 'phone')
+    @field_validator("full_name", "phone")
     @classmethod
     def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
-                raise ValueError('Invalid characters in input')
+                raise ValueError("Invalid characters in input")
         return v
-    
-    @field_validator('avatar_url')
+
+    @field_validator("avatar_url")
     @classmethod
     def validate_avatar_url(cls, v: Optional[str]) -> Optional[str]:
         if v:
             v = v.strip()
             # Validate URL format (only allow safe URLs)
-            if not (v.startswith('http://') or v.startswith('https://') or v.startswith('/')):
-                raise ValueError('avatar_url must be a valid URL starting with http://, https://, or /')
+            if not (
+                v.startswith("http://") or v.startswith("https://") or v.startswith("/")
+            ):
+                raise ValueError(
+                    "avatar_url must be a valid URL starting with http://, https://, or /"
+                )
             # Block dangerous protocols
-            if v.startswith('javascript:') or v.startswith('data:'):
-                raise ValueError('Invalid URL protocol')
+            if v.startswith("javascript:") or v.startswith("data:"):
+                raise ValueError("Invalid URL protocol")
         return v
 
 
@@ -98,7 +119,7 @@ class UserResponse(UserBase):
     is_verified: bool
     avatar_url: Optional[str]
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -127,11 +148,13 @@ class PasswordChangeRequest(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=8)
 
-    @field_validator('new_password')
+    @field_validator("new_password")
     @classmethod
     def validate_new_password(cls, v: str) -> str:
         if is_weak_password(v):
-            raise ValueError('Password must be 8+ chars with uppercase, lowercase, and numbers')
+            raise ValueError(
+                "Password must be 8+ chars with uppercase, lowercase, and numbers"
+            )
         return v
 
 
@@ -165,12 +188,12 @@ class VendorBase(BaseModel):
 
 
 class VendorCreate(VendorBase):
-    @field_validator('business_name')
+    @field_validator("business_name")
     @classmethod
     def sanitize_name(cls, v: str) -> str:
         v = v.strip()
         if is_dangerous_sql(v):
-            raise ValueError('Invalid business name')
+            raise ValueError("Invalid business name")
         return v
 
 
@@ -180,13 +203,13 @@ class VendorUpdate(BaseModel):
     phone: Optional[str] = None
     email: Optional[EmailStr] = None
 
-    @field_validator('business_name', 'description')
+    @field_validator("business_name", "description")
     @classmethod
     def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
-                raise ValueError('Invalid input')
+                raise ValueError("Invalid input")
         return v
 
 
@@ -198,7 +221,7 @@ class VendorResponse(VendorBase):
     is_verified: bool
     is_active: bool
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -210,7 +233,7 @@ class VendorPublicResponse(BaseModel):
     logo_url: Optional[str]
     rating: Optional[float]
     total_reviews: Optional[int]
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -222,7 +245,7 @@ class PropertyBase(BaseModel):
     description: Optional[str] = None
     property_type: str = "hotel"
     category: Optional[str] = None
-    
+
     address: Optional[str] = None
     country: str = "Costa Rica"
     province: Optional[str] = None
@@ -232,44 +255,44 @@ class PropertyBase(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     map_address: Optional[str] = None
-    
+
     cover_image: Optional[str] = None
     images: Optional[List[str]] = []
     videos: Optional[List[str]] = []
     virtual_tour_url: Optional[str] = None
-    
+
     amenities: Optional[List[str]] = []
     features: Optional[List[str]] = []
-    
+
     check_in_time: str = "15:00"
     check_out_time: str = "11:00"
     cancellation_policy: Optional[str] = None
     house_rules: Optional[str] = None
     important_info: Optional[str] = None
-    
+
     min_guests: int = 1
     max_guests: int = 10
     beds: int = 1
     baths: int = 1
     square_meters: Optional[int] = None
-    
+
     base_price: float = 0
     currency: str = "USD"
     weekend_price: float = 0
     weekly_discount: float = 0
-    
+
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
     seo_keywords: Optional[List[str]] = []
     seo_slug: Optional[str] = None
 
-    @field_validator('name', 'address', 'slug')
+    @field_validator("name", "address", "slug")
     @classmethod
     def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
-                raise ValueError('Invalid input')
+                raise ValueError("Invalid input")
         return v
 
 
@@ -318,13 +341,13 @@ class PropertyUpdate(BaseModel):
     seo_keywords: Optional[List[str]] = None
     seo_slug: Optional[str] = None
 
-    @field_validator('name', 'description', 'address')
+    @field_validator("name", "description", "address")
     @classmethod
     def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
-                raise ValueError('Invalid input')
+                raise ValueError("Invalid input")
         return v
 
 
@@ -338,7 +361,7 @@ class PropertyResponse(PropertyBase):
     is_active: bool = True
     is_verified: bool = False
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -357,7 +380,7 @@ class PropertyListResponse(BaseModel):
     total_reviews: int = 0
     base_price: float = 0
     is_active: bool = True
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -368,12 +391,12 @@ class TourBase(BaseModel):
     category: str
     location: str
 
-    @field_validator('name', 'location')
+    @field_validator("name", "location")
     @classmethod
     def sanitize_input(cls, v: str) -> str:
         v = v.strip()
         if is_dangerous_sql(v):
-            raise ValueError('Invalid input')
+            raise ValueError("Invalid input")
         return v
 
 
@@ -390,13 +413,13 @@ class TourUpdate(BaseModel):
     description: Optional[str] = None
     location: Optional[str] = None
 
-    @field_validator('name', 'description', 'location')
+    @field_validator("name", "description", "location")
     @classmethod
     def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
-                raise ValueError('Invalid input')
+                raise ValueError("Invalid input")
         return v
 
 
@@ -409,7 +432,7 @@ class TourResponse(TourBase):
     rating: Optional[float]
     total_reviews: Optional[int]
     is_active: bool
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -422,7 +445,7 @@ class TourListResponse(BaseModel):
     location: str
     price: float
     rating: Optional[float]
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -433,12 +456,12 @@ class BookingBase(BaseModel):
     guest_phone: Optional[str] = None
     guest_notes: Optional[str] = None
 
-    @field_validator('guest_name')
+    @field_validator("guest_name")
     @classmethod
     def sanitize_input(cls, v: str) -> str:
         v = v.strip()
         if is_dangerous_sql(v):
-            raise ValueError('Invalid guest name')
+            raise ValueError("Invalid guest name")
         return v
 
 
@@ -462,6 +485,7 @@ class BookingUpdateStatus(BaseModel):
 
 class PricePreviewRequest(BaseModel):
     """Request to preview pricing before booking"""
+
     room_id: UUID
     check_in: datetime
     check_out: datetime
@@ -470,6 +494,7 @@ class PricePreviewRequest(BaseModel):
 
 class PricePreviewResponse(BaseModel):
     """Detailed price breakdown for preview"""
+
     nights: int
     weekday_nights: int
     weekend_nights: int
@@ -502,7 +527,7 @@ class BookingResponse(BookingBase):
     status: str
     total_amount: float
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -513,12 +538,12 @@ class BlogPostBase(BaseModel):
     content: str = Field(..., min_length=50)
     category: Optional[str] = None
 
-    @field_validator('title', 'content')
+    @field_validator("title", "content")
     @classmethod
     def sanitize_input(cls, v: str) -> str:
         v = v.strip()
         if is_dangerous_sql(v):
-            raise ValueError('Invalid input')
+            raise ValueError("Invalid input")
         return v
 
 
@@ -532,13 +557,13 @@ class BlogPostUpdate(BaseModel):
     excerpt: Optional[str] = None
     content: Optional[str] = None
 
-    @field_validator('title', 'content')
+    @field_validator("title", "content")
     @classmethod
     def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
-                raise ValueError('Invalid input')
+                raise ValueError("Invalid input")
         return v
 
 
@@ -550,7 +575,7 @@ class BlogPostResponse(BlogPostBase):
     is_featured: bool
     published_at: Optional[datetime]
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -562,7 +587,7 @@ class BlogPostListResponse(BaseModel):
     status: str
     views_count: int
     is_featured: bool
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -571,12 +596,12 @@ class DestinationBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=255)
     description: Optional[str] = None
 
-    @field_validator('name')
+    @field_validator("name")
     @classmethod
     def sanitize_input(cls, v: str) -> str:
         v = v.strip()
         if is_dangerous_sql(v):
-            raise ValueError('Invalid name')
+            raise ValueError("Invalid name")
         return v
 
 
@@ -591,13 +616,13 @@ class DestinationUpdate(BaseModel):
     is_active: Optional[bool] = None
     is_featured: Optional[bool] = None
 
-    @field_validator('name', 'description')
+    @field_validator("name", "description")
     @classmethod
     def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
-                raise ValueError('Invalid input')
+                raise ValueError("Invalid input")
         return v
 
 
@@ -607,7 +632,7 @@ class DestinationResponse(DestinationBase):
     province: Optional[str]
     is_featured: bool
     is_active: bool
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -630,5 +655,5 @@ class NewsletterSubscriberResponse(BaseModel):
     is_confirmed: bool
     source: str
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)

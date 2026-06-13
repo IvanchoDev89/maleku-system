@@ -11,27 +11,27 @@
       <!-- Progress Bar -->
       <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
         <div class="flex justify-between items-center">
-          <div 
-            v-for="(step, index) in steps" 
+          <div
+            v-for="(step, index) in steps"
             :key="index"
             class="flex items-center"
             :class="{ 'flex-1': index < steps.length - 1 }"
           >
-            <div 
+            <div
               class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all"
               :class="currentStep > index + 1 ? 'bg-green-500 text-white' : currentStep === index + 1 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'"
             >
               <span v-if="currentStep > index + 1">✓</span>
               <span v-else>{{ index + 1 }}</span>
             </div>
-            <span 
+            <span
               class="ml-2 text-sm hidden sm:block"
               :class="currentStep === index + 1 ? 'text-primary font-semibold' : 'text-gray-500'"
             >
               {{ step }}
             </span>
             <div v-if="index < steps.length - 1" class="flex-1 h-1 mx-4 bg-gray-200 rounded">
-              <div 
+              <div
                 class="h-full bg-primary rounded transition-all"
                 :style="{ width: currentStep > index + 1 ? '100%' : '0%' }"
               ></div>
@@ -42,15 +42,15 @@
 
       <!-- Step Content -->
       <div class="bg-white rounded-2xl shadow-lg p-8">
-        
+
         <!-- STEP 1: Duration -->
         <div v-show="currentStep === 1" class="space-y-6">
           <h2 class="text-2xl font-bold">{{ $t('step1.title') }}</h2>
           <p class="text-gray-600">{{ $t('step1.subtitle') }}</p>
-          
+
           <div class="grid md:grid-cols-3 gap-4">
-            <div 
-              v-for="option in durationOptions" 
+            <div
+              v-for="option in durationOptions"
               :key="option.value"
               @click="form.duration = option.value"
               class="p-6 border-2 rounded-xl cursor-pointer transition-all text-center"
@@ -65,11 +65,11 @@
           <!-- Budget Slider -->
           <div class="mt-8 p-6 bg-gray-50 rounded-xl">
             <label class="block font-semibold mb-4">{{ $t('step1.budgetLabel') }}</label>
-            <input 
-              type="range" 
+            <input
+              type="range"
               v-model.number="form.budget"
-              min="500" 
-              max="10000" 
+              min="500"
+              max="10000"
               step="100"
               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
             />
@@ -85,10 +85,10 @@
         <div v-show="currentStep === 2" class="space-y-6">
           <h2 class="text-2xl font-bold">{{ $t('step2.title') }}</h2>
           <p class="text-gray-600">{{ $t('step2.subtitle') }}</p>
-          
+
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div 
-              v-for="option in styleOptions" 
+            <div
+              v-for="option in styleOptions"
               :key="option.value"
               @click="form.style = option.value"
               class="p-6 border-2 rounded-xl cursor-pointer transition-all"
@@ -107,8 +107,8 @@
           <p class="text-gray-600">{{ $t('step3.subtitle') }}</p>
 
           <div class="grid md:grid-cols-2 gap-4">
-            <div 
-              v-for="dest in destinationOptions" 
+            <div
+              v-for="dest in destinationOptions"
               :key="dest.value"
               @click="toggleDestination(dest.value)"
               class="flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all"
@@ -119,7 +119,7 @@
                 <h3 class="font-semibold">{{ dest.label }}</h3>
                 <p class="text-sm text-gray-500">{{ dest.desc }}</p>
               </div>
-              <div 
+              <div
                 class="w-6 h-6 rounded-full flex items-center justify-center"
                 :class="form.destinations.includes(dest.value) ? 'bg-primary text-white' : 'bg-gray-200'"
               >
@@ -147,9 +147,9 @@
 
           <div>
             <label class="block font-semibold mb-2">{{ $t('step4.notes') }}</label>
-            <textarea 
-              v-model="form.notes" 
-              rows="3" 
+            <textarea
+              v-model="form.notes"
+              rows="3"
               class="w-full p-3 border border-gray-200 rounded-lg"
               placeholder="Ej: Viajo con niños, soy vegetariano, tengo limitaciones..."
             ></textarea>
@@ -182,14 +182,14 @@
           <!-- Itinerary Timeline -->
           <div class="relative">
             <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-primary"></div>
-            
-            <div 
-              v-for="(day, index) in generatedItinerary" 
+
+            <div
+              v-for="(day, index) in generatedItinerary"
               :key="index"
               class="relative pl-20 pb-8"
             >
               <div class="absolute left-6 w-5 h-5 bg-primary rounded-full border-4 border-white"></div>
-              
+
               <div class="bg-gray-50 rounded-xl p-6">
                 <div class="flex items-center justify-between mb-4">
                   <h3 class="font-bold text-lg">{{ day.title }}</h3>
@@ -197,10 +197,10 @@
                     {{ day.region }}
                   </span>
                 </div>
-                
+
                 <div class="space-y-3">
-                  <div 
-                    v-for="activity in day.activities" 
+                  <div
+                    v-for="activity in day.activities"
                     :key="activity.time"
                     class="flex items-start gap-4"
                   >
@@ -234,7 +234,7 @@
 
         <!-- Navigation -->
         <div class="flex justify-between mt-8 pt-6 border-t">
-          <button 
+          <button
             v-if="currentStep > 1"
             @click="prevStep"
             class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2"
@@ -243,7 +243,7 @@
           </button>
           <div v-else></div>
 
-          <button 
+          <button
             v-if="currentStep < 5"
             @click="nextStep"
             :disabled="!canProceed"
@@ -366,7 +366,7 @@ const generatedItinerary = ref<any[]>([])
 const generateItinerary = () => {
   const nights = form.duration === '3-5' ? 4 : form.duration === '7-10' ? 7 : 14
   const selectedDests = form.destinations.length > 0 ? form.destinations : ['guanacaste', 'arenal', 'monteverde']
-  
+
   const destInfo: Record<string, any> = {
     guanacaste: { region: 'Guanacaste', icon: '🏖️', tip: 'No te pierdas el atardecer en Playa Conchal' },
     arenal: { region: 'Arenal', icon: '🌋', tip: 'Las termales son mejores al atardecer' },

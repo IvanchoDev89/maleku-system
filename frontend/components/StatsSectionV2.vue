@@ -73,7 +73,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section 
+  <section
     ref="sectionRef"
     class="py-20 bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 relative overflow-hidden"
   >
@@ -98,8 +98,8 @@ onUnmounted(() => {
 
       <!-- Stats Grid -->
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 text-center">
-        <div 
-          v-for="(stat, index) in stats" 
+        <div
+          v-for="(stat, index) in stats"
           :key="stat.label"
           class="group"
         >

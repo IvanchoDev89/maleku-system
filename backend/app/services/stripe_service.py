@@ -2,6 +2,7 @@
 Stripe Service - Gestiona pagos, checkout sessions y webhooks
 Integración completa con Stripe Connect para marketplace multi-vendor
 """
+
 import stripe
 from typing import Optional, Dict, Any
 from app.core.config import settings
@@ -19,6 +20,7 @@ DEFAULT_CURRENCY = "usd"
 
 class StripeError(Exception):
     """Custom Stripe error"""
+
     pass
 
 
@@ -27,11 +29,11 @@ def create_checkout_session(
     vendor: Vendor,
     success_url: str,
     cancel_url: str,
-    customer_email: Optional[str] = None
+    customer_email: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Create a Stripe Checkout Session for a booking.
-    
+
     For marketplace with Stripe Connect:
     - Platform collects full amount
     - Vendor receives amount minus commission
@@ -40,34 +42,44 @@ def create_checkout_session(
     try:
         # Build line items
         if booking.booking_type == "property":
-            line_items = [{
-                "price_data": {
-                    "currency": booking.currency.lower(),
-                    "product_data": {
-                        "name": f"Booking #{booking.confirmation_code}",
-                        "description": f"Stay from {booking.check_in.date()} to {booking.check_out.date()}",
+            line_items = [
+                {
+                    "price_data": {
+                        "currency": booking.currency.lower(),
+                        "product_data": {
+                            "name": f"Booking #{booking.confirmation_code}",
+                            "description": f"Stay from {booking.check_in.date()} to {booking.check_out.date()}",
+                        },
+                        "unit_amount": int(
+                            booking.total_amount * CENTS_PER_DOLLAR
+                        ),  # cents
                     },
-                    "unit_amount": int(booking.total_amount * CENTS_PER_DOLLAR),  # cents
-                },
-                "quantity": 1,
-            }]
+                    "quantity": 1,
+                }
+            ]
         else:  # tour
-            line_items = [{
-                "price_data": {
-                    "currency": booking.currency.lower(),
-                    "product_data": {
-                        "name": f"Tour Booking #{booking.confirmation_code}",
-                        "description": f"Tour on {booking.check_in.date()}",
+            line_items = [
+                {
+                    "price_data": {
+                        "currency": booking.currency.lower(),
+                        "product_data": {
+                            "name": f"Tour Booking #{booking.confirmation_code}",
+                            "description": f"Tour on {booking.check_in.date()}",
+                        },
+                        "unit_amount": int(
+                            booking.total_amount * CENTS_PER_DOLLAR
+                        ),  # cents
                     },
-                    "unit_amount": int(booking.total_amount * CENTS_PER_DOLLAR),  # cents
-                },
-                "quantity": 1,
-            }]
-        
+                    "quantity": 1,
+                }
+            ]
+
         # Calculate amounts for Connect
-        vendor_amount = int((booking.total_amount - booking.commission_amount) * CENTS_PER_DOLLAR)
+        vendor_amount = int(
+            (booking.total_amount - booking.commission_amount) * CENTS_PER_DOLLAR
+        )
         platform_amount = int(booking.commission_amount * CENTS_PER_DOLLAR)
-        
+
         session_data = {
             "payment_method_types": ["card"],
             "line_items": line_items,
@@ -82,11 +94,11 @@ def create_checkout_session(
                 "vendor_id": str(booking.vendor_id) if booking.vendor_id else None,
             },
         }
-        
+
         # Add customer email if provided
         if customer_email:
             session_data["customer_email"] = customer_email
-        
+
         # Stripe Connect: Transfer to vendor if connected
         if vendor and vendor.stripe_account_id and vendor.stripe_connected:
             session_data["payment_intent_data"] = {
@@ -106,23 +118,21 @@ def create_checkout_session(
                     "platform_amount": str(platform_amount),
                 }
             }
-        
+
         session = stripe.checkout.Session.create(**session_data)
-        
+
         return {
             "session_id": session.id,
             "url": session.url,
             "payment_intent_id": session.payment_intent,
         }
-        
+
     except stripe.error.StripeError as e:
         raise StripeError(f"Stripe error: {str(e)}") from e
 
 
 def create_vendor_connect_account(
-    vendor: Vendor,
-    refresh_url: str,
-    return_url: str
+    vendor: Vendor, refresh_url: str, return_url: str
 ) -> Dict[str, Any]:
     """
     Create a Stripe Connect Express account for a vendor.
@@ -142,9 +152,9 @@ def create_vendor_connect_account(
             metadata={
                 "vendor_id": str(vendor.id),
                 "business_name": vendor.business_name,
-            }
+            },
         )
-        
+
         # Create account link for onboarding
         account_link = stripe.AccountLink.create(
             account=account.id,
@@ -152,12 +162,12 @@ def create_vendor_connect_account(
             return_url=return_url,
             type="account_onboarding",
         )
-        
+
         return {
             "account_id": account.id,
             "onboarding_url": account_link.url,
         }
-        
+
     except stripe.error.StripeError as e:
         raise StripeError(f"Stripe error: {str(e)}")
 
@@ -182,7 +192,7 @@ def construct_webhook_event(payload: bytes, sig_header: str) -> Any:
     """
     if not settings.STRIPE_WEBHOOK_SECRET:
         raise StripeError("Webhook secret not configured")
-    
+
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
@@ -201,14 +211,15 @@ def handle_payment_success(payment_intent: Dict[str, Any]) -> Dict[str, Any]:
     """
     metadata = payment_intent.get("metadata", {})
     booking_id = metadata.get("booking_id")
-    
+
     if not booking_id:
         raise StripeError("No booking_id in payment intent metadata")
-    
+
     return {
         "booking_id": booking_id,
         "payment_intent_id": payment_intent["id"],
-        "amount_received": payment_intent["amount_received"] / CENTS_PER_DOLLAR,  # Convert from cents
+        "amount_received": payment_intent["amount_received"]
+        / CENTS_PER_DOLLAR,  # Convert from cents
         "currency": payment_intent["currency"],
         "status": payment_intent["status"],
     }
@@ -218,19 +229,19 @@ def handle_payment_failure(payment_intent: Dict[str, Any]) -> Dict[str, Any]:
     """Process failed payment webhook"""
     metadata = payment_intent.get("metadata", {})
     booking_id = metadata.get("booking_id")
-    
+
     return {
         "booking_id": booking_id,
         "payment_intent_id": payment_intent["id"],
         "status": "failed",
-        "error_message": payment_intent.get("last_payment_error", {}).get("message", "Unknown error"),
+        "error_message": payment_intent.get("last_payment_error", {}).get(
+            "message", "Unknown error"
+        ),
     }
 
 
 def refund_payment(
-    payment_intent_id: str,
-    amount: Optional[float] = None,
-    reason: Optional[str] = None
+    payment_intent_id: str, amount: Optional[float] = None, reason: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Refund a payment (partial or full).
@@ -240,26 +251,24 @@ def refund_payment(
             "payment_intent": payment_intent_id,
             "reason": "requested_by_customer" if reason else None,
         }
-        
+
         if amount:
             refund_data["amount"] = int(amount * CENTS_PER_DOLLAR)  # Convert to cents
-        
+
         refund = stripe.Refund.create(**refund_data)
-        
+
         return {
             "refund_id": refund.id,
             "amount": refund.amount / CENTS_PER_DOLLAR,
             "status": refund.status,
         }
-        
+
     except stripe.error.StripeError as e:
         raise StripeError(f"Refund error: {str(e)}")
 
 
 def create_payout_to_vendor(
-    vendor_account_id: str,
-    amount: float,
-    currency: str = DEFAULT_CURRENCY
+    vendor_account_id: str, amount: float, currency: str = DEFAULT_CURRENCY
 ) -> Dict[str, Any]:
     """
     Create manual payout to vendor (for vendors without Connect).
@@ -271,12 +280,12 @@ def create_payout_to_vendor(
             currency=currency,
             destination=vendor_account_id,
         )
-        
+
         return {
             "transfer_id": transfer.id,
             "amount": transfer.amount / CENTS_PER_DOLLAR,
             "status": transfer.status,
         }
-        
+
     except stripe.error.StripeError as e:
         raise StripeError(f"Transfer error: {str(e)}")

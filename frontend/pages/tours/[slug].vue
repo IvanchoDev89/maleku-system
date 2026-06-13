@@ -64,7 +64,7 @@
                 <Users class="w-5 h-5 text-primary-600" />
                 <span class="font-medium">Max {{ tour.max_group_size || 15 }} personas</span>
               </div>
-              <div 
+              <div
                 class="flex items-center gap-2 px-4 py-2 rounded-full border"
                 :class="difficultyColor"
               >
@@ -85,7 +85,7 @@
             <section class="mb-8">
               <h2 class="text-2xl font-bold text-gray-900 mb-4">¿Qué incluye?</h2>
               <div class="grid sm:grid-cols-2 gap-4">
-                <div 
+                <div
                   v-for="(item, index) in getIncludes()"
                   :key="item"
                   class="flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100"
@@ -102,7 +102,7 @@
             <section class="mb-8">
               <h2 class="text-2xl font-bold text-gray-900 mb-4">Itinerario</h2>
               <div class="space-y-4">
-                <div 
+                <div
                   v-for="(item, index) in getItinerary()"
                   :key="index"
                   class="flex gap-4 bg-white p-4 rounded-xl border border-gray-100"
@@ -122,7 +122,7 @@
             <section class="mb-8">
               <h2 class="text-2xl font-bold text-gray-900 mb-4">Qué Llevar</h2>
               <div class="flex flex-wrap gap-3">
-                <span 
+                <span
                   v-for="item in getWhatToBring()"
                   :key="item"
                   class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm"

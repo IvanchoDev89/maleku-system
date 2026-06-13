@@ -50,8 +50,8 @@
                 No tienes reservas aún.
               </td>
             </tr>
-            <tr 
-              v-for="booking in bookings" 
+            <tr
+              v-for="booking in bookings"
               :key="booking.id"
               class="border-t hover:bg-gray-50"
             >

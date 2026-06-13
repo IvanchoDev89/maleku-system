@@ -15,18 +15,18 @@ const mimeTypes = {
 
 const server = http.createServer((req, res) => {
   console.log(`Request: ${req.url}`);
-  
+
   // Serve index.html for all routes (SPA)
   let filePath = path.join(BASE_DIR, 'client', req.url);
-  
+
   // If file doesn't exist, serve index.html
   if (!fs.existsSync(filePath)) {
     filePath = path.join(BASE_DIR, 'client', 'index.html');
   }
-  
+
   const ext = path.extname(filePath);
   const contentType = mimeTypes[ext] || 'text/plain';
-  
+
   try {
     const content = fs.readFileSync(filePath);
     res.writeHead(200, { 'Content-Type': contentType });

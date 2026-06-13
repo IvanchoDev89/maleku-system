@@ -2,6 +2,7 @@
 Seed script to populate Costa Rica Travel database with realistic sample data.
 Run with: python -m app.scripts.seed_costa_rica
 """
+
 import asyncio
 import os
 import secrets
@@ -15,16 +16,20 @@ from app.core.security import get_password_hash
 from app.models.base import VendorStatus, UserRole
 from app.models.property import PropertyType, PropertyCategory
 from app.models import (
-    Destination, Property, Tour, BlogPost,
-    Vendor, User, TourCategory, TourDifficulty,
-    BlogPostStatus
+    Destination,
+    Property,
+    Tour,
+    BlogPost,
+    Vendor,
+    User,
+    TourCategory,
+    TourDifficulty,
+    BlogPostStatus,
 )
 
 engine = create_async_engine(settings.DATABASE_URL, echo=False)
 AsyncSessionLocal = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False
+    engine, class_=AsyncSession, expire_on_commit=False
 )
 
 
@@ -44,22 +49,25 @@ def _get_default_password() -> str:
             "Refusing to seed with a random password in production."
         )
     generated = secrets.token_urlsafe(16)
-    print(f"[seed] SEED_DEFAULT_PASSWORD not set; generated random dev password: {generated}")
+    print(
+        f"[seed] SEED_DEFAULT_PASSWORD not set; generated random dev password: {generated}"
+    )
     return generated
 
 
 def slugify(text: str) -> str:
     """Convert text to URL-friendly slug."""
     import re
+
     text = text.lower()
-    text = re.sub(r'[áàä]', 'a', text)
-    text = re.sub(r'[éèë]', 'e', text)
-    text = re.sub(r'[íìï]', 'i', text)
-    text = re.sub(r'[óòö]', 'o', text)
-    text = re.sub(r'[úùü]', 'u', text)
-    text = re.sub(r'ñ', 'n', text)
-    text = re.sub(r'[^a-z0-9]+', '-', text)
-    text = re.sub(r'^-|-$', '', text)
+    text = re.sub(r"[áàä]", "a", text)
+    text = re.sub(r"[éèë]", "e", text)
+    text = re.sub(r"[íìï]", "i", text)
+    text = re.sub(r"[óòö]", "o", text)
+    text = re.sub(r"[úùü]", "u", text)
+    text = re.sub(r"ñ", "n", text)
+    text = re.sub(r"[^a-z0-9]+", "-", text)
+    text = re.sub(r"^-|-$", "", text)
     return text
 
 
@@ -72,14 +80,27 @@ async def seed_destinations(db: AsyncSession):
             "description": "Guanacaste es la provincia más famosa de Costa Rica por sus playas espectaculares, sunsets increíbles y clima seco. Tamarindo, Flamingo, Conchal y Papagayo son destinos de clase mundial para surf, diving y relaxation.",
             "region": "Pacífico Norte",
             "province": "Guanacaste",
-            "highlights": ["Playas vírgenes", "Surf de clase mundial", "Sunsets espectaculares", "Resorts de lujo"],
-            "things_to_do": ["Surf en Tamarindo", "Snorkel en Isla Murciélago", "Tour de canopy en Diamante", "Pesca deportiva en Flamingo"],
+            "highlights": [
+                "Playas vírgenes",
+                "Surf de clase mundial",
+                "Sunsets espectaculares",
+                "Resorts de lujo",
+            ],
+            "things_to_do": [
+                "Surf en Tamarindo",
+                "Snorkel en Isla Murciélago",
+                "Tour de canopy en Diamante",
+                "Pesca deportiva en Flamingo",
+            ],
             "best_time": "Diciembre a Abril (temporada seca)",
             "image": "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=1200&q=80",
-            "gallery": ["https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800&q=80", "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80"],
+            "gallery": [
+                "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800&q=80",
+                "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80",
+            ],
             "order": 1,
             "is_featured": True,
-            "is_active": True
+            "is_active": True,
         },
         {
             "name": "La Fortuna",
@@ -87,14 +108,27 @@ async def seed_destinations(db: AsyncSession):
             "description": "La Fortuna es el corazón de la aventura en Costa Rica. Domina el paisaje el Volcán Arenal, majestuoso con sus 1,633 metros. La región ofrece aguas termales naturales, cascadas impresionantes, puentes colgantes en la selva y experiencias de vida silvestre únicas.",
             "region": "Norte",
             "province": "Alajuela",
-            "highlights": ["Volcán Arenal", "Aguas termales naturales", "Cascada La Fortuna", "Puentes colgantes en la selva"],
-            "things_to_do": ["Caminata al Volcán Arenal", "Baño en aguas termales", "Rafting en ríos salvajes", "Avistamiento de fauna"],
+            "highlights": [
+                "Volcán Arenal",
+                "Aguas termales naturales",
+                "Cascada La Fortuna",
+                "Puentes colgantes en la selva",
+            ],
+            "things_to_do": [
+                "Caminata al Volcán Arenal",
+                "Baño en aguas termales",
+                "Rafting en ríos salvajes",
+                "Avistamiento de fauna",
+            ],
             "best_time": "Diciembre a Marzo (mejor visibilidad del volcán)",
             "image": "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=1200&q=80",
-            "gallery": ["https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80", "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&q=80"],
+            "gallery": [
+                "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80",
+                "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&q=80",
+            ],
             "order": 2,
             "is_featured": True,
-            "is_active": True
+            "is_active": True,
         },
         {
             "name": "Monteverde",
@@ -102,14 +136,27 @@ async def seed_destinations(db: AsyncSession):
             "description": "Monteverde es un bosque nuboso que alberga el 5% de la biodiversidad mundial. Los senderos serpentean entre árboles cubiertos de musgo, y el coro de aves exóticas acompaña cada paso. Ideal para observación de quetzales, puentes colgantes y experiencias de ecoturismo de clase mundial.",
             "region": "Norte",
             "province": "Puntarenas",
-            "highlights": ["Bosque nuboso único", "Observación de quetzales", "Puentes colgantes naturales", "Vida silvestre exótica"],
-            "things_to_do": ["Puentes colgantes Sky Walk", "Avistamiento de quetzales", "Tour nocturno en la selva", "Conservatorio de colibríes"],
+            "highlights": [
+                "Bosque nuboso único",
+                "Observación de quetzales",
+                "Puentes colgantes naturales",
+                "Vida silvestre exótica",
+            ],
+            "things_to_do": [
+                "Puentes colgantes Sky Walk",
+                "Avistamiento de quetzales",
+                "Tour nocturno en la selva",
+                "Conservatorio de colibríes",
+            ],
             "best_time": "Enero a Marzo (mejor para avistamiento de quetzales)",
             "image": "https://images.unsplash.com/photo-1518623380242-4a8806cef5b8?w=1200&q=80",
-            "gallery": ["https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80", "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&q=80"],
+            "gallery": [
+                "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80",
+                "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&q=80",
+            ],
             "order": 3,
             "is_featured": True,
-            "is_active": True
+            "is_active": True,
         },
         {
             "name": "Manuel Antonio",
@@ -117,14 +164,27 @@ async def seed_destinations(db: AsyncSession):
             "description": "Manuel Antonio combina selva tropical y playas de postal en solo 7 km². El Parque Nacional ofrece avistamiento de monos, perezosos y más. Sus playas de aguas cristalinas son perfectas para snorkel y relaxation.",
             "region": "Pacífico Central",
             "province": "Puntarenas",
-            "highlights": ["Playas de aguas cristalinas", "Selva tropical accesible", "Fauna diversa", "Atardeceres únicos"],
-            "things_to_do": ["Snorkel en Playa Manuel Antonio", "Avistamiento de perezosos", "Sunset cruise", "Kayak en manglares"],
+            "highlights": [
+                "Playas de aguas cristalinas",
+                "Selva tropical accesible",
+                "Fauna diversa",
+                "Atardeceres únicos",
+            ],
+            "things_to_do": [
+                "Snorkel en Playa Manuel Antonio",
+                "Avistamiento de perezosos",
+                "Sunset cruise",
+                "Kayak en manglares",
+            ],
             "best_time": "Diciembre a Abril (temporada seca)",
             "image": "https://images.unsplash.com/photo-1589802829985-817e51171b92?w=1200&q=80",
-            "gallery": ["https://images.unsplash.com/photo-1596577932257-3c7ab64b3f8f?w=800&q=80", "https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=800&q=80"],
+            "gallery": [
+                "https://images.unsplash.com/photo-1596577932257-3c7ab64b3f8f?w=800&q=80",
+                "https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=800&q=80",
+            ],
             "order": 4,
             "is_featured": True,
-            "is_active": True
+            "is_active": True,
         },
         {
             "name": "San José",
@@ -132,14 +192,27 @@ async def seed_destinations(db: AsyncSession):
             "description": "San José es la capital vibrante de Costa Rica, mezcla de historia colonial y modernidad. Museos de oro precolombino, teatros históricos y el bullicio del mercado central ofrecen una inmersión cultural única.",
             "region": "Valle Central",
             "province": "San José",
-            "highlights": ["Museo del Oro Precolombino", "Teatro Nacional", "Mercado Central", "Cultura Tica auténtica"],
-            "things_to_do": ["Tour por el centro histórico", "Museo Nacional", "Mercado de artesanías", "Tour de café"],
+            "highlights": [
+                "Museo del Oro Precolombino",
+                "Teatro Nacional",
+                "Mercado Central",
+                "Cultura Tica auténtica",
+            ],
+            "things_to_do": [
+                "Tour por el centro histórico",
+                "Museo Nacional",
+                "Mercado de artesanías",
+                "Tour de café",
+            ],
             "best_time": "Todo el año (clima templado)",
             "image": "https://images.unsplash.com/photo-1611121976909-8c4de5273880?w=1200&q=80",
-            "gallery": ["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80", "https://images.unsplash.com/photo-1591123120675-6f7f1aae0e5b?w=800&q=80"],
+            "gallery": [
+                "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+                "https://images.unsplash.com/photo-1591123120675-6f7f1aae0e5b?w=800&q=80",
+            ],
             "order": 5,
             "is_featured": False,
-            "is_active": True
+            "is_active": True,
         },
         {
             "name": "Tortuguero",
@@ -147,14 +220,27 @@ async def seed_destinations(db: AsyncSession):
             "description": "Conocido como la 'Pequeña Amazonía' de Costa Rica, Tortuguero es un laberinto de canales rodeados de selva tropical exuberante. Cada año, miles de tortugas marinas anidan en sus playas.",
             "region": "Caribe",
             "province": "Limón",
-            "highlights": ["Canales tortuguero", "Anidación de tortugas marinas", "Biodiversidad única", "Selva tropical prístina"],
-            "things_to_do": ["Tour de canales en lancha", "Avistamiento de tortugas", "Caminatas en selva", "Observación de aves"],
+            "highlights": [
+                "Canales tortuguero",
+                "Anidación de tortugas marinas",
+                "Biodiversidad única",
+                "Selva tropical prístina",
+            ],
+            "things_to_do": [
+                "Tour de canales en lancha",
+                "Avistamiento de tortugas",
+                "Caminatas en selva",
+                "Observación de aves",
+            ],
             "best_time": "Julio a Septiembre (temporada de tortugas)",
             "image": "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0?w=1200&q=80",
-            "gallery": ["https://images.unsplash.com/photo-1544979590-37e9b7c5c72e?w=800&q=80", "https://images.unsplash.com/photo-1564429238979-f6d3de5643e1?w=800&q=80"],
+            "gallery": [
+                "https://images.unsplash.com/photo-1544979590-37e9b7c5c72e?w=800&q=80",
+                "https://images.unsplash.com/photo-1564429238979-f6d3de5643e1?w=800&q=80",
+            ],
             "order": 6,
             "is_featured": False,
-            "is_active": True
+            "is_active": True,
         },
         {
             "name": "Cahuita y Puerto Viejo",
@@ -162,14 +248,27 @@ async def seed_destinations(db: AsyncSession):
             "description": "La costa caribeña de Costa Rica vibra con cultura afrocaribeña y un ambiente relajado único. Cahuita ofrece arrecifes de coral perfectos para snorkel, mientras Puerto Viejo es célebre por su ambiente bohemio, surf de clase y gastronomía créolle.",
             "region": "Caribe",
             "province": "Limón",
-            "highlights": ["Cultura afrocaribeña", "Snorkel en arrecifes", "Surf de clase mundial", "Ambiente bohemio único"],
-            "things_to_do": ["Snorkel en Parque Nacional Cahuita", "Surf en Playa Cocles", "Yoga y wellness", "Tour de cacao"],
+            "highlights": [
+                "Cultura afrocaribeña",
+                "Snorkel en arrecifes",
+                "Surf de clase mundial",
+                "Ambiente bohemio único",
+            ],
+            "things_to_do": [
+                "Snorkel en Parque Nacional Cahuita",
+                "Surf en Playa Cocles",
+                "Yoga y wellness",
+                "Tour de cacao",
+            ],
             "best_time": "Febrero a Abril, Septiembre a Octubre",
             "image": "https://images.unsplash.com/photo-1518623489668-2799b5809c43?w=1200&q=80",
-            "gallery": ["https://images.unsplash.com/photo-1596838132731-1fa1e57b8b26?w=800&q=80", "https://images.unsplash.com/photo-1601933513796-5de9b6a7c9e8?w=800&q=80"],
+            "gallery": [
+                "https://images.unsplash.com/photo-1596838132731-1fa1e57b8b26?w=800&q=80",
+                "https://images.unsplash.com/photo-1601933513796-5de9b6a7c9e8?w=800&q=80",
+            ],
             "order": 7,
             "is_featured": False,
-            "is_active": True
+            "is_active": True,
         },
         {
             "name": "Corcovado y Osa",
@@ -177,20 +276,35 @@ async def seed_destinations(db: AsyncSession):
             "description": "National Geographic lo llama 'el lugar biológicamente más intenso de la Tierra'. Corcovado alberga jaguares, tapires, guacamayas y cuatro especies de monos. Un paraíso para excursionistas y fotógrafos de naturaleza.",
             "region": "Pacífico Sur",
             "province": "Puntarenas",
-            "highlights": ["Biodiversidad máxima", "Jaguar y fauna exótica", "Playas vírgenes", "Selva tropical prístina"],
-            "things_to_do": ["Senderismo en Corcovado", "Avistamiento de jaguares", "Snorkel en Isla del Caño", "Tour de vida silvestre"],
+            "highlights": [
+                "Biodiversidad máxima",
+                "Jaguar y fauna exótica",
+                "Playas vírgenes",
+                "Selva tropical prístina",
+            ],
+            "things_to_do": [
+                "Senderismo en Corcovado",
+                "Avistamiento de jaguares",
+                "Snorkel en Isla del Caño",
+                "Tour de vida silvestre",
+            ],
             "best_time": "Diciembre a Abril (temporada seca)",
             "image": "https://images.unsplash.com/photo-1597074866923-dc0589151855?w=1200&q=80",
-            "gallery": ["https://images.unsplash.com/photo-1547471080-7ac2f5514419?w=800&q=80", "https://images.unsplash.com/photo-1587974869209-9b86d5c0a8c6?w=800&q=80"],
+            "gallery": [
+                "https://images.unsplash.com/photo-1547471080-7ac2f5514419?w=800&q=80",
+                "https://images.unsplash.com/photo-1587974869209-9b86d5c0a8c6?w=800&q=80",
+            ],
             "order": 8,
             "is_featured": False,
-            "is_active": True
-        }
+            "is_active": True,
+        },
     ]
 
     print("Seeding destinations...")
     for data in destinations_data:
-        result = await db.execute(select(Destination).where(Destination.slug == data["slug"]))
+        result = await db.execute(
+            select(Destination).where(Destination.slug == data["slug"])
+        )
         existing = result.scalar_one_or_none()
         if not existing:
             dest = Destination(**data)
@@ -218,7 +332,7 @@ async def seed_vendor(db: AsyncSession) -> Vendor:
             password_hash=get_password_hash(default_password),
             role=UserRole.VENDOR,
             is_verified=True,
-            is_active=True
+            is_active=True,
         )
         db.add(user)
         await db.commit()
@@ -238,7 +352,7 @@ async def seed_vendor(db: AsyncSession) -> Vendor:
             phone="+506 2222-0000",
             email=vendor_email,
             status=VendorStatus.ACTIVE,
-            is_verified=True
+            is_verified=True,
         )
         db.add(vendor)
         await db.commit()
@@ -267,8 +381,21 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "latitude": 10.4738,
             "longitude": -84.2315,
             "cover_image": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
-            "images": ["https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80", "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80", "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80"],
-            "amenities": ["Aguas termales", "Spa", "Restaurante", "Bar", "Wifi gratis", "Piscina", "Estacionamiento", "Room service"],
+            "images": [
+                "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80",
+                "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
+                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+            ],
+            "amenities": [
+                "Aguas termales",
+                "Spa",
+                "Restaurante",
+                "Bar",
+                "Wifi gratis",
+                "Piscina",
+                "Estacionamiento",
+                "Room service",
+            ],
             "features": ["Vista al Volcán", "Baño termal privado", "Balcón privado"],
             "check_in_time": "15:00",
             "check_out_time": "11:00",
@@ -282,10 +409,16 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "weekend_price": 280.00,
             "rating": 4.8,
             "total_reviews": 847,
-            "seo_keywords": ["hot springs", "arenal", "thermal resort", "luxury", "spa"],
+            "seo_keywords": [
+                "hot springs",
+                "arenal",
+                "thermal resort",
+                "luxury",
+                "spa",
+            ],
             "is_featured": True,
             "is_active": True,
-            "is_verified": True
+            "is_verified": True,
         },
         {
             "vendor_id": vendor.id,
@@ -301,8 +434,21 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "latitude": 10.4217,
             "longitude": -85.7706,
             "cover_image": "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
-            "images": ["https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&q=80", "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&q=80", "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&q=80"],
-            "amenities": ["Todo incluido", "Piscina", "Spa", "Restaurante", "Bar", "Wifi gratis", "Gimnasio", "Centro de buceo"],
+            "images": [
+                "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&q=80",
+                "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&q=80",
+                "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&q=80",
+            ],
+            "amenities": [
+                "Todo incluido",
+                "Piscina",
+                "Spa",
+                "Restaurante",
+                "Bar",
+                "Wifi gratis",
+                "Gimnasio",
+                "Centro de buceo",
+            ],
             "features": ["Frente a la playa", "All inclusive", "Diving", "Pesca"],
             "check_in_time": "15:00",
             "check_out_time": "11:00",
@@ -316,10 +462,15 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "weekend_price": 195.00,
             "rating": 4.6,
             "total_reviews": 623,
-            "seo_keywords": ["flamingo beach", "all inclusive", "guanacaste resort", "diving"],
+            "seo_keywords": [
+                "flamingo beach",
+                "all inclusive",
+                "guanacaste resort",
+                "diving",
+            ],
             "is_featured": True,
             "is_active": True,
-            "is_verified": True
+            "is_verified": True,
         },
         {
             "vendor_id": vendor.id,
@@ -335,9 +486,26 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "latitude": 10.4523,
             "longitude": -84.2654,
             "cover_image": "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80",
-            "images": ["https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80", "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80", "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80"],
-            "amenities": ["Plunge pool privado", "Spa", "Restaurante gourmet", "Bar", "Wifi gratis", "Concierge 24/7", "Yoga"],
-            "features": ["Adults only", "Private plunge pool", "Volcano view", "Romantic"],
+            "images": [
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
+                "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
+                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+            ],
+            "amenities": [
+                "Plunge pool privado",
+                "Spa",
+                "Restaurante gourmet",
+                "Bar",
+                "Wifi gratis",
+                "Concierge 24/7",
+                "Yoga",
+            ],
+            "features": [
+                "Adults only",
+                "Private plunge pool",
+                "Volcano view",
+                "Romantic",
+            ],
             "check_in_time": "14:00",
             "check_out_time": "12:00",
             "cancellation_policy": "Cancelación gratuita hasta 30 días antes.",
@@ -350,10 +518,15 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "weekend_price": 350.00,
             "rating": 4.9,
             "total_reviews": 412,
-            "seo_keywords": ["nayara springs", "adults only", "luxury resort", "honeymoon"],
+            "seo_keywords": [
+                "nayara springs",
+                "adults only",
+                "luxury resort",
+                "honeymoon",
+            ],
             "is_featured": True,
             "is_active": True,
-            "is_verified": True
+            "is_verified": True,
         },
         {
             "vendor_id": vendor.id,
@@ -369,9 +542,25 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "latitude": 9.9323,
             "longitude": -84.0745,
             "cover_image": "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80",
-            "images": ["https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80", "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&q=80", "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&q=80"],
-            "amenities": ["Restaurante", "Bar", "Wifi gratis", "Business center", "Gimnasio", "Estacionamiento", "Room service"],
-            "features": ["Centro ciudad", "Walking distance attractions", "Business friendly"],
+            "images": [
+                "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80",
+                "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&q=80",
+                "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&q=80",
+            ],
+            "amenities": [
+                "Restaurante",
+                "Bar",
+                "Wifi gratis",
+                "Business center",
+                "Gimnasio",
+                "Estacionamiento",
+                "Room service",
+            ],
+            "features": [
+                "Centro ciudad",
+                "Walking distance attractions",
+                "Business friendly",
+            ],
             "check_in_time": "14:00",
             "check_out_time": "12:00",
             "cancellation_policy": "Cancelación gratuita hasta 48 horas antes.",
@@ -384,10 +573,15 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "weekend_price": 109.00,
             "rating": 4.3,
             "total_reviews": 1523,
-            "seo_keywords": ["san jose hotel", "central avenue", "downtown", "business hotel"],
+            "seo_keywords": [
+                "san jose hotel",
+                "central avenue",
+                "downtown",
+                "business hotel",
+            ],
             "is_featured": True,
             "is_active": True,
-            "is_verified": True
+            "is_verified": True,
         },
         {
             "vendor_id": vendor.id,
@@ -403,9 +597,25 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "latitude": 10.3031,
             "longitude": -84.8175,
             "cover_image": "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80",
-            "images": ["https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80", "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&q=80", "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80"],
-            "amenities": ["Restaurante", "Bar", "Wifi gratis", "Senderos naturales", "Observación de aves", "Calefacción"],
-            "features": ["Cloud forest", "Birdwatching", "Nature trails", "Organic gardens"],
+            "images": [
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
+                "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&q=80",
+                "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
+            ],
+            "amenities": [
+                "Restaurante",
+                "Bar",
+                "Wifi gratis",
+                "Senderos naturales",
+                "Observación de aves",
+                "Calefacción",
+            ],
+            "features": [
+                "Cloud forest",
+                "Birdwatching",
+                "Nature trails",
+                "Organic gardens",
+            ],
             "check_in_time": "15:00",
             "check_out_time": "10:00",
             "cancellation_policy": "Cancelación gratuita hasta 7 días antes.",
@@ -418,10 +628,15 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "weekend_price": 145.00,
             "rating": 4.7,
             "total_reviews": 534,
-            "seo_keywords": ["monteverde lodge", "cloud forest", "birdwatching", "eco lodge"],
+            "seo_keywords": [
+                "monteverde lodge",
+                "cloud forest",
+                "birdwatching",
+                "eco lodge",
+            ],
             "is_featured": True,
             "is_active": True,
-            "is_verified": True
+            "is_verified": True,
         },
         {
             "vendor_id": vendor.id,
@@ -437,9 +652,26 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "latitude": 9.3815,
             "longitude": -84.1432,
             "cover_image": "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80",
-            "images": ["https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&q=80", "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80", "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80"],
-            "amenities": ["Spa", "Piscina", "Restaurante", "Bar", "Wifi gratis", "Gimnasio", "Transporte al parque"],
-            "features": ["Cliff location", "Pacific views", "Near Manuel Antonio Park", "Spa"],
+            "images": [
+                "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&q=80",
+                "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
+                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+            ],
+            "amenities": [
+                "Spa",
+                "Piscina",
+                "Restaurante",
+                "Bar",
+                "Wifi gratis",
+                "Gimnasio",
+                "Transporte al parque",
+            ],
+            "features": [
+                "Cliff location",
+                "Pacific views",
+                "Near Manuel Antonio Park",
+                "Spa",
+            ],
             "check_in_time": "15:00",
             "check_out_time": "11:00",
             "cancellation_policy": "Cancelación gratuita hasta 10 días antes.",
@@ -452,10 +684,15 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "weekend_price": 220.00,
             "rating": 4.5,
             "total_reviews": 789,
-            "seo_keywords": ["parador resort", "manuel antonio", "cliffs", "pacific views"],
+            "seo_keywords": [
+                "parador resort",
+                "manuel antonio",
+                "cliffs",
+                "pacific views",
+            ],
             "is_featured": False,
             "is_active": True,
-            "is_verified": True
+            "is_verified": True,
         },
         {
             "vendor_id": vendor.id,
@@ -471,9 +708,26 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "latitude": 10.4892,
             "longitude": -84.2456,
             "cover_image": "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
-            "images": ["https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80", "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80", "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80"],
-            "amenities": ["Parque acuático", "Aguas termales", "Spa", "Restaurante", "Bar", "Wifi gratis", "Kids club"],
-            "features": ["Water park", "Hot springs", "Family friendly", "Volcano views"],
+            "images": [
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
+                "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80",
+                "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
+            ],
+            "amenities": [
+                "Parque acuático",
+                "Aguas termales",
+                "Spa",
+                "Restaurante",
+                "Bar",
+                "Wifi gratis",
+                "Kids club",
+            ],
+            "features": [
+                "Water park",
+                "Hot springs",
+                "Family friendly",
+                "Volcano views",
+            ],
             "check_in_time": "15:00",
             "check_out_time": "11:00",
             "cancellation_policy": "Cancelación gratuita hasta 7 días antes.",
@@ -486,10 +740,15 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "weekend_price": 260.00,
             "rating": 4.6,
             "total_reviews": 956,
-            "seo_keywords": ["the springs", "water park", "family resort", "hot springs"],
+            "seo_keywords": [
+                "the springs",
+                "water park",
+                "family resort",
+                "hot springs",
+            ],
             "is_featured": False,
             "is_active": True,
-            "is_verified": True
+            "is_verified": True,
         },
         {
             "vendor_id": vendor.id,
@@ -505,9 +764,25 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "latitude": 10.3231,
             "longitude": -85.8407,
             "cover_image": "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80",
-            "images": ["https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&q=80", "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80", "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&q=80"],
-            "amenities": ["Piscina", "Restaurante", "Bar", "Wifi gratis", "Surf rentals", "Tour desk"],
-            "features": ["Surf town", "Beach walking distance", "Central location", "Surf rentals"],
+            "images": [
+                "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&q=80",
+                "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80",
+                "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&q=80",
+            ],
+            "amenities": [
+                "Piscina",
+                "Restaurante",
+                "Bar",
+                "Wifi gratis",
+                "Surf rentals",
+                "Tour desk",
+            ],
+            "features": [
+                "Surf town",
+                "Beach walking distance",
+                "Central location",
+                "Surf rentals",
+            ],
             "check_in_time": "14:00",
             "check_out_time": "11:00",
             "cancellation_policy": "Cancelación gratuita hasta 5 días antes.",
@@ -523,7 +798,7 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "seo_keywords": ["tamarindo hotel", "surf", "beach hotel", "guanacaste"],
             "is_featured": False,
             "is_active": True,
-            "is_verified": True
+            "is_verified": True,
         },
         {
             "vendor_id": vendor.id,
@@ -539,8 +814,19 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "latitude": 9.6569,
             "longitude": -82.7569,
             "cover_image": "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80",
-            "images": ["https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80", "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80"],
-            "amenities": ["Beach club", "Restaurante", "Bar", "Wifi gratis", "Yoga", "Bicicletas"],
+            "images": [
+                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
+                "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
+            ],
+            "amenities": [
+                "Beach club",
+                "Restaurante",
+                "Bar",
+                "Wifi gratis",
+                "Yoga",
+                "Bicicletas",
+            ],
             "features": ["Boutique hotel", "Beach club", "Yoga", "Caribbean vibe"],
             "check_in_time": "15:00",
             "check_out_time": "11:00",
@@ -554,10 +840,15 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "weekend_price": 160.00,
             "rating": 4.4,
             "total_reviews": 287,
-            "seo_keywords": ["le cameleon", "puerto viejo", "boutique hotel", "caribbean"],
+            "seo_keywords": [
+                "le cameleon",
+                "puerto viejo",
+                "boutique hotel",
+                "caribbean",
+            ],
             "is_featured": False,
             "is_active": True,
-            "is_verified": True
+            "is_verified": True,
         },
         {
             "vendor_id": vendor.id,
@@ -573,9 +864,24 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "latitude": 9.8234,
             "longitude": -83.6845,
             "cover_image": "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80",
-            "images": ["https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80", "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80", "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80"],
-            "amenities": ["Restaurante", "Bar", "Spa", "Guías naturalistas", "Paquetes aventura"],
-            "features": ["Remote location", "River crossing", "Eco luxury", "Adventure packages"],
+            "images": [
+                "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80",
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
+                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+            ],
+            "amenities": [
+                "Restaurante",
+                "Bar",
+                "Spa",
+                "Guías naturalistas",
+                "Paquetes aventura",
+            ],
+            "features": [
+                "Remote location",
+                "River crossing",
+                "Eco luxury",
+                "Adventure packages",
+            ],
             "check_in_time": "14:00",
             "check_out_time": "10:00",
             "cancellation_policy": "Cancelación gratuita hasta 30 días antes.",
@@ -591,8 +897,8 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "seo_keywords": ["pacuare lodge", "eco lodge", "luxury", "rainforest"],
             "is_featured": False,
             "is_active": True,
-            "is_verified": True
-        }
+            "is_verified": True,
+        },
     ]
 
     print("\nSeeding properties...")
@@ -625,16 +931,40 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "duration_text": "2 horas",
             "location": "La Fortuna",
             "meeting_point": "Centro de Aventura Arenal, La Fortuna",
-            "included": ["Equipo de seguridad", "Guía certificado", "Transfer desde hotel", "Frutas y agua"],
+            "included": [
+                "Equipo de seguridad",
+                "Guía certificado",
+                "Transfer desde hotel",
+                "Frutas y agua",
+            ],
             "not_included": ["Transporte adicional", "Propinas"],
-            "itinerary": [{"step": 1, "activity": "Briefing de seguridad", "duration": "15 min"}, {"step": 2, "activity": "Inicio del canopy - 15 cables", "duration": "90 min"}, {"step": 3, "activity": "Refrigerio y fotos", "duration": "15 min"}],
+            "itinerary": [
+                {"step": 1, "activity": "Briefing de seguridad", "duration": "15 min"},
+                {
+                    "step": 2,
+                    "activity": "Inicio del canopy - 15 cables",
+                    "duration": "90 min",
+                },
+                {"step": 3, "activity": "Refrigerio y fotos", "duration": "15 min"},
+            ],
             "max_group_size": 15,
             "min_age": 5,
             "price": 65.00,
             "currency": "USD",
-            "images": ["https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80", "https://images.unsplash.com/photo-1530866495561-507c9faab2ed?w=800&q=80"],
+            "images": [
+                "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80",
+                "https://images.unsplash.com/photo-1530866495561-507c9faab2ed?w=800&q=80",
+            ],
             "cover_image": "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80",
-            "schedule_days": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+            "schedule_days": [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ],
             "rating": 4.7,
             "total_reviews": 1234,
             "total_bookings": 5678,
@@ -652,14 +982,41 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "duration_text": "5 horas",
             "location": "La Fortuna / Turrialba",
             "meeting_point": "Hotel pickup en La Fortuna o Turrialba",
-            "included": ["Equipo de rafting", "Guía certificado", "Almuerzo", "Transfer desde hotel", "Seguro"],
+            "included": [
+                "Equipo de rafting",
+                "Guía certificado",
+                "Almuerzo",
+                "Transfer desde hotel",
+                "Seguro",
+            ],
             "not_included": ["Ropa de agua personal", "Zapatos mojados"],
-            "itinerary": [{"step": 1, "activity": "Pickup y transporte al río", "duration": "45 min"}, {"step": 2, "activity": "Briefing y equipamiento", "duration": "20 min"}, {"step": 3, "activity": "Rafting - 20kms de río", "duration": "3.5 horas"}, {"step": 4, "activity": "Almuerzo en la rivera", "duration": "30 min"}, {"step": 5, "activity": "Regreso al hotel", "duration": "45 min"}],
+            "itinerary": [
+                {
+                    "step": 1,
+                    "activity": "Pickup y transporte al río",
+                    "duration": "45 min",
+                },
+                {
+                    "step": 2,
+                    "activity": "Briefing y equipamiento",
+                    "duration": "20 min",
+                },
+                {
+                    "step": 3,
+                    "activity": "Rafting - 20kms de río",
+                    "duration": "3.5 horas",
+                },
+                {"step": 4, "activity": "Almuerzo en la rivera", "duration": "30 min"},
+                {"step": 5, "activity": "Regreso al hotel", "duration": "45 min"},
+            ],
             "max_group_size": 12,
             "min_age": 12,
             "price": 95.00,
             "currency": "USD",
-            "images": ["https://images.unsplash.com/photo-1530866495561-507c9faab2ed?w=800&q=80", "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80"],
+            "images": [
+                "https://images.unsplash.com/photo-1530866495561-507c9faab2ed?w=800&q=80",
+                "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80",
+            ],
             "cover_image": "https://images.unsplash.com/photo-1530866495561-507c9faab2ed?w=800&q=80",
             "schedule_days": ["monday", "wednesday", "friday", "saturday", "sunday"],
             "rating": 4.9,
@@ -679,16 +1036,41 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "duration_text": "2-3 horas",
             "location": "Manuel Antonio",
             "meeting_point": "Entrada del Parque Nacional Manuel Antonio",
-            "included": ["Guía naturalista certificado", "Equipo de snorkel", "Agua y frutas", "Entrada al parque"],
+            "included": [
+                "Guía naturalista certificado",
+                "Equipo de snorkel",
+                "Agua y frutas",
+                "Entrada al parque",
+            ],
             "not_included": ["Transporte", "Almuerzo"],
-            "itinerary": [{"step": 1, "activity": "Encuentro con guía", "duration": "10 min"}, {"step": 2, "activity": "Senderismo con avistamiento de fauna", "duration": "90 min"}, {"step": 3, "activity": "Playa y snorkel", "duration": "45 min"}, {"step": 4, "activity": "Tiempo libre", "duration": "15 min"}],
+            "itinerary": [
+                {"step": 1, "activity": "Encuentro con guía", "duration": "10 min"},
+                {
+                    "step": 2,
+                    "activity": "Senderismo con avistamiento de fauna",
+                    "duration": "90 min",
+                },
+                {"step": 3, "activity": "Playa y snorkel", "duration": "45 min"},
+                {"step": 4, "activity": "Tiempo libre", "duration": "15 min"},
+            ],
             "max_group_size": 20,
             "min_age": 0,
             "price": 49.00,
             "currency": "USD",
-            "images": ["https://images.unsplash.com/photo-1589802829985-817e51171b92?w=800&q=80", "https://images.unsplash.com/photo-1596577932257-3c7ab64b3f8f?w=800&q=80"],
+            "images": [
+                "https://images.unsplash.com/photo-1589802829985-817e51171b92?w=800&q=80",
+                "https://images.unsplash.com/photo-1596577932257-3c7ab64b3f8f?w=800&q=80",
+            ],
             "cover_image": "https://images.unsplash.com/photo-1589802829985-817e51171b92?w=800&q=80",
-            "schedule_days": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+            "schedule_days": [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ],
             "rating": 4.8,
             "total_reviews": 2345,
             "total_bookings": 8765,
@@ -706,16 +1088,36 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "duration_text": "4 horas",
             "location": "La Fortuna",
             "meeting_point": "Hotel pickup en La Fortuna",
-            "included": ["Balsa y remos", "Guía naturalista", "Frutas y agua", "Transfer desde hotel"],
+            "included": [
+                "Balsa y remos",
+                "Guía naturalista",
+                "Frutas y agua",
+                "Transfer desde hotel",
+            ],
             "not_included": ["Propinas"],
-            "itinerary": [{"step": 1, "activity": "Pickup y transporte", "duration": "20 min"}, {"step": 2, "activity": "Navegación por el río", "duration": "3 horas"}, {"step": 3, "activity": "Snack y regreso", "duration": "40 min"}],
+            "itinerary": [
+                {"step": 1, "activity": "Pickup y transporte", "duration": "20 min"},
+                {"step": 2, "activity": "Navegación por el río", "duration": "3 horas"},
+                {"step": 3, "activity": "Snack y regreso", "duration": "40 min"},
+            ],
             "max_group_size": 16,
             "min_age": 0,
             "price": 50.00,
             "currency": "USD",
-            "images": ["https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0?w=800&q=80", "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=800&q=80"],
+            "images": [
+                "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0?w=800&q=80",
+                "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=800&q=80",
+            ],
             "cover_image": "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0?w=800&q=80",
-            "schedule_days": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+            "schedule_days": [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ],
             "rating": 4.6,
             "total_reviews": 654,
             "total_bookings": 2345,
@@ -735,14 +1137,37 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "meeting_point": "Mistico Park, La Fortuna",
             "included": ["Entrada al parque", "Guía local", "Agua"],
             "not_included": ["Transporte"],
-            "itinerary": [{"step": 1, "activity": "Registro y briefing", "duration": "15 min"}, {"step": 2, "activity": "Caminata en puentes colgantes", "duration": "2 horas"}, {"step": 3, "activity": "Observación de flora y fauna", "duration": "45 min"}],
+            "itinerary": [
+                {"step": 1, "activity": "Registro y briefing", "duration": "15 min"},
+                {
+                    "step": 2,
+                    "activity": "Caminata en puentes colgantes",
+                    "duration": "2 horas",
+                },
+                {
+                    "step": 3,
+                    "activity": "Observación de flora y fauna",
+                    "duration": "45 min",
+                },
+            ],
             "max_group_size": 25,
             "min_age": 0,
             "price": 54.00,
             "currency": "USD",
-            "images": ["https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80", "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&q=80"],
+            "images": [
+                "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80",
+                "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&q=80",
+            ],
             "cover_image": "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80",
-            "schedule_days": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+            "schedule_days": [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ],
             "rating": 4.7,
             "total_reviews": 1178,
             "total_bookings": 4567,
@@ -760,14 +1185,32 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "duration_text": "5 horas",
             "location": "Tamarindo, Guanacaste",
             "meeting_point": "Muelle de Tamarindo",
-            "included": ["Barco catamarán", "Open bar", "Snorkel equipment", "Almuerzo", "Frutas"],
+            "included": [
+                "Barco catamarán",
+                "Open bar",
+                "Snorkel equipment",
+                "Almuerzo",
+                "Frutas",
+            ],
             "not_included": ["Transporte al muelle"],
-            "itinerary": [{"step": 1, "activity": "Embarque y briefing", "duration": "15 min"}, {"step": 2, "activity": "Navegación y snorkel", "duration": "2.5 horas"}, {"step": 3, "activity": "Open bar y almuerzo", "duration": "1.5 horas"}, {"step": 4, "activity": "Sunset cruise", "duration": "1 hora"}],
+            "itinerary": [
+                {"step": 1, "activity": "Embarque y briefing", "duration": "15 min"},
+                {
+                    "step": 2,
+                    "activity": "Navegación y snorkel",
+                    "duration": "2.5 horas",
+                },
+                {"step": 3, "activity": "Open bar y almuerzo", "duration": "1.5 horas"},
+                {"step": 4, "activity": "Sunset cruise", "duration": "1 hora"},
+            ],
             "max_group_size": 40,
             "min_age": 0,
             "price": 108.00,
             "currency": "USD",
-            "images": ["https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80", "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&q=80"],
+            "images": [
+                "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80",
+                "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&q=80",
+            ],
             "cover_image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80",
             "schedule_days": ["monday", "wednesday", "friday", "saturday"],
             "rating": 4.8,
@@ -787,14 +1230,40 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "duration_text": "Día completo",
             "location": "Tortuguero",
             "meeting_point": "Pickup en Lodge o Transfers available from Moín",
-            "included": ["Navegación en lancha", "Guía certificado", "Almuerzo buffet", "Entrada al Parque Nacional"],
+            "included": [
+                "Navegación en lancha",
+                "Guía certificado",
+                "Almuerzo buffet",
+                "Entrada al Parque Nacional",
+            ],
             "not_included": ["Transporte terrestre opcional", "Propinas"],
-            "itinerary": [{"step": 1, "activity": "Navegación matutina por canales", "duration": "2 horas"}, {"step": 2, "activity": "Caminata en selva", "duration": "1.5 horas"}, {"step": 3, "activity": "Almuerzo buffet", "duration": "45 min"}, {"step": 4, "activity": "Tour por el pueblo de Tortuguero", "duration": "1 hora"}, {"step": 5, "activity": "Navegación vespertina", "duration": "1.5 horas"}],
+            "itinerary": [
+                {
+                    "step": 1,
+                    "activity": "Navegación matutina por canales",
+                    "duration": "2 horas",
+                },
+                {"step": 2, "activity": "Caminata en selva", "duration": "1.5 horas"},
+                {"step": 3, "activity": "Almuerzo buffet", "duration": "45 min"},
+                {
+                    "step": 4,
+                    "activity": "Tour por el pueblo de Tortuguero",
+                    "duration": "1 hora",
+                },
+                {
+                    "step": 5,
+                    "activity": "Navegación vespertina",
+                    "duration": "1.5 horas",
+                },
+            ],
             "max_group_size": 20,
             "min_age": 0,
             "price": 85.00,
             "currency": "USD",
-            "images": ["https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0?w=800&q=80", "https://images.unsplash.com/photo-1544979590-37e9b7c5c72e?w=800&q=80"],
+            "images": [
+                "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0?w=800&q=80",
+                "https://images.unsplash.com/photo-1544979590-37e9b7c5c72e?w=800&q=80",
+            ],
             "cover_image": "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0?w=800&q=80",
             "schedule_days": ["monday", "wednesday", "friday", "saturday"],
             "rating": 4.7,
@@ -814,14 +1283,36 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "duration_text": "4 horas",
             "location": "La Fortuna",
             "meeting_point": "Hotel pickup en La Fortuna",
-            "included": ["Equipo de rappelen", "Guía certificado", "Snack", "Transfer desde hotel", "Seguro"],
+            "included": [
+                "Equipo de rappelen",
+                "Guía certificado",
+                "Snack",
+                "Transfer desde hotel",
+                "Seguro",
+            ],
             "not_included": ["Zapatos de agua personal"],
-            "itinerary": [{"step": 1, "activity": "Transporte y equipamiento", "duration": "30 min"}, {"step": 2, "activity": "Briefing de seguridad", "duration": "20 min"}, {"step": 3, "activity": "Canyoning - 4 rappeles", "duration": "2.5 horas"}, {"step": 4, "activity": "Snack y fotos", "duration": "30 min"}],
+            "itinerary": [
+                {
+                    "step": 1,
+                    "activity": "Transporte y equipamiento",
+                    "duration": "30 min",
+                },
+                {"step": 2, "activity": "Briefing de seguridad", "duration": "20 min"},
+                {
+                    "step": 3,
+                    "activity": "Canyoning - 4 rappeles",
+                    "duration": "2.5 horas",
+                },
+                {"step": 4, "activity": "Snack y fotos", "duration": "30 min"},
+            ],
             "max_group_size": 8,
             "min_age": 12,
             "price": 125.00,
             "currency": "USD",
-            "images": ["https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=800&q=80", "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80"],
+            "images": [
+                "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=800&q=80",
+                "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80",
+            ],
             "cover_image": "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=800&q=80",
             "schedule_days": ["tuesday", "thursday", "saturday"],
             "rating": 4.9,
@@ -843,12 +1334,18 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "meeting_point": "Centro de Visitantes Monteverde",
             "included": ["Guía certificado", "Linterna", "Botella de agua"],
             "not_included": ["Transporte"],
-            "itinerary": [{"step": 1, "activity": "Registro y briefing", "duration": "15 min"}, {"step": 2, "activity": "Caminata nocturna", "duration": "2 horas"}],
+            "itinerary": [
+                {"step": 1, "activity": "Registro y briefing", "duration": "15 min"},
+                {"step": 2, "activity": "Caminata nocturna", "duration": "2 horas"},
+            ],
             "max_group_size": 12,
             "min_age": 8,
             "price": 55.00,
             "currency": "USD",
-            "images": ["https://images.unsplash.com/photo-1518623380242-4a8806cef5b8?w=800&q=80", "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80"],
+            "images": [
+                "https://images.unsplash.com/photo-1518623380242-4a8806cef5b8?w=800&q=80",
+                "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80",
+            ],
             "cover_image": "https://images.unsplash.com/photo-1518623380242-4a8806cef5b8?w=800&q=80",
             "schedule_days": ["monday", "wednesday", "friday", "saturday"],
             "rating": 4.8,
@@ -868,22 +1365,49 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "duration_text": "3 horas",
             "location": "Alajuela",
             "meeting_point": "Pickup en hoteles de San José",
-            "included": ["Transporte ida y vuelta", "Guía certificado", "Degustación de café", "Chocolate samples"],
+            "included": [
+                "Transporte ida y vuelta",
+                "Guía certificado",
+                "Degustación de café",
+                "Chocolate samples",
+            ],
             "not_included": ["Almuerzo opcional"],
-            "itinerary": [{"step": 1, "activity": "Transporte desde San José", "duration": "45 min"}, {"step": 2, "activity": "Tour por la plantación", "duration": "1.5 horas"}, {"step": 3, "activity": "Degustación y compras", "duration": "45 min"}],
+            "itinerary": [
+                {
+                    "step": 1,
+                    "activity": "Transporte desde San José",
+                    "duration": "45 min",
+                },
+                {
+                    "step": 2,
+                    "activity": "Tour por la plantación",
+                    "duration": "1.5 horas",
+                },
+                {"step": 3, "activity": "Degustación y compras", "duration": "45 min"},
+            ],
             "max_group_size": 15,
             "min_age": 0,
             "price": 45.00,
             "currency": "USD",
-            "images": ["https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=800&q=80", "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&q=80"],
+            "images": [
+                "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=800&q=80",
+                "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&q=80",
+            ],
             "cover_image": "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=800&q=80",
-            "schedule_days": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
+            "schedule_days": [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+            ],
             "rating": 4.5,
             "total_reviews": 234,
             "total_bookings": 1234,
             "is_featured": False,
             "is_active": True,
-        }
+        },
     ]
 
     print("\nSeeding tours...")
@@ -969,7 +1493,7 @@ async def seed_blog_posts(db: AsyncSession):
             "published_at": datetime.now(timezone.utc),
             "views_count": 1234,
             "is_featured": False,
-        }
+        },
     ]
 
     print("\nSeeding blog posts...")
@@ -1038,7 +1562,12 @@ async def main():
             print("SEED COMPLETE!")
             print("=" * 60)
             print("\nSummary:")
-            for model, name in [(Destination, "Destinations"), (Property, "Properties"), (Tour, "Tours"), (BlogPost, "Blog Posts")]:
+            for model, name in [
+                (Destination, "Destinations"),
+                (Property, "Properties"),
+                (Tour, "Tours"),
+                (BlogPost, "Blog Posts"),
+            ]:
                 result = await db.execute(select(func.count(model.id)))
                 print(f"  {name}: {result.scalar()}")
             print("\nAll data is now editable from the backend!")

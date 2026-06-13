@@ -22,18 +22,18 @@
           </div>
         </NuxtLink>
       </div>
-      
+
       <nav class="flex-1 py-4 overflow-y-auto">
         <div class="mb-6">
           <p class="px-4 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Principal</p>
           <div class="mx-2 space-y-0.5">
-            <NuxtLink 
-              v-for="item in mainMenuItems" 
+            <NuxtLink
+              v-for="item in mainMenuItems"
               :key="item.path"
               :to="item.path"
               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium group"
-              :class="$route.path === item.path 
-                ? 'bg-gradient-to-r from-primary-500/20 to-primary-600/10 text-primary-400 border-l-2 border-primary-500' 
+              :class="$route.path === item.path
+                ? 'bg-gradient-to-r from-primary-500/20 to-primary-600/10 text-primary-400 border-l-2 border-primary-500'
                 : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border-l-2 border-transparent'"
               :aria-current="$route.path === item.path ? 'page' : undefined"
               @click="mobileOpen = false"
@@ -47,13 +47,13 @@
         <div class="mb-6">
           <p class="px-4 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Gestión</p>
           <div class="mx-2 space-y-0.5">
-            <NuxtLink 
-              v-for="item in managementMenuItems" 
+            <NuxtLink
+              v-for="item in managementMenuItems"
               :key="item.path"
               :to="item.path"
               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium group"
               :class="$route.path.startsWith(item.path)
-                ? 'bg-gradient-to-r from-primary-500/20 to-primary-600/10 text-primary-400 border-l-2 border-primary-500' 
+                ? 'bg-gradient-to-r from-primary-500/20 to-primary-600/10 text-primary-400 border-l-2 border-primary-500'
                 : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border-l-2 border-transparent'"
               :aria-current="$route.path.startsWith(item.path) ? 'page' : undefined"
               @click="mobileOpen = false"
@@ -75,8 +75,8 @@
             <p class="text-xs text-slate-400 truncate">{{ user?.email }}</p>
           </div>
         </div>
-        <button 
-          @click="logout" 
+        <button
+          @click="logout"
           class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg w-full transition-colors text-sm"
         >
           <Icon name="lucide:log-out" class="w-4 h-4" />

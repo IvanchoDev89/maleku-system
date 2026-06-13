@@ -4,11 +4,11 @@
  * Con badges, rating, precio y acciones rápidas
  */
 import { computed } from 'vue'
-import { 
-  Clock, 
-  Star, 
-  MapPin, 
-  Users, 
+import {
+  Clock,
+  Star,
+  MapPin,
+  Users,
   Zap,
   ChevronRight,
   Heart
@@ -56,7 +56,7 @@ const formatDuration = (duration: string) => {
 </script>
 
 <template>
-  <article 
+  <article
     class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
     :class="{ 'ring-2 ring-primary-500 ring-offset-2': featured }"
   >
@@ -71,34 +71,34 @@ const formatDuration = (duration: string) => {
         height="300"
         format="webp"
       />
-      
+
       <!-- Badges -->
       <div class="absolute top-3 left-3 flex flex-wrap gap-2">
         <!-- Category Badge -->
-        <span 
+        <span
           class="px-2.5 py-1 bg-white/95 backdrop-blur-sm rounded-full text-sm font-medium shadow-sm"
         >
           {{ categoryIcons[tour.category] || '🎯' }} {{ tour.category }}
         </span>
-        
+
         <!-- Featured Badge -->
-        <span 
+        <span
           v-if="tour.is_featured"
           class="px-2.5 py-1 bg-accent-500 text-white rounded-full text-xs font-bold shadow-sm flex items-center gap-1"
         >
           <Zap class="w-3 h-3" />
           Destacado
         </span>
-        
+
         <!-- Discount Badge -->
-        <span 
+        <span
           v-if="discount"
           class="px-2.5 py-1 bg-red-500 text-white rounded-full text-xs font-bold shadow-sm"
         >
           -{{ discount }}%
         </span>
       </div>
-      
+
       <!-- Favorite Button -->
       <button
         @click.prevent="emit('favorite', tour.id)"
@@ -106,10 +106,10 @@ const formatDuration = (duration: string) => {
       >
         <Heart class="w-4 h-4 text-gray-600 hover:text-red-500 transition-colors" />
       </button>
-      
+
       <!-- Difficulty Badge (bottom) -->
       <div class="absolute bottom-3 left-3">
-        <span 
+        <span
           class="px-2.5 py-1 rounded-full text-xs font-semibold border"
           :class="difficulty.color"
         >
@@ -117,25 +117,25 @@ const formatDuration = (duration: string) => {
         </span>
       </div>
     </div>
-    
+
     <!-- Content -->
     <div class="p-5">
       <!-- Vendor (if available) -->
       <div v-if="tour.vendor_name" class="text-xs text-gray-500 mb-2">
         Por {{ tour.vendor_name }}
       </div>
-      
+
       <!-- Title -->
       <h3 class="font-bold text-gray-900 text-lg mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
         {{ tour.title }}
       </h3>
-      
+
       <!-- Location -->
       <div class="flex items-center gap-1 text-sm text-gray-600 mb-3">
         <MapPin class="w-4 h-4 text-primary-500 flex-shrink-0" />
         <span class="truncate">{{ tour.location }}, {{ tour.region }}</span>
       </div>
-      
+
       <!-- Meta Info -->
       <div class="flex items-center gap-4 text-sm text-gray-600 mb-4">
         <div class="flex items-center gap-1">
@@ -147,7 +147,7 @@ const formatDuration = (duration: string) => {
           <span>Max {{ tour.max_group_size || 10 }}</span>
         </div>
       </div>
-      
+
       <!-- Rating -->
       <div class="flex items-center gap-2 mb-4">
         <div class="flex items-center gap-1">
@@ -156,7 +156,7 @@ const formatDuration = (duration: string) => {
         </div>
         <span class="text-sm text-gray-500">({{ tour.review_count }} reseñas)</span>
       </div>
-      
+
       <!-- Included Items (if any) -->
       <div v-if="tour.included && tour.included.length > 0" class="flex flex-wrap gap-2 mb-4">
         <span
@@ -170,7 +170,7 @@ const formatDuration = (duration: string) => {
           +{{ tour.included.length - 3 }}
         </span>
       </div>
-      
+
       <!-- Price & CTA -->
       <div class="flex items-end justify-between pt-4 border-t border-gray-100">
         <div>
@@ -182,7 +182,7 @@ const formatDuration = (duration: string) => {
             <span class="text-sm text-gray-500">/persona</span>
           </div>
         </div>
-        
+
         <div class="flex gap-2">
           <button
             @click="emit('view', tour.id)"

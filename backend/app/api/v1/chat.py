@@ -1,6 +1,7 @@
 """
 Chat/Conversation API - WebSocket Ready
 """
+
 import uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -15,6 +16,7 @@ from app.schemas import chat as chat_schema
 from pydantic import BaseModel
 
 router = APIRouter()
+
 
 class DeleteResponse(BaseModel):
     message: str
@@ -61,14 +63,9 @@ class PresignedUrlResponse(BaseModel):
     fields: dict
 
 
-
-async def get_participant_vendor(
-    db: AsyncSession, current_user: User
-) -> Vendor | None:
+async def get_participant_vendor(db: AsyncSession, current_user: User) -> Vendor | None:
     """Fetch the vendor profile associated with the current user (if any)."""
-    result = await db.execute(
-        select(Vendor).where(Vendor.user_id == current_user.id)
-    )
+    result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     return result.scalar_one_or_none()
 
 
@@ -97,7 +94,7 @@ def assert_conversation_participant(
 async def list_conversations(
     service_type: ChatServiceType = None,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """List user's conversations"""
     vendor = await get_participant_vendor(db, current_user)
@@ -107,13 +104,12 @@ async def list_conversations(
     elif vendor:
         query = select(Conversation).where(
             Conversation.is_active,
-            (Conversation.participant_user_id == current_user.id) |
-            (Conversation.participant_vendor_id == vendor.id)
+            (Conversation.participant_user_id == current_user.id)
+            | (Conversation.participant_vendor_id == vendor.id),
         )
     else:
         query = select(Conversation).where(
-            Conversation.is_active,
-            Conversation.participant_user_id == current_user.id
+            Conversation.is_active, Conversation.participant_user_id == current_user.id
         )
 
     if service_type:
@@ -122,7 +118,7 @@ async def list_conversations(
     # Apply eager loading to avoid N+1 queries
     query = query.options(
         selectinload(Conversation.participant_user),
-        selectinload(Conversation.participant_vendor)
+        selectinload(Conversation.participant_vendor),
     )
 
     result = await db.execute(query.order_by(desc(Conversation.last_message_at)))
@@ -135,7 +131,7 @@ async def list_conversations(
 async def create_conversation(
     conv_data: chat_schema.ConversationCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Create or get existing conversation"""
     if conv_data.participant_vendor_id:
@@ -143,13 +139,13 @@ async def create_conversation(
             select(Conversation).where(
                 Conversation.participant_user_id == current_user.id,
                 Conversation.participant_vendor_id == conv_data.participant_vendor_id,
-                Conversation.service_type == conv_data.service_type
+                Conversation.service_type == conv_data.service_type,
             )
         )
         existing = result.scalar_one_or_none()
         if existing:
             return existing
-    
+
     if conv_data.participant_vendor_id:
         vendor_result = await db.execute(
             select(Vendor).where(Vendor.id == conv_data.participant_vendor_id)
@@ -157,18 +153,18 @@ async def create_conversation(
         vendor = vendor_result.scalar_one_or_none()
         if not vendor:
             raise HTTPException(status_code=400, detail="Vendor not found")
-    
+
     conversation = Conversation(
         participant_user_id=current_user.id,
         participant_vendor_id=conv_data.participant_vendor_id,
         service_type=conv_data.service_type,
-        service_id=conv_data.service_id
+        service_id=conv_data.service_id,
     )
-    
+
     db.add(conversation)
     await db.commit()
     await db.refresh(conversation)
-    
+
     return conversation
 
 
@@ -176,7 +172,7 @@ async def create_conversation(
 async def get_conversation(
     conversation_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Get conversation details"""
     result = await db.execute(
@@ -194,13 +190,15 @@ async def get_conversation(
     return conversation
 
 
-@router.get("/{conversation_id}/messages", response_model=list[chat_schema.MessageResponse])
+@router.get(
+    "/{conversation_id}/messages", response_model=list[chat_schema.MessageResponse]
+)
 async def get_messages(
     conversation_id: uuid.UUID,
     limit: int = Query(default=50, ge=1, le=100),
     before: uuid.UUID = None,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Get conversation messages"""
     result = await db.execute(
@@ -231,7 +229,7 @@ async def send_message(
     conversation_id: uuid.UUID,
     message_data: chat_schema.MessageCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Send a message"""
     result = await db.execute(
@@ -265,7 +263,7 @@ async def send_message(
         sender_type=sender_type,
         message_type=message_data.message_type,
         content=message_data.content,
-        attachments=message_data.attachments
+        attachments=message_data.attachments,
     )
 
     conversation.last_message_at = datetime.now(timezone.utc)
@@ -281,7 +279,7 @@ async def send_message(
 async def mark_read(
     conversation_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Mark messages as read"""
     result = await db.execute(
@@ -300,7 +298,7 @@ async def mark_read(
         select(Message).where(
             Message.conversation_id == conversation_id,
             Message.sender_id != current_user.id,
-            Message.read_at.is_(None)
+            Message.read_at.is_(None),
         )
     )
     messages = result.scalars().all()

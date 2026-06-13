@@ -82,13 +82,13 @@ const handleRegister = async () => {
   error.value = ''
 
   const result = await auth.registerVendor(form)
-  
+
   if (result.success) {
     router.push('/vendor/dashboard')
   } else {
     error.value = result.error || 'Error al registrar'
   }
-  
+
   loading.value = false
 }
 

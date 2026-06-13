@@ -37,7 +37,7 @@ ERRORS=0
 check_required() {
     local var_name=$1
     local var_value=$2
-    
+
     if [ -z "$var_value" ] || [ "$var_value" = "CHANGE_ME" ] || [ "$var_value" = "your-secret-key-here" ]; then
         echo -e "${RED}❌ $var_name is not set or is using default value${NC}"
         ERRORS=$((ERRORS + 1))

@@ -1,4 +1,5 @@
 """Middleware that ensures every request has a unique request ID."""
+
 import uuid
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware

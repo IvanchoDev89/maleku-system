@@ -7,14 +7,14 @@
         <p class="text-gray-500 mt-1">Aprobación, moderación y análisis de vendors</p>
       </div>
       <div class="flex gap-3">
-        <button 
+        <button
           @click="showAnalytics = true"
           class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
         >
           <BarChart3 class="w-4 h-4" />
           <span>{{ $t('superadmin.vendors.analytics') }}</span>
         </button>
-        <NuxtLink 
+        <NuxtLink
           to="/superadmin/vendors/pending"
           class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
         >
@@ -57,9 +57,9 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
           <div class="relative">
-            <input 
+            <input
               v-model="filters.search"
-              type="text" 
+              type="text"
               placeholder="Nombre o email..."
               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
               @input="debouncedSearch"
@@ -77,8 +77,8 @@
         </div>
         <div class="flex items-end">
           <label class="flex items-center gap-2 cursor-pointer">
-            <input 
-              v-model="filters.featured_only" 
+            <input
+              v-model="filters.featured_only"
               type="checkbox"
               class="w-4 h-4 text-slate-900 rounded border-gray-300"
               @change="loadVendors"
@@ -141,7 +141,7 @@
               </td>
               <td class="px-4 py-4 text-right">
                 <div class="flex items-center justify-end gap-2">
-                  <button 
+                  <button
                     v-if="vendor.status === 'pending'"
                     @click="confirmApproveVendor(vendor)"
                     class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
@@ -149,7 +149,7 @@
                   >
                     <CheckCircle class="w-5 h-5" />
                   </button>
-                  <button 
+                  <button
                     v-if="vendor.status === 'active'"
                     @click="confirmToggleFeatured(vendor)"
                     class="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
@@ -157,7 +157,7 @@
                   >
                     <component :is="vendor.is_featured ? HeartOff : Star" class="w-5 h-5" />
                   </button>
-                  <NuxtLink 
+                  <NuxtLink
                     :to="`/superadmin/vendors/${vendor.id}`"
                     class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     :title="$t('superadmin.vendors.view')"
@@ -199,7 +199,7 @@
       <div v-if="loading" class="flex items-center justify-center py-12">
         <Loader2 class="w-8 h-8 animate-spin text-slate-600" />
       </div>
-      
+
       <!-- Empty State -->
       <div v-else-if="vendors.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
         <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -237,12 +237,12 @@
           <div v-if="analytics.top_performers?.length > 0">
             <h3 class="font-bold text-gray-900 mb-4">Top Performers</h3>
             <div class="space-y-3">
-              <div 
-                v-for="(vendor, index) in analytics.top_performers.slice(0, 5)" 
+              <div
+                v-for="(vendor, index) in analytics.top_performers.slice(0, 5)"
                 :key="vendor.vendor_id"
                 class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl"
               >
-                <div 
+                <div
                   class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
                   :class="index === 0 ? 'bg-yellow-400 text-black' : index === 1 ? 'bg-gray-300 text-black' : index === 2 ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-600'"
                 >
@@ -267,8 +267,8 @@
           <div v-if="analytics.recent_registrations?.length > 0">
             <h3 class="font-bold text-gray-900 mb-4">Registros Recientes</h3>
             <div class="space-y-2">
-              <div 
-                v-for="vendor in analytics.recent_registrations" 
+              <div
+                v-for="vendor in analytics.recent_registrations"
                 :key="vendor.id"
                 class="flex justify-between items-center p-3 border border-gray-200 rounded-lg"
               >
@@ -393,7 +393,7 @@ const loadVendors = async () => {
     if (filters.value.search) params.search = filters.value.search
     if (filters.value.type) params.business_type = filters.value.type
     if (filters.value.featured_only) params.featured_only = 'true'
-    
+
     const response = await api.get<{ items: any[]; total: number }>('/superadmin/vendors', params)
     vendors.value = response.items || response
     total.value = response.total || vendors.value.length

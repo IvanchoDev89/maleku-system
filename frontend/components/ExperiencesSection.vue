@@ -26,16 +26,16 @@
 
       <!-- Content -->
       <div v-else class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <NuxtLink 
-          v-for="exp in experiences" 
+        <NuxtLink
+          v-for="exp in experiences"
           :key="exp.slug"
           :to="`/tours?category=${exp.slug}`"
           class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
           :aria-label="t(`experiences.items.${exp.slug}.ariaLabel`)"
         >
           <div class="relative h-48 overflow-hidden">
-            <NuxtImg 
-              :src="exp.image" 
+            <NuxtImg
+              :src="exp.image"
               :alt="t(`experiences.items.${exp.slug}.imageAlt`)"
               class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               loading="lazy"
@@ -59,8 +59,8 @@
       </div>
 
       <div class="text-center mt-12">
-        <NuxtLink 
-          to="/tours" 
+        <NuxtLink
+          to="/tours"
           class="inline-flex items-center gap-2 px-6 py-3 border-2 border-primary-600 text-primary-600 font-semibold rounded-full hover:bg-primary-600 hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         >
           {{ t('common.seeAll') }}

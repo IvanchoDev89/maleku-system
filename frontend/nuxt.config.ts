@@ -1,6 +1,6 @@
 export default defineNuxtConfig({
   devtools: { enabled: false },
-  
+
   modules: [
     '@pinia/nuxt',
     '@vueuse/nuxt',
@@ -56,20 +56,20 @@ export default defineNuxtConfig({
       periodicSyncForUpdates: 60 * 60
     }
   },
-  
+
   components: [
     { path: '~/components', pathPrefix: false }
   ],
-  
+
   css: ['~/assets/css/main.css', '~/assets/css/a11y.css'],
-  
+
   postcss: {
     plugins: {
       tailwindcss: {},
       autoprefixer: {},
     },
   },
-  
+
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
@@ -84,7 +84,7 @@ export default defineNuxtConfig({
       environment: process.env.NUXT_PUBLIC_ENVIRONMENT || 'production'
     }
   },
-  
+
   app: {
     head: {
       htmlAttrs: {
@@ -110,12 +110,12 @@ export default defineNuxtConfig({
       ]
     }
   },
-  
+
   // Alias para resolución de tipos
   alias: {
     '~/types': './types/index.ts'
   },
-  
+
   i18n: {
     locales: [
       { code: 'es', name: 'Español', language: 'es-CR', file: 'es.json' },
@@ -134,7 +134,7 @@ export default defineNuxtConfig({
     // Prevenir hydration mismatches
     skipSettingLocaleOnNavigate: false
   },
-  
+
   nitro: {
     preset: 'node-server',
     // SECURITY: Add security headers
@@ -164,7 +164,7 @@ export default defineNuxtConfig({
       }
     }
   },
-  
+
   compatibilityDate: '2024-01-01',
 
   colorMode: {

@@ -10,6 +10,7 @@ Strategy
   under test is automatically rolled back when the test ends, so tests
   cannot leak state to one another.
 """
+
 import os
 import pytest
 import pytest_asyncio
@@ -83,6 +84,7 @@ async def db_session(engine):
 @pytest_asyncio.fixture
 async def client(db_session):
     """Create test client with overridden database dependency."""
+
     async def override_get_db():
         yield db_session
 
@@ -101,17 +103,14 @@ def sample_user_data():
         "email": "test@example.com",
         "password": "TestPass123!",
         "full_name": "Test User",
-        "phone": "+50612345678"
+        "phone": "+50612345678",
     }
 
 
 @pytest.fixture
 def sample_vendor_data():
     """Sample vendor data for tests"""
-    return {
-        "business_name": "Test Hotel Costa Rica",
-        "business_type": "hotel"
-    }
+    return {"business_name": "Test Hotel Costa Rica", "business_type": "hotel"}
 
 
 @pytest.fixture
@@ -124,7 +123,7 @@ def sample_property_data():
         "property_type": "hotel",
         "base_price": 150.0,
         "currency": "USD",
-        "max_guests": 4
+        "max_guests": 4,
     }
 
 
@@ -138,13 +137,14 @@ def sample_room_data():
         "max_occupancy": 2,
         "price_per_night": 150.0,
         "weekend_price": 180.0,
-        "currency": "USD"
+        "currency": "USD",
     }
 
 
 # ---------------------------------------------------------------------------
 # Security fixtures: admin / superadmin / vendor-without-profile
 # ---------------------------------------------------------------------------
+
 
 async def _create_user_with_role(
     db_session: AsyncSession,
@@ -185,7 +185,10 @@ async def superadmin_user(db_session) -> User:
 async def vendor_no_profile_user(db_session) -> User:
     """A VENDOR-role user without a Vendor profile (edge case for BOLA-vendor-None)."""
     return await _create_user_with_role(
-        db_session, "vendor-no-profile@example.com", UserRole.VENDOR, "Vendor No Profile"
+        db_session,
+        "vendor-no-profile@example.com",
+        UserRole.VENDOR,
+        "Vendor No Profile",
     )
 
 

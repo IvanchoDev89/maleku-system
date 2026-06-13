@@ -25,20 +25,20 @@
           </div>
         </NuxtLink>
       </div>
-      
+
       <!-- Navigation -->
       <nav class="flex-1 py-4 overflow-y-auto" @click="mobileOpen = false">
         <!-- Principal -->
         <div class="mb-6">
           <p class="px-5 mb-3 text-[10px] font-bold text-primary-400 uppercase tracking-wider">Principal</p>
           <div class="mx-3 space-y-1">
-              <NuxtLink 
-                v-for="item in mainMenuItems" 
+              <NuxtLink
+                v-for="item in mainMenuItems"
                 :key="item.path"
                 :to="item.path"
                 class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium group"
-                :class="$route.path === item.path 
-                  ? 'bg-white/15 text-white border-l-2 border-primary-400 shadow-sm' 
+                :class="$route.path === item.path
+                  ? 'bg-white/15 text-white border-l-2 border-primary-400 shadow-sm'
                   : 'text-primary-100/80 hover:bg-white/10 hover:text-white border-l-2 border-transparent'"
                 :aria-current="$route.path === item.path ? 'page' : undefined"
               >
@@ -55,13 +55,13 @@
         <div class="mb-6">
           <p class="px-5 mb-3 text-[10px] font-bold text-primary-400 uppercase tracking-wider">Gestión</p>
           <div class="mx-3 space-y-1">
-              <NuxtLink 
-                v-for="item in managementMenuItems" 
+              <NuxtLink
+                v-for="item in managementMenuItems"
                 :key="item.path"
                 :to="item.path"
                 class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium group"
                 :class="$route.path.startsWith(item.path)
-                  ? 'bg-white/15 text-white border-l-2 border-primary-400 shadow-sm' 
+                  ? 'bg-white/15 text-white border-l-2 border-primary-400 shadow-sm'
                   : 'text-primary-100/80 hover:bg-white/10 hover:text-white border-l-2 border-transparent'"
                 :aria-current="$route.path === item.path ? 'page' : undefined"
               >
@@ -75,13 +75,13 @@
         <div class="mb-6">
           <p class="px-5 mb-3 text-[10px] font-bold text-primary-400 uppercase tracking-wider">Monitoreo</p>
           <div class="mx-3 space-y-1">
-              <NuxtLink 
-                v-for="item in monitoringMenuItems" 
+              <NuxtLink
+                v-for="item in monitoringMenuItems"
                 :key="item.path"
                 :to="item.path"
                 class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium group"
                 :class="$route.path.startsWith(item.path)
-                  ? 'bg-white/15 text-white border-l-2 border-primary-400 shadow-sm' 
+                  ? 'bg-white/15 text-white border-l-2 border-primary-400 shadow-sm'
                   : 'text-primary-100/80 hover:bg-white/10 hover:text-white border-l-2 border-transparent'"
                 :aria-current="$route.path === item.path ? 'page' : undefined"
               >
@@ -95,13 +95,13 @@
         <div>
           <p class="px-5 mb-3 text-[10px] font-bold text-primary-400 uppercase tracking-wider">Sistema</p>
           <div class="mx-3 space-y-1">
-              <NuxtLink 
-                v-for="item in systemMenuItems" 
+              <NuxtLink
+                v-for="item in systemMenuItems"
                 :key="item.path"
                 :to="item.path"
                 class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium group"
                 :class="$route.path.startsWith(item.path)
-                  ? 'bg-white/15 text-white border-l-2 border-primary-400 shadow-sm' 
+                  ? 'bg-white/15 text-white border-l-2 border-primary-400 shadow-sm'
                   : 'text-primary-100/80 hover:bg-white/10 hover:text-white border-l-2 border-transparent'"
                 :aria-current="$route.path === item.path ? 'page' : undefined"
               >
@@ -157,19 +157,19 @@
           <div class="flex items-center gap-4">
             <!-- Global Search -->
             <div class="relative">
-              <input 
+              <input
                 v-model="searchQuery"
                 @keyup.enter="handleSearch"
-                type="text" 
-                placeholder="Buscar usuarios, proveedores..." 
+                type="text"
+                placeholder="Buscar usuarios, proveedores..."
                 class="pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 w-80 transition-all placeholder:text-gray-400"
               />
               <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
-            
+
             <!-- Quick Actions Dropdown -->
             <div class="relative" ref="quickActionsRef">
-              <button 
+              <button
                 @click="showQuickActions = !showQuickActions"
                 class="flex items-center gap-2 px-4 py-2.5 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-xl transition-colors font-medium text-sm"
               >
@@ -177,7 +177,7 @@
                 <span>Nuevo</span>
                 <ChevronDown class="w-4 h-4" />
               </button>
-              
+
               <div v-if="showQuickActions" class="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
                 <NuxtLink to="/superadmin/users" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-sm text-gray-700">
                   <UserPlus class="w-4 h-4 text-primary-600" />
@@ -198,15 +198,15 @@
                 </NuxtLink>
               </div>
             </div>
-            
+
             <!-- Notifications -->
             <button class="p-2.5 bg-gray-50 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors relative">
               <Bell class="w-5 h-5" />
               <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
-            
+
             <!-- Emergency Actions -->
-            <button 
+            <button
               ref="emergencyBtnRef"
               @click="toggleEmergencyMenu"
               class="p-2.5 bg-red-50 hover:bg-red-100 rounded-xl text-red-600 transition-colors"
@@ -234,7 +234,7 @@
           Acciones de Emergencia
         </h3>
         <div class="space-y-2">
-          <button 
+          <button
             @click="triggerMaintenanceMode"
             :disabled="maintenanceLoading"
             class="w-full p-4 bg-red-50 hover:bg-red-100 rounded-xl text-left text-sm text-red-700 transition-colors flex items-start gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -246,7 +246,7 @@
               <p class="text-xs text-red-500 mt-0.5">Desactivar sitio público</p>
             </div>
           </button>
-          <button 
+          <button
             @click="forceGlobalLogout"
             :disabled="logoutLoading"
             class="w-full p-4 bg-orange-50 hover:bg-orange-100 rounded-xl text-left text-sm text-orange-700 transition-colors flex items-start gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -258,7 +258,7 @@
               <p class="text-xs text-orange-500 mt-0.5">Cerrar todas las sesiones</p>
             </div>
           </button>
-          <button 
+          <button
             @click="blockSuspiciousIPs"
             :disabled="blockIPsLoading"
             class="w-full p-4 bg-amber-50 hover:bg-amber-100 rounded-xl text-left text-sm text-amber-700 transition-colors flex items-start gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -271,7 +271,7 @@
             </div>
           </button>
           <div class="border-t border-gray-200 my-3"></div>
-          <button 
+          <button
             @click="clearSystemCache"
             :disabled="clearCacheLoading"
             class="w-full p-4 bg-blue-50 hover:bg-blue-100 rounded-xl text-left text-sm text-blue-700 transition-colors flex items-start gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -302,15 +302,15 @@
 
 <script setup lang="ts">
 import { onClickOutside } from '@vueuse/core'
-import { 
-  LayoutDashboard, 
-  Users, 
-  Store, 
-  Building2, 
-  Calendar, 
-  Car, 
-  FileText, 
-  MapPin, 
+import {
+  LayoutDashboard,
+  Users,
+  Store,
+  Building2,
+  Calendar,
+  Car,
+  FileText,
+  MapPin,
   Star,
   BarChart3,
   FileBarChart2,
@@ -382,10 +382,10 @@ const userInitials = computed(() => {
 })
 
 const currentDate = computed(() => {
-  return new Date().toLocaleDateString('es-CR', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
+  return new Date().toLocaleDateString('es-CR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'

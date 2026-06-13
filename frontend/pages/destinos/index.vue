@@ -9,7 +9,7 @@
 
       <!-- Filter -->
       <div class="flex flex-wrap justify-center gap-3 mb-12">
-        <button 
+        <button
           v-for="region in regions"
           :key="region"
           @click="selectedRegion = selectedRegion === region ? '' : region"
@@ -33,14 +33,14 @@
 
       <!-- Destinations Grid -->
       <div v-else class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <NuxtLink 
+        <NuxtLink
           v-for="dest in filteredDestinations"
           :key="dest.id"
           :to="`/destinos/${dest.slug || dest.name.toLowerCase().replace(/\s+/g, '-')}`"
           class="group"
         >
           <div class="relative rounded-2xl overflow-hidden shadow-lg h-72">
-            <div 
+            <div
               class="absolute inset-0 flex items-center justify-center text-8xl"
               :class="dest.gradient"
             >
@@ -145,7 +145,7 @@ const destinations = computed(() => {
     'Caribe': 'bg-gradient-to-br from-primary-400 to-emerald-500',
     'Pacífico Sur': 'bg-gradient-to-br from-green-600 to-primary-700'
   }
-  
+
   return (apiData.value || []).map((d: any) => ({
     id: d.id,
     name: d.name,

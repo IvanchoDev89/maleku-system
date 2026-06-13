@@ -12,7 +12,7 @@ class Settings(BaseSettings):
         env_file=str(env_path),
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
     APP_NAME: str = "Costa Rica Travel"
@@ -31,13 +31,16 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
 
     PASSWORD_MIN_LENGTH: int = 8
-    PASSWORD_REGEX: str = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+    PASSWORD_REGEX: str = (
+        r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+    )
 
     BACKEND_CORS_ORIGINS: str = '["http://localhost:3000", "http://localhost:3003"]'
 
     @property
     def cors_origins_list(self) -> list[str]:
         import json
+
         return json.loads(self.BACKEND_CORS_ORIGINS)
 
     STRIPE_SECRET_KEY: str = ""
@@ -85,7 +88,10 @@ class Settings(BaseSettings):
     def is_stripe_test_mode(self) -> bool:
         if not self.STRIPE_SECRET_KEY:
             return True
-        return self.STRIPE_SECRET_KEY.startswith("sk_test_") or self.STRIPE_SECRET_KEY == "sk_test_..."
+        return (
+            self.STRIPE_SECRET_KEY.startswith("sk_test_")
+            or self.STRIPE_SECRET_KEY == "sk_test_..."
+        )
 
 
 settings = Settings()

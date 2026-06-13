@@ -1,19 +1,21 @@
 """
 Unit tests for Blog schemas
 """
+
 import pytest
-from uuid import UUID, uuid4
+from uuid import uuid4
 from datetime import datetime, timezone
 
 
 class TestBlogSchemas:
     def test_blog_post_create_valid(self):
         from app.schemas import BlogPostCreate
+
         data = BlogPostCreate(
             title="Valid Blog Post Title",
             content="A" * 50,
             category="Travel",
-            tags=["costa-rica", "travel"]
+            tags=["costa-rica", "travel"],
         )
         assert data.title == "Valid Blog Post Title"
         assert len(data.content) == 50
@@ -21,10 +23,8 @@ class TestBlogSchemas:
 
     def test_blog_post_create_minimal(self):
         from app.schemas import BlogPostCreate
-        data = BlogPostCreate(
-            title="Minimal Post",
-            content="X" * 50
-        )
+
+        data = BlogPostCreate(title="Minimal Post", content="X" * 50)
         assert data.title == "Minimal Post"
         assert data.excerpt is None
         assert data.featured_image is None
@@ -32,16 +32,19 @@ class TestBlogSchemas:
 
     def test_blog_post_create_title_too_short(self):
         from app.schemas import BlogPostCreate
+
         with pytest.raises(ValueError):
             BlogPostCreate(title="AB", content="X" * 50)
 
     def test_blog_post_create_content_too_short(self):
         from app.schemas import BlogPostCreate
+
         with pytest.raises(ValueError):
             BlogPostCreate(title="Valid Title", content="Short")
 
     def test_blog_post_update_partial(self):
         from app.schemas import BlogPostUpdate
+
         data = BlogPostUpdate(title="Revised Title")
         assert data.title == "Revised Title"
         assert data.excerpt is None
@@ -49,11 +52,13 @@ class TestBlogSchemas:
 
     def test_blog_post_update_empty(self):
         from app.schemas import BlogPostUpdate
+
         data = BlogPostUpdate()
         assert data.title is None
 
     def test_blog_post_response(self):
         from app.schemas import BlogPostResponse
+
         now = datetime.now(timezone.utc)
         data = BlogPostResponse(
             id=uuid4(),
@@ -72,6 +77,7 @@ class TestBlogSchemas:
 
     def test_blog_post_list_response(self):
         from app.schemas import BlogPostListResponse
+
         data = BlogPostListResponse(
             id=uuid4(),
             title="List Item",
@@ -88,13 +94,17 @@ class TestBlogSchemas:
 class TestBlogImports:
     def test_router_import(self):
         from app.api.v1.blog import router
+
         assert router
 
     def test_blog_schemas_import(self):
         from app.schemas import (
-            BlogPostCreate, BlogPostUpdate,
-            BlogPostResponse, BlogPostListResponse
+            BlogPostCreate,
+            BlogPostUpdate,
+            BlogPostResponse,
+            BlogPostListResponse,
         )
+
         assert BlogPostCreate
         assert BlogPostUpdate
         assert BlogPostResponse

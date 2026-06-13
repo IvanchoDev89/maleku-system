@@ -1,4 +1,5 @@
 """Landing page content API."""
+
 import asyncio
 from typing import Optional
 from fastapi import APIRouter, Depends
@@ -57,9 +58,7 @@ class LandingContentResponse(BaseModel):
 
 
 @router.get("/content", response_model=LandingContentResponse)
-async def get_landing_content(
-    db: AsyncSession = Depends(get_db)
-):
+async def get_landing_content(db: AsyncSession = Depends(get_db)):
     """Get all content for the landing page."""
 
     cache_key = "landing:content"
@@ -70,28 +69,28 @@ async def get_landing_content(
     # Run 3 independent queries in parallel
     async def _get_destinations():
         result = await db.execute(
-            select(Destination).where(
-                Destination.is_active,
-                Destination.is_featured
-            ).order_by(Destination.order.asc()).limit(6)
+            select(Destination)
+            .where(Destination.is_active, Destination.is_featured)
+            .order_by(Destination.order.asc())
+            .limit(6)
         )
         return result.scalars().all()
 
     async def _get_properties():
         result = await db.execute(
-            select(Property).where(
-                Property.is_active,
-                Property.is_featured
-            ).order_by(Property.rating.desc()).limit(6)
+            select(Property)
+            .where(Property.is_active, Property.is_featured)
+            .order_by(Property.rating.desc())
+            .limit(6)
         )
         return result.scalars().all()
 
     async def _get_tours():
         result = await db.execute(
-            select(Tour).where(
-                Tour.is_active,
-                Tour.is_featured
-            ).order_by(Tour.rating.desc()).limit(6)
+            select(Tour)
+            .where(Tour.is_active, Tour.is_featured)
+            .order_by(Tour.rating.desc())
+            .limit(6)
         )
         return result.scalars().all()
 
@@ -107,7 +106,7 @@ async def get_landing_content(
                 "slug": d.slug,
                 "region": d.region,
                 "description": d.description,
-                "image": d.image
+                "image": d.image,
             }
             for d in destinations
         ],
@@ -121,7 +120,7 @@ async def get_landing_content(
                 "cover_image": p.cover_image,
                 "base_price": p.base_price,
                 "rating": p.rating,
-                "property_type": p.property_type.value if p.property_type else None
+                "property_type": p.property_type.value if p.property_type else None,
             }
             for p in properties
         ],
@@ -137,10 +136,10 @@ async def get_landing_content(
                 "rating": t.rating,
                 "duration_text": t.duration_text,
                 "duration_hours": t.duration_hours,
-                "category": t.category.value if t.category else None
+                "category": t.category.value if t.category else None,
             }
             for t in tours
-        ]
+        ],
     }
 
     # Cache the response

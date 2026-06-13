@@ -2,6 +2,7 @@
 Models package for Costa Rica Travel application.
 All models are organized into separate modules by domain.
 """
+
 # Import Base first (re-export from database module)
 from app.core.database import Base
 
@@ -38,13 +39,25 @@ from app.models.chat import Conversation, Message, ChatServiceType, MessageType
 from app.models.vehicle import Vehicle, VehicleType, TransmissionType, FuelType
 from app.models.boat import Boat as BoatEquipment, BoatType
 from app.models.flight import Flight, RouteType
-from app.models.transportation import Transportation, TransportServiceType, TransportVehicleType, PricingType, DayType
+from app.models.transportation import (
+    Transportation,
+    TransportServiceType,
+    TransportVehicleType,
+    PricingType,
+    DayType,
+)
 from app.models.pricing import PricingRule
 from app.models.newsletter import NewsletterSubscriber
 from app.models.marketing import (
-    CampaignStatus, CampaignType, RecipientType,
-    EmailCampaign, EmailTemplate, EmailLog,
-    MarketingAutomation, InboxMessage, EmailPreference
+    CampaignStatus,
+    CampaignType,
+    RecipientType,
+    EmailCampaign,
+    EmailTemplate,
+    EmailLog,
+    MarketingAutomation,
+    InboxMessage,
+    EmailPreference,
 )
 
 # Additional enums from property

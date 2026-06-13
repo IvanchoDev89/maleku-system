@@ -61,12 +61,12 @@ alembic upgrade 004
 SELECT * FROM properties WHERE amenities @> '["wifi", "pool"]';
 
 -- Full-text search properties
-SELECT * FROM properties 
-WHERE to_tsvector('spanish', name || ' ' || description) @@ 
+SELECT * FROM properties
+WHERE to_tsvector('spanish', name || ' ' || description) @@
       to_tsquery('spanish', 'playa & tamarindo');
 
 -- Check room availability
-SELECT * FROM room_availability 
+SELECT * FROM room_availability
 WHERE room_id = '...' AND date BETWEEN '2025-01-01' AND '2025-01-07'
   AND is_available = true;
 ```

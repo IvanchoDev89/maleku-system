@@ -19,8 +19,8 @@
 
           <!-- Desktop Nav -->
           <div class="hidden lg:flex items-center gap-1">
-              <NuxtLink 
-                v-for="item in navItems" 
+              <NuxtLink
+                v-for="item in navItems"
                 :key="item.path"
                 :to="item.path"
                 class="flex items-center gap-2 px-4 py-2 text-white/90 hover:text-white hover:bg-white/10 font-medium rounded-lg transition-all backdrop-blur-sm"
@@ -36,7 +36,7 @@
           <div class="flex items-center gap-2">
             <!-- Dark Mode Toggle -->
             <ClientOnly>
-              <button 
+              <button
                 @click="toggleColorMode"
                 class="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all backdrop-blur-sm"
                 :aria-label="isDark ? 'Modo claro' : 'Modo oscuro'"
@@ -53,7 +53,7 @@
             </ClientOnly>
 
             <!-- Search Toggle -->
-            <button 
+            <button
               @click="showSearch = !showSearch"
               class="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all backdrop-blur-sm"
               aria-label="Buscar"
@@ -64,7 +64,7 @@
 
             <!-- Language Dropdown -->
             <div class="relative" ref="langMenuRef">
-              <button 
+              <button
                 @click="langMenuOpen = !langMenuOpen"
                 class="flex items-center gap-1 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all backdrop-blur-sm"
                 aria-label="Seleccionar idioma"
@@ -75,8 +75,8 @@
               </button>
               <Transition name="dropdown">
                 <div v-if="langMenuOpen" class="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
-                  <button 
-                    v-for="lang in languages" 
+                  <button
+                    v-for="lang in languages"
                     :key="lang.code"
                     @click="changeLocale(lang.code)"
                     class="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors"
@@ -91,24 +91,24 @@
 
             <!-- Auth -->
             <template v-if="isAuthenticated">
-              <NuxtLink 
-                v-if="isVendor" 
+              <NuxtLink
+                v-if="isVendor"
                 to="/vendor/dashboard"
                 class="hidden sm:flex items-center gap-2 px-4 py-2 bg-white text-primary-700 font-semibold rounded-lg hover:bg-gray-100 transition-all text-sm shadow"
               >
                 <LayoutDashboard class="w-4 h-4" />
                 Mi Panel
               </NuxtLink>
-              <NuxtLink 
-                v-else 
+              <NuxtLink
+                v-else
                 to="/dashboard"
                 class="hidden sm:flex items-center gap-2 px-4 py-2 bg-white text-primary-700 font-semibold rounded-lg hover:bg-gray-100 transition-all text-sm shadow"
               >
                 <LayoutDashboard class="w-4 h-4" />
                 Dashboard
               </NuxtLink>
-              <button 
-                @click="logout" 
+              <button
+                @click="logout"
                 class="p-2.5 bg-white/10 hover:bg-red-500 text-white rounded-lg transition-all"
                 aria-label="Cerrar sesión"
               >
@@ -116,15 +116,15 @@
               </button>
             </template>
             <template v-else>
-              <NuxtLink 
-                to="/login" 
+              <NuxtLink
+                to="/login"
                 class="hidden sm:flex items-center gap-2 px-4 py-2 text-white hover:bg-white/10 rounded-lg transition-all text-sm font-medium"
               >
                 <LogIn class="w-4 h-4" />
                 Entrar
               </NuxtLink>
-              <NuxtLink 
-                to="/register" 
+              <NuxtLink
+                to="/register"
                 class="flex items-center gap-2 px-4 py-2 bg-white text-primary-700 font-bold rounded-lg hover:bg-gray-100 transition-all text-sm shadow"
               >
                 <UserPlus class="w-4 h-4" />
@@ -133,7 +133,7 @@
             </template>
 
             <!-- Mobile Menu -->
-            <button 
+            <button
               @click="mobileMenuOpen = !mobileMenuOpen"
               class="lg:hidden p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all"
               :aria-label="mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'"
@@ -152,15 +152,15 @@
               <form @submit.prevent="handleSearch" class="flex flex-col sm:flex-row gap-3" role="search">
                 <div class="flex-1 relative">
                   <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input 
+                  <input
                     v-model="searchQuery"
-                    type="text" 
+                    type="text"
                     placeholder="¿Qué estás buscando?"
                     class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:ring-0 outline-none transition-all text-gray-800 placeholder-gray-400 font-medium"
                   />
                 </div>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   class="px-8 py-3.5 bg-gradient-to-r from-primary-600 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   <Search class="w-5 h-5" />
@@ -169,8 +169,8 @@
               </form>
               <div class="flex flex-wrap gap-2 mt-3 items-center">
                 <span class="text-xs text-gray-500 font-medium">Sugerencias:</span>
-                <button 
-                  v-for="tag in popularSearches" 
+                <button
+                  v-for="tag in popularSearches"
                   :key="tag"
                   @click="searchQuery = tag; handleSearch()"
                   class="text-xs px-3 py-1.5 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-full transition-colors font-medium border border-primary-200"
@@ -187,8 +187,8 @@
       <Transition name="slide-down">
         <div v-if="mobileMenuOpen" class="lg:hidden bg-primary-800 border-t border-white/10">
           <div class="container mx-auto px-4 py-4 space-y-1">
-            <NuxtLink 
-              v-for="item in navItems" 
+            <NuxtLink
+              v-for="item in navItems"
               :key="item.path"
               :to="item.path"
               @click="mobileMenuOpen = false"
@@ -199,16 +199,16 @@
               {{ item.label }}
             </NuxtLink>
             <div class="pt-4 border-t border-white/10 mt-4 space-y-2">
-              <NuxtLink 
-                to="/login" 
+              <NuxtLink
+                to="/login"
                 @click="mobileMenuOpen = false"
                 class="flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 rounded-lg font-medium"
               >
                 <LogIn class="w-5 h-5" />
                 Entrar
               </NuxtLink>
-              <NuxtLink 
-                to="/register" 
+              <NuxtLink
+                to="/register"
                 @click="mobileMenuOpen = false"
                 class="flex items-center justify-center gap-2 px-4 py-3 bg-white text-primary-700 rounded-lg font-bold"
               >
@@ -232,17 +232,17 @@
 </template>
 
 <script setup lang="ts">
-import { 
-  Search, 
-  MapPin, 
-  Building2, 
-  Compass, 
-  FileText, 
-  Globe, 
-  ChevronDown, 
-  LogIn, 
-  LogOut, 
-  UserPlus, 
+import {
+  Search,
+  MapPin,
+  Building2,
+  Compass,
+  FileText,
+  Globe,
+  ChevronDown,
+  LogIn,
+  LogOut,
+  UserPlus,
   LayoutDashboard,
   Menu,
   X,

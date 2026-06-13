@@ -2,10 +2,11 @@
 Super Admin Reviews Management endpoints.
 Moderation of reviews and ratings.
 """
+
 from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, desc, func
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from pydantic import BaseModel
@@ -21,6 +22,7 @@ router = APIRouter()
 
 class ReviewListItem(BaseModel):
     """Review item for list view."""
+
     id: str
     user_id: str
     user_name: str
@@ -39,6 +41,7 @@ class ReviewListItem(BaseModel):
 
 class ReviewUpdateRequest(BaseModel):
     """Request to update review moderation status."""
+
     is_approved: bool
 
 
@@ -62,9 +65,12 @@ def review_to_item(review: Review, user: Optional[User] = None) -> ReviewListIte
     )
 
 
-@router.get("", response_model=PaginatedResponse,
-            summary="List all reviews (superadmin)",
-            description="Returns all reviews with user and service info. Supports filters.")
+@router.get(
+    "",
+    response_model=PaginatedResponse,
+    summary="List all reviews (superadmin)",
+    description="Returns all reviews with user and service info. Supports filters.",
+)
 async def list_reviews(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -75,7 +81,11 @@ async def list_reviews(
     query = (
         select(Review)
         .where(Review.deleted_at.is_(None))
-        .options(selectinload(Review.user), selectinload(Review.property), selectinload(Review.tour))
+        .options(
+            selectinload(Review.user),
+            selectinload(Review.property),
+            selectinload(Review.tour),
+        )
     )
 
     if status_filter == "approved":
@@ -85,7 +95,9 @@ async def list_reviews(
 
     params = PaginationParams(page=page, page_size=page_size)
     result = await paginate_flat(
-        db, query, params,
+        db,
+        query,
+        params,
         order_by=desc(Review.created_at),
     )
 
@@ -97,8 +109,11 @@ async def list_reviews(
     return result
 
 
-@router.put("/{review_id}", summary="Update review moderation",
-            description="Approve or reject a review.")
+@router.put(
+    "/{review_id}",
+    summary="Update review moderation",
+    description="Approve or reject a review.",
+)
 async def update_review(
     review_id: UUID,
     body: ReviewUpdateRequest,
@@ -115,14 +130,16 @@ async def update_review(
     return {"success": True, "is_approved": review.is_approved}
 
 
-@router.delete("/{review_id}", summary="Soft delete review",
-               description="Soft-deletes a review.")
+@router.delete(
+    "/{review_id}", summary="Soft delete review", description="Soft-deletes a review."
+)
 async def delete_review(
     review_id: UUID,
     db: AsyncSession = Depends(get_db),
     _current_user: User = Depends(require_superadmin()),
 ):
     from datetime import datetime, timezone
+
     result = await db.execute(select(Review).where(Review.id == review_id))
     review = result.scalar_one_or_none()
     if not review:

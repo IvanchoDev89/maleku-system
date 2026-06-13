@@ -3,6 +3,7 @@ Security tests for the chat module (OWASP API1:2023 - BOLA).
 
 Verifies that a user can only read/write conversations they participate in.
 """
+
 import pytest
 
 pytestmark = pytest.mark.security
@@ -12,7 +13,9 @@ async def _register_vendor(client, sample_user_data, sample_vendor_data, suffix=
     """Helper: register a vendor user and create their vendor profile."""
     payload = sample_user_data.copy()
     payload["email"] = f"vendor{suffix}@example.com"
-    reg = await client.post("/api/v1/auth/register/vendor", json=payload, params=sample_vendor_data)
+    reg = await client.post(
+        "/api/v1/auth/register/vendor", json=payload, params=sample_vendor_data
+    )
     assert reg.status_code == 200, reg.text
     return reg.json()
 

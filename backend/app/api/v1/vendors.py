@@ -15,21 +15,22 @@ CACHE_TTL_LIST = 300  # 5 minutes for vendor lists
 CACHE_TTL_DETAIL = 600  # 10 minutes for vendor details
 
 
-@router.get("", response_model=list[VendorPublicResponse],
-            summary="List vendors",
-            description="Returns a list of active vendors sorted by rating. Supports limit and offset for pagination.")
+@router.get(
+    "",
+    response_model=list[VendorPublicResponse],
+    summary="List vendors",
+    description="Returns a list of active vendors sorted by rating. Supports limit and offset for pagination.",
+)
 async def get_vendors(
-    db: AsyncSession = Depends(get_db),
-    limit: int = 20,
-    offset: int = 0
+    db: AsyncSession = Depends(get_db), limit: int = 20, offset: int = 0
 ):
     cache_key = f"vendors:list:{limit}:{offset}"
-    
+
     # Try cache first
     cached = await cache.get(cache_key)
     if cached:
         return [VendorPublicResponse(**item) for item in cached]
-    
+
     result = await db.execute(
         select(Vendor)
         .where(Vendor.is_active)
@@ -39,127 +40,152 @@ async def get_vendors(
     )
     vendors = result.scalars().all()
     response = [VendorPublicResponse.model_validate(v) for v in vendors]
-    
+
     # Cache the response
-    await cache.set(cache_key, [item.model_dump() for item in response], ttl=CACHE_TTL_LIST, tags=["vendors"])
-    
+    await cache.set(
+        cache_key,
+        [item.model_dump() for item in response],
+        ttl=CACHE_TTL_LIST,
+        tags=["vendors"],
+    )
+
     return response
 
 
-@router.get("/{vendor_id}", response_model=VendorResponse,
-            summary="Get vendor by ID",
-            description="Returns a single vendor by UUID with full details including reviews and commission rate.")
-async def get_vendor(
-    vendor_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db)
-):
+@router.get(
+    "/{vendor_id}",
+    response_model=VendorResponse,
+    summary="Get vendor by ID",
+    description="Returns a single vendor by UUID with full details including reviews and commission rate.",
+)
+async def get_vendor(vendor_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     cache_key = f"vendors:detail:{vendor_id}"
-    
+
     # Try cache first
     cached = await cache.get(cache_key)
     if cached:
         return VendorResponse(**cached)
-    
+
     result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
         )
-    
+
     response = VendorResponse.model_validate(vendor)
-    await cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_DETAIL, tags=["vendors", f"vendor:{vendor_id}"])
-    
+    await cache.set(
+        cache_key,
+        response.model_dump(),
+        ttl=CACHE_TTL_DETAIL,
+        tags=["vendors", f"vendor:{vendor_id}"],
+    )
+
     return response
 
 
-@router.get("/slug/{slug}", response_model=VendorResponse,
-            summary="Get vendor by slug",
-            description="Returns a single vendor by their business URL-friendly slug.")
-async def get_vendor_by_slug(
-    slug: str,
-    db: AsyncSession = Depends(get_db)
-):
+@router.get(
+    "/slug/{slug}",
+    response_model=VendorResponse,
+    summary="Get vendor by slug",
+    description="Returns a single vendor by their business URL-friendly slug.",
+)
+async def get_vendor_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
     cache_key = f"vendors:slug:{slug}"
-    
+
     # Try cache first
     cached = await cache.get(cache_key)
     if cached:
         return VendorResponse(**cached)
-    
+
     result = await db.execute(select(Vendor).where(Vendor.business_slug == slug))
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
         )
-    
+
     response = VendorResponse.model_validate(vendor)
-    await cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_DETAIL, tags=["vendors", f"vendor:{vendor.id}"])
-    
+    await cache.set(
+        cache_key,
+        response.model_dump(),
+        ttl=CACHE_TTL_DETAIL,
+        tags=["vendors", f"vendor:{vendor.id}"],
+    )
+
     return response
 
 
-@router.get("/me/profile", response_model=VendorResponse,
-            summary="Get my vendor profile",
-            description="Returns the authenticated vendor's own profile.")
+@router.get(
+    "/me/profile",
+    response_model=VendorResponse,
+    summary="Get my vendor profile",
+    description="Returns the authenticated vendor's own profile.",
+)
 async def get_my_vendor_profile(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     if current_user.role != UserRole.VENDOR:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only vendors can access this resource"
+            detail="Only vendors can access this resource",
         )
-    
+
     result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor profile not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor profile not found"
         )
-    
+
     return VendorResponse.model_validate(vendor)
 
 
-@router.put("/me/profile", response_model=VendorResponse,
-            summary="Update vendor profile",
-            description="Updates the authenticated vendor's profile. Only allows specific fields (business_name, description, phone, address, etc.) to prevent mass assignment.")
+@router.put(
+    "/me/profile",
+    response_model=VendorResponse,
+    summary="Update vendor profile",
+    description="Updates the authenticated vendor's profile. Only allows specific fields (business_name, description, phone, address, etc.) to prevent mass assignment.",
+)
 async def update_my_vendor_profile(
     data: VendorUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     if current_user.role != UserRole.VENDOR:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only vendors can access this resource"
+            detail="Only vendors can access this resource",
         )
-    
+
     result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor profile not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor profile not found"
         )
-    
+
     # SECURITY: Prevent mass assignment - only allow specific fields
-    allowed_fields = {'business_name', 'description', 'phone', 'address', 'city', 
-                     'country', 'website', 'logo_url', 'tax_id'}
-    
+    allowed_fields = {
+        "business_name",
+        "description",
+        "phone",
+        "address",
+        "city",
+        "country",
+        "website",
+        "logo_url",
+        "tax_id",
+    }
+
     for field, value in data.model_dump(exclude_unset=True).items():
         if field in allowed_fields:
             setattr(vendor, field, value)
-    
+
     await db.flush()
     await db.commit()
 
@@ -171,28 +197,29 @@ async def update_my_vendor_profile(
     return VendorResponse.model_validate(vendor)
 
 
-@router.get("/me/analytics", response_model=dict,
-            summary="Vendor analytics dashboard",
-            description="Returns key metrics for the authenticated vendor: property count, tour count, booking stats (pending/confirmed/completed), revenue, rating, and commission rate.")
+@router.get(
+    "/me/analytics",
+    response_model=dict,
+    summary="Vendor analytics dashboard",
+    description="Returns key metrics for the authenticated vendor: property count, tour count, booking stats (pending/confirmed/completed), revenue, rating, and commission rate.",
+)
 async def get_my_analytics(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     if current_user.role != UserRole.VENDOR:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only vendors can access this resource"
+            detail="Only vendors can access this resource",
         )
-    
+
     result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor profile not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor profile not found"
         )
-    
+
     # Get property count
     prop_result = await db.execute(
         select(func.count()).where(Property.vendor_id == vendor.id)
@@ -209,12 +236,14 @@ async def get_my_analytics(
         select(Booking).where(Booking.vendor_id == vendor.id)
     )
     bookings = booking_result.scalars().all()
-    
+
     pending = sum(1 for b in bookings if b.status == BookingStatus.PENDING)
     confirmed = sum(1 for b in bookings if b.status == BookingStatus.CONFIRMED)
     completed = sum(1 for b in bookings if b.status == BookingStatus.COMPLETED)
-    total_revenue = sum(b.total_amount for b in bookings if b.status == BookingStatus.COMPLETED)
-    
+    total_revenue = sum(
+        b.total_amount for b in bookings if b.status == BookingStatus.COMPLETED
+    )
+
     return {
         "total_properties": total_properties,
         "total_tours": total_tours,
@@ -225,27 +254,29 @@ async def get_my_analytics(
         "total_revenue": total_revenue,
         "rating": vendor.rating,
         "total_reviews": vendor.total_reviews,
-        "commission_rate": vendor.commission_rate
+        "commission_rate": vendor.commission_rate,
     }
 
 
-@router.put("/{vendor_id}/verify", response_model=dict,
-            summary="Verify vendor",
-            description="Marks a vendor as verified. SUPER_ADMIN role required.")
+@router.put(
+    "/{vendor_id}/verify",
+    response_model=dict,
+    summary="Verify vendor",
+    description="Marks a vendor as verified. SUPER_ADMIN role required.",
+)
 async def verify_vendor(
     vendor_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN))
+    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
 ):
     result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
         )
-    
+
     vendor.is_verified = True
     await db.flush()
     await db.commit()
@@ -258,24 +289,26 @@ async def verify_vendor(
     return {"message": "Vendor verified successfully"}
 
 
-@router.put("/{vendor_id}/activate", response_model=dict,
-            summary="Toggle vendor active status",
-            description="Activates or deactivates a vendor account. SUPER_ADMIN role required.")
+@router.put(
+    "/{vendor_id}/activate",
+    response_model=dict,
+    summary="Toggle vendor active status",
+    description="Activates or deactivates a vendor account. SUPER_ADMIN role required.",
+)
 async def toggle_vendor_active(
     vendor_id: uuid.UUID,
     is_active: bool,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN))
+    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
 ):
     result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
     vendor = result.scalar_one_or_none()
-    
+
     if not vendor:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vendor not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
         )
-    
+
     vendor.is_active = is_active
     await db.flush()
     await db.commit()

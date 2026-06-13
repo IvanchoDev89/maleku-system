@@ -2,6 +2,7 @@
 Audit service for comprehensive logging of system actions.
 Provides methods to log audit events and security events consistently.
 """
+
 from datetime import datetime, timezone
 from typing import Optional, Any, Dict
 from uuid import UUID
@@ -14,7 +15,7 @@ from app.models import AuditLog, SecurityLog, AuditAction, SecurityAction, User
 
 class AuditService:
     """Service for creating and managing audit logs."""
-    
+
     @staticmethod
     async def log_action(
         db: AsyncSession,
@@ -33,7 +34,7 @@ class AuditService:
     ) -> AuditLog:
         """
         Log an audit action.
-        
+
         Args:
             db: Database session
             user: User performing the action (None for anonymous)
@@ -48,17 +49,17 @@ class AuditService:
             extra_data: Additional flexible metadata
             ip_address: Override IP address (if not from request)
             user_agent: Override user agent (if not from request)
-        
+
         Returns:
             Created AuditLog instance
         """
         # Extract request info if provided
         request_info = AuditService._extract_request_info(request) if request else {}
-        
+
         # Sanitize sensitive data before logging
         old_values = AuditService._sanitize_sensitive_data(old_values)
         new_values = AuditService._sanitize_sensitive_data(new_values)
-        
+
         audit_log = AuditLog(
             user_id=user.id if user else None,
             user_email=user.email if user else None,
@@ -79,12 +80,12 @@ class AuditService:
             extra_data=extra_data,
             created_at=datetime.now(timezone.utc),
         )
-        
+
         db.add(audit_log)
         await db.flush()  # Flush to get the ID, but don't commit yet
-        
+
         return audit_log
-    
+
     @staticmethod
     async def log_security_event(
         db: AsyncSession,
@@ -101,7 +102,7 @@ class AuditService:
     ) -> SecurityLog:
         """
         Log a security-related event.
-        
+
         Args:
             db: Database session
             action: Type of security action
@@ -114,15 +115,15 @@ class AuditService:
             ip_address: Override IP address
             user_agent: Override user agent
             session_id: Session identifier
-        
+
         Returns:
             Created SecurityLog instance
         """
         request_info = AuditService._extract_request_info(request) if request else {}
-        
+
         # Sanitize sensitive data
         details = AuditService._sanitize_sensitive_data(details)
-        
+
         security_log = SecurityLog(
             user_id=user.id if user else None,
             user_email=user_email or (user.email if user else None),
@@ -137,26 +138,26 @@ class AuditService:
             correlation_id=request_info.get("correlation_id"),
             created_at=datetime.now(timezone.utc),
         )
-        
+
         db.add(security_log)
         await db.flush()
-        
+
         return security_log
-    
+
     @staticmethod
     def _extract_request_info(request: Optional[Request]) -> Dict[str, Any]:
         """Extract relevant information from a FastAPI request."""
         if not request:
             return {}
-        
+
         info = {
             "method": request.method,
             "path": str(request.url.path),
         }
-        
+
         # Extract headers
         headers = request.headers
-        
+
         # IP Address handling (handles proxies)
         forwarded_for = headers.get("x-forwarded-for")
         if forwarded_for:
@@ -166,22 +167,26 @@ class AuditService:
             real_ip = headers.get("x-real-ip")
             if real_ip:
                 info["ip_address"] = real_ip
-            elif hasattr(request.client, 'host'):
+            elif hasattr(request.client, "host"):
                 info["ip_address"] = request.client.host
-        
+
         # User agent
         info["user_agent"] = headers.get("user-agent")
-        
+
         # Request/Correlation IDs (prefer request.state set by RequestIDMiddleware)
-        state_id = getattr(request.state, "request_id", None) if hasattr(request, "state") else None
+        state_id = (
+            getattr(request.state, "request_id", None)
+            if hasattr(request, "state")
+            else None
+        )
         info["request_id"] = state_id or headers.get("x-request-id")
         info["correlation_id"] = headers.get("x-correlation-id")
-        
+
         # Session ID (could come from cookie or header)
         info["session_id"] = headers.get("x-session-id")
-        
+
         return info
-    
+
     @staticmethod
     def _sanitize_sensitive_data(data: Optional[Dict]) -> Optional[Dict]:
         """
@@ -190,17 +195,30 @@ class AuditService:
         """
         if not data:
             return data
-        
+
         sensitive_fields = {
-            'password', 'password_hash', 'token', 'access_token', 'refresh_token',
-            'secret', 'api_key', 'credit_card', 'card_number', 'cvv', 'pin',
-            'ssn', 'social_security', 'tax_id', 'secret_key', 'private_key'
+            "password",
+            "password_hash",
+            "token",
+            "access_token",
+            "refresh_token",
+            "secret",
+            "api_key",
+            "credit_card",
+            "card_number",
+            "cvv",
+            "pin",
+            "ssn",
+            "social_security",
+            "tax_id",
+            "secret_key",
+            "private_key",
         }
-        
+
         sanitized = {}
         for key, value in data.items():
             key_lower = key.lower()
-            
+
             # Check if field is sensitive
             if any(sensitive in key_lower for sensitive in sensitive_fields):
                 sanitized[key] = "[REDACTED]"
@@ -208,20 +226,20 @@ class AuditService:
                 sanitized[key] = AuditService._sanitize_sensitive_data(value)
             elif isinstance(value, list):
                 sanitized[key] = [
-                    AuditService._sanitize_sensitive_data(item) if isinstance(item, dict) else (
-                        item.isoformat() if hasattr(item, 'isoformat') else item
-                    )
+                    AuditService._sanitize_sensitive_data(item)
+                    if isinstance(item, dict)
+                    else (item.isoformat() if hasattr(item, "isoformat") else item)
                     for item in value
                 ]
             elif isinstance(value, datetime):
                 sanitized[key] = value.isoformat()
-            elif hasattr(value, 'isoformat'):
+            elif hasattr(value, "isoformat"):
                 sanitized[key] = str(value)
             else:
                 sanitized[key] = value
-        
+
         return sanitized
-    
+
     @staticmethod
     async def get_user_activity(
         db: AsyncSession,
@@ -233,21 +251,17 @@ class AuditService:
     ) -> list:
         """Get audit logs for a specific user."""
         query = select(AuditLog).where(AuditLog.user_id == user_id)
-        
+
         if action_filter:
             query = query.where(AuditLog.action == action_filter)
         if entity_type_filter:
             query = query.where(AuditLog.entity_type == entity_type_filter)
-        
-        query = (
-            query.order_by(AuditLog.created_at.desc())
-            .offset(offset)
-            .limit(limit)
-        )
-        
+
+        query = query.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit)
+
         result = await db.execute(query)
         return result.scalars().all()
-    
+
     @staticmethod
     async def get_entity_history(
         db: AsyncSession,
@@ -263,7 +277,7 @@ class AuditService:
             .order_by(AuditLog.created_at.desc())
             .limit(limit)
         )
-        
+
         result = await db.execute(query)
         return result.scalars().all()
 
@@ -314,7 +328,8 @@ async def log_update(
         old_values=old_values,
         new_values=new_values,
         request=request,
-        changes_summary=changes_summary or f"Updated {entity_type}: {entity_name or entity_id}",
+        changes_summary=changes_summary
+        or f"Updated {entity_type}: {entity_name or entity_id}",
     )
 
 

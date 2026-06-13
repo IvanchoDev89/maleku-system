@@ -6,8 +6,6 @@ from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
@@ -15,8 +13,10 @@ from app.core.database import init_db
 from app.core.rate_limiter import limiter, rate_limit_exceeded_handler
 from app.api.v1.endpoints import auth
 from app.api.v1 import users, vendors, properties, tours, bookings, blog, destinations
+
 try:
     from app.api.v1.landing import router as landing_router
+
     print("Landing router imported successfully")
 except Exception as e:
     print(f"Failed to import landing router: {e}")
@@ -39,34 +39,31 @@ from app.api.v1.newsletter import router as newsletter_router
 from app.api.v1.contact import router as contact_router
 from app.api.v1.superadmin import router as superadmin_router
 from app.core.logging import setup_logging, get_logger
+from app.core.token_blacklist import token_blacklist
 from app.middleware.error_handler import ErrorHandlerMiddleware
 from app.middleware.request_id import RequestIDMiddleware
 from app.middleware.metrics import MetricsMiddleware
+from app.middleware.feature_flags import FeatureFlagMiddleware
 
 # Setup Sentry monitoring
 if settings.SENTRY_DSN:
     import sentry_sdk
+
     sentry_sdk.init(
         dsn=settings.SENTRY_DSN,
         environment=settings.ENVIRONMENT,
         traces_sample_rate=0.1 if settings.ENVIRONMENT == "production" else 1.0,
         profiles_sample_rate=0.1,
-        send_default_pii=False
+        send_default_pii=False,
     )
 
 # Setup logging (env-driven: LOG_FORMAT=json|text, default: text en dev, json en prod)
-_json_format = settings.LOG_FORMAT == "json" if settings.LOG_FORMAT else settings.is_production
+_json_format = (
+    settings.LOG_FORMAT == "json" if settings.LOG_FORMAT else settings.is_production
+)
 setup_logging(level=settings.LOG_LEVEL, json_format=_json_format)
 logger = get_logger(__name__)
 
-# Rate limiter (Redis-backed, configured in app.core.rate_limiter)
-from app.core.rate_limiter import limiter  # noqa: F401
-from app.core.token_blacklist import token_blacklist
-
-# Global rate limits
-DEFAULT_RATE_LIMIT = "100/minute"
-AUTH_RATE_LIMIT = "5/minute"
-WRITE_RATE_LIMIT = "30/minute"
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
@@ -82,10 +79,7 @@ app = FastAPI(
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
     terms_of_service="https://costaricatravel.dev/terms",
-    contact={
-        "name": "Costa Rica Travel",
-        "url": "https://costaricatravel.dev/contact"
-    },
+    contact={"name": "Costa Rica Travel", "url": "https://costaricatravel.dev/contact"},
     lifespan=_lifespan,
     redirect_slashes=False,
 )
@@ -114,7 +108,14 @@ app.add_middleware(
     allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Origin", "Content-Type", "Accept", "Authorization", "X-Request-ID", "X-Requested-With"],
+    allow_headers=[
+        "Origin",
+        "Content-Type",
+        "Accept",
+        "Authorization",
+        "X-Request-ID",
+        "X-Requested-With",
+    ],
     max_age=600,  # Cache preflight for 10 minutes
 )
 
@@ -147,8 +148,9 @@ app.add_middleware(
         "api.costaricatravel.dev",
         "admin.costaricatravel.dev",
         "*.costaricatravel.dev",
-    ]
+    ],
 )
+
 
 # Security: Custom security headers middleware
 @app.middleware("http")
@@ -160,7 +162,9 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Strict-Transport-Security"] = (
+        "max-age=31536000; includeSubDomains"
+    )
     # Content Security Policy (CSP)
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
@@ -182,15 +186,15 @@ async def security_headers_middleware(request: Request, call_next):
 @app.middleware("http")
 async def logging_middleware(request: Request, call_next):
     from time import time
-    
+
     start_time = time()
-    
+
     # Process request
     response = await call_next(request)
-    
+
     # Calculate duration
     duration_ms = (time() - start_time) * 1000
-    
+
     # Log request (skip health checks to reduce noise)
     if request.url.path not in ["/health", "/health/ready", "/health/live"]:
         logger.info(
@@ -200,14 +204,16 @@ async def logging_middleware(request: Request, call_next):
                     "method": request.method,
                     "path": request.url.path,
                     "status_code": response.status_code,
-                    "duration_ms": round(duration_ms, 2)
+                    "duration_ms": round(duration_ms, 2),
                 }
-            }
+            },
         )
-    
+
     return response
 
+
 # Exception handlers (SLOWAPI uses the handler registered in app.core.rate_limiter)
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -217,56 +223,49 @@ async def global_exception_handler(request: Request, exc: Exception):
         extra={
             "exception": str(exc),
             "path": request.url.path,
-            "method": request.method
-        }
+            "method": request.method,
+        },
     )
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error. Please try again later."}
+        content={"detail": "Internal server error. Please try again later."},
     )
+
 
 # Router with rate limiting
 api_v1 = "/api/v1"
 
 # Authentication routes
-app.include_router(
-    auth.router, 
-    prefix=f"{api_v1}/auth", 
-    tags=["Authentication"]
-)
+app.include_router(auth.router, prefix=f"{api_v1}/auth", tags=["Authentication"])
 
 # Admin routes
 app.include_router(
-    analytics_router, 
-    prefix=f"{api_v1}/admin/analytics", 
-    tags=["Admin Analytics"]
+    analytics_router, prefix=f"{api_v1}/admin/analytics", tags=["Admin Analytics"]
 )
 app.include_router(
-    settings_router, 
-    prefix=f"{api_v1}/admin/settings", 
-    tags=["Admin Settings"]
+    settings_router, prefix=f"{api_v1}/admin/settings", tags=["Admin Settings"]
 )
 app.include_router(
-    admin_vendors_router, 
-    prefix=f"{api_v1}/admin/vendors", 
-    tags=["Admin Vendors"]
+    admin_vendors_router, prefix=f"{api_v1}/admin/vendors", tags=["Admin Vendors"]
 )
 
 # Super Admin routes (exclusive access for SUPER_ADMIN)
 app.include_router(
-    superadmin_router,
-    prefix=f"{api_v1}/superadmin",
-    tags=["Super Admin"]
+    superadmin_router, prefix=f"{api_v1}/superadmin", tags=["Super Admin"]
 )
 
 # Standard routes - default rate limit
 app.include_router(users.router, prefix=f"{api_v1}/users", tags=["Users"])
 app.include_router(vendors.router, prefix=f"{api_v1}/vendors", tags=["Vendors"])
-app.include_router(properties.router, prefix=f"{api_v1}/properties", tags=["Properties"])
+app.include_router(
+    properties.router, prefix=f"{api_v1}/properties", tags=["Properties"]
+)
 app.include_router(tours.router, prefix=f"{api_v1}/tours", tags=["Tours"])
 app.include_router(bookings.router, prefix=f"{api_v1}/bookings", tags=["Bookings"])
 app.include_router(blog.router, prefix=f"{api_v1}/blog", tags=["Blog"])
-app.include_router(destinations.router, prefix=f"{api_v1}/destinations", tags=["Destinations"])
+app.include_router(
+    destinations.router, prefix=f"{api_v1}/destinations", tags=["Destinations"]
+)
 app.include_router(landing_router, prefix=f"{api_v1}/landing", tags=["Landing"])
 app.include_router(search_router, prefix=f"{api_v1}/search", tags=["Search"])
 
@@ -274,17 +273,24 @@ app.include_router(search_router, prefix=f"{api_v1}/search", tags=["Search"])
 app.include_router(vehicles_router, prefix=f"{api_v1}/vehicles", tags=["Vehicles"])
 app.include_router(boats_router, prefix=f"{api_v1}/boats", tags=["Boats"])
 app.include_router(flights_router, prefix=f"{api_v1}/flights", tags=["Flights"])
-app.include_router(transportation_router, prefix=f"{api_v1}/transportation", tags=["Transportation"])
+app.include_router(
+    transportation_router, prefix=f"{api_v1}/transportation", tags=["Transportation"]
+)
 app.include_router(pricing_router, prefix=f"{api_v1}/pricing", tags=["Pricing"])
 app.include_router(chat_router, prefix=f"{api_v1}/chat", tags=["Chat"])
 app.include_router(upload_router, prefix=f"{api_v1}/upload", tags=["Upload"])
-app.include_router(availability_router, prefix=f"{api_v1}/availability", tags=["Availability"])
+app.include_router(
+    availability_router, prefix=f"{api_v1}/availability", tags=["Availability"]
+)
 app.include_router(stripe_router, prefix=f"{api_v1}/stripe", tags=["Stripe Payments"])
-app.include_router(newsletter_router, prefix=f"{api_v1}/newsletter", tags=["Newsletter"])
+app.include_router(
+    newsletter_router, prefix=f"{api_v1}/newsletter", tags=["Newsletter"]
+)
 app.include_router(contact_router, prefix=api_v1, tags=["Contact"])
 
 # Marketing routes (BillionMail integration)
 app.include_router(marketing_router, prefix=f"{api_v1}/marketing", tags=["Marketing"])
+
 
 # API Health check endpoint for frontend
 @app.get(f"{api_v1}/health")
@@ -294,8 +300,9 @@ async def api_health_check():
         "status": "ok",
         "service": settings.APP_NAME,
         "version": settings.APP_VERSION,
-        "timestamp": __import__('datetime').datetime.utcnow().isoformat()
+        "timestamp": __import__("datetime").datetime.utcnow().isoformat(),
     }
+
 
 # Static files for uploads
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
@@ -306,7 +313,7 @@ async def root():
     return {
         "name": settings.APP_NAME,
         "version": settings.APP_VERSION,
-        "status": "running"
+        "status": "running",
     }
 
 
@@ -316,7 +323,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": settings.APP_NAME,
-        "version": settings.APP_VERSION
+        "version": settings.APP_VERSION,
     }
 
 
@@ -353,7 +360,9 @@ async def health_ready():
         services["redis"] = "unavailable"
 
     # Stripe (config check)
-    services["stripe"] = "configured" if settings.is_stripe_configured else "not_configured"
+    services["stripe"] = (
+        "configured" if settings.is_stripe_configured else "not_configured"
+    )
 
     # Cloudinary (config check)
     services["cloudinary"] = (
@@ -363,8 +372,7 @@ async def health_ready():
     )
 
     critical_ok = (
-        services["database"] == "connected"
-        and services["redis"] == "connected"
+        services["database"] == "connected" and services["redis"] == "connected"
     )
 
     return {
@@ -378,14 +386,39 @@ async def health_ready():
 async def health_live():
     """Liveness check - verifies process is running"""
     import os
-    return {
-        "status": "alive",
-        "pid": os.getpid()
-    }
+
+    return {"status": "alive", "pid": os.getpid()}
+
+
+# Feature flag middleware (checks MAINTENANCE_MODE)
+app.add_middleware(FeatureFlagMiddleware)
+
+
+# Redoc documentation (always available for production API consumers)
+@app.get("/docs/redoc", include_in_schema=False)
+async def redoc_docs():
+    from fastapi.responses import HTMLResponse
+
+    return HTMLResponse("""
+    <!DOCTYPE html>
+    <html>
+    <head><title>Costa Rica Travel API - Docs</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet"/>
+    </head>
+    <body>
+    <redoc spec-url='/openapi.json' expand-responses="200,201" hide-download-button="false"
+           theme='{ "colors": { "primary": { "main": "#0D9488" } } }'></redoc>
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+    </body>
+    </html>
+    """)
 
 
 # Prometheus metrics endpoint (no auth — intended for internal scraping)
 @app.get("/metrics", include_in_schema=False)
 async def metrics():
     from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)

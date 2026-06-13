@@ -1,6 +1,7 @@
 """
 Tests for booking endpoints with real pricing logic
 """
+
 import pytest
 from datetime import datetime, timedelta, timezone
 from httpx import AsyncClient
@@ -12,7 +13,7 @@ async def auth_client(client: AsyncClient, sample_user_data):
     # Register user
     response = await client.post("/api/v1/auth/register", json=sample_user_data)
     token = response.json()["access_token"]
-    
+
     # Set authorization header
     client.headers["Authorization"] = f"Bearer {token}"
     return client
@@ -27,11 +28,11 @@ async def vendor_client(client: AsyncClient, sample_user_data, sample_vendor_dat
         json=sample_user_data,
         params={
             "business_name": sample_vendor_data["business_name"],
-            "business_type": sample_vendor_data["business_type"]
-        }
+            "business_type": sample_vendor_data["business_type"],
+        },
     )
     token = response.json()["access_token"]
-    
+
     client.headers["Authorization"] = f"Bearer {token}"
     return client
 
@@ -46,9 +47,9 @@ async def test_create_property_booking_without_room(auth_client: AsyncClient):
         "guests": 2,
         "guest_name": "Test Guest",
         "guest_email": "guest@example.com",
-        "guest_phone": "+50612345678"
+        "guest_phone": "+50612345678",
     }
-    
+
     response = await auth_client.post("/api/v1/bookings/property", json=booking_data)
     assert response.status_code == 400
     assert "room_id is required" in response.json()["detail"]
@@ -64,9 +65,9 @@ async def test_create_property_booking_past_date(auth_client: AsyncClient):
         "check_out": (datetime.now(timezone.utc) + timedelta(days=2)).isoformat(),
         "guests": 2,
         "guest_name": "Test Guest",
-        "guest_email": "guest@example.com"
+        "guest_email": "guest@example.com",
     }
-    
+
     response = await auth_client.post("/api/v1/bookings/property", json=booking_data)
     assert response.status_code == 400
     assert "cannot be in the past" in response.json()["detail"]
@@ -79,12 +80,14 @@ async def test_create_property_booking_min_one_night(auth_client: AsyncClient):
         "property_id": "123e4567-e89b-12d3-a456-426614174000",
         "room_id": "123e4567-e89b-12d3-a456-426614174001",
         "check_in": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
-        "check_out": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),  # Same day
+        "check_out": (
+            datetime.now(timezone.utc) + timedelta(days=1)
+        ).isoformat(),  # Same day
         "guests": 2,
         "guest_name": "Test Guest",
-        "guest_email": "guest@example.com"
+        "guest_email": "guest@example.com",
     }
-    
+
     response = await auth_client.post("/api/v1/bookings/property", json=booking_data)
     assert response.status_code == 400
     assert "minimum stay is 1 night" in response.json()["detail"].lower()
@@ -98,9 +101,9 @@ async def test_create_tour_booking_past_date(auth_client: AsyncClient):
         "tour_date": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
         "participants": 2,
         "guest_name": "Test Guest",
-        "guest_email": "guest@example.com"
+        "guest_email": "guest@example.com",
     }
-    
+
     response = await auth_client.post("/api/v1/bookings/tour", json=booking_data)
     assert response.status_code == 400
     assert "cannot be in the past" in response.json()["detail"]
@@ -112,10 +115,12 @@ async def test_price_preview_invalid_dates(auth_client: AsyncClient):
     preview_data = {
         "room_id": "123e4567-e89b-12d3-a456-426614174000",
         "check_in": (datetime.now(timezone.utc) + timedelta(days=5)).isoformat(),
-        "check_out": (datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),  # Check-out before check-in
-        "guests": 2
+        "check_out": (
+            datetime.now(timezone.utc) + timedelta(days=3)
+        ).isoformat(),  # Check-out before check-in
+        "guests": 2,
     }
-    
+
     response = await auth_client.post("/api/v1/bookings/preview", json=preview_data)
     assert response.status_code == 400
 
@@ -130,7 +135,9 @@ async def test_get_bookings_unauthorized(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_get_booking_by_id_not_found(auth_client: AsyncClient):
     """Test getting non-existent booking"""
-    response = await auth_client.get("/api/v1/bookings/123e4567-e89b-12d3-a456-426614174000")
+    response = await auth_client.get(
+        "/api/v1/bookings/123e4567-e89b-12d3-a456-426614174000"
+    )
     assert response.status_code == 404
 
 
@@ -139,6 +146,6 @@ async def test_update_booking_status_unauthorized(auth_client: AsyncClient):
     """Test updating booking status as client fails"""
     response = await auth_client.put(
         "/api/v1/bookings/123e4567-e89b-12d3-a456-426614174000/status",
-        json={"status": "confirmed"}
+        json={"status": "confirmed"},
     )
     assert response.status_code == 404  # Booking not found

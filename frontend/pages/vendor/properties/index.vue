@@ -49,8 +49,8 @@
                 <NuxtLink to="/vendor/properties/new" class="text-primary hover:underline">Crear primera propiedad</NuxtLink>
               </td>
             </tr>
-            <tr 
-              v-for="property in properties" 
+            <tr
+              v-for="property in properties"
               :key="property.id"
               class="border-t hover:bg-gray-50"
             >

@@ -899,6 +899,6 @@ https://api.costaricatravel.dev/openapi.json
 ---
 
 <p align="center">
-  <strong>API Version 1.0</strong> | 
+  <strong>API Version 1.0</strong> |
   <a href="mailto:api@costaricatravel.dev">Support</a>
 </p>
