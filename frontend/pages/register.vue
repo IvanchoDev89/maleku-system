@@ -141,7 +141,7 @@ const handleRegister = async () => {
   })
 
   if (result.success) {
-    router.push('/dashboard')
+    router.push('/')
   } else {
     error.value = result.error || 'Error al registrar'
   }

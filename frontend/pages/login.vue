@@ -72,7 +72,7 @@ function getDefaultRedirect(role: string): string {
     case 'super_admin': return '/superadmin/dashboard'
     case 'vendor': return '/vendor/dashboard'
     case 'admin': return '/admin/dashboard'
-    default: return '/dashboard'
+    default: return '/'
   }
 }
 
