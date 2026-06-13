@@ -1,7 +1,6 @@
 # Python
 __pycache__/
 *.py[cod]
-*.py[cod]
 *.pyo
 *.egg-info/
 dist/
@@ -60,6 +59,7 @@ backend/uploads/*
 
 # Nuxt
 frontend/.nuxt/
+frontend/.nuxt_*/
 frontend/.output/
 
 # Vite / Bundler
