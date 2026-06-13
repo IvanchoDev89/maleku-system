@@ -143,11 +143,11 @@ async def create_destination(
 
 @router.put("/{destination_id}", response_model=DestinationResponse,
             summary="Update destination",
-            description="Updates a destination. SUPER_ADMIN role required.")
+            description="Updates a destination. SUPER_ADMIN or ADMIN role required.")
 async def update_destination(
     destination_id: uuid.UUID,
     data: DestinationUpdate,
-    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
+    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN, UserRole.ADMIN)),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(Destination).where(Destination.id == destination_id))

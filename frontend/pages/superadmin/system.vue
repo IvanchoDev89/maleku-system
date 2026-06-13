@@ -434,7 +434,7 @@ const confirmToggleMaintenance = () => {
 
 const executeToggleMaintenance = async () => {
   try {
-    await api.post('/superadmin/system/maintenance', {
+    await api.post('/superadmin/system/maintenance-mode', {
       enabled: !maintenanceMode.value,
       message: maintenanceMode.value ? undefined : 'Estamos realizando mantenimiento. Volveremos pronto.',
     })
@@ -447,7 +447,7 @@ const executeToggleMaintenance = async () => {
 const runBackup = async () => {
   backupInProgress.value = true
   try {
-    await api.post('/superadmin/system/backup')
+    await api.post('/superadmin/system/backups/trigger')
     toast.success('Backup iniciado')
     await loadBackups()
   } catch (error) {
@@ -469,9 +469,10 @@ const confirmOptimize = () => {
 
 const executeOptimize = async () => {
   try {
-    await api.post('/superadmin/system/optimize')
+    await api.post('/superadmin/system/database/optimize')
   } catch (error) {
     console.error('Error optimizing database:', error)
+    toast.info('Función de optimización no disponible aún')
   }
 }
 
@@ -489,9 +490,10 @@ const confirmClearCache = (type: string) => {
 
 const executeClearCache = async () => {
   try {
-    await api.post('/superadmin/system/cache/clear', { type: cacheTypeToClear })
+    await api.post('/superadmin/system/cache/flush', { type: cacheTypeToClear })
   } catch (error) {
     console.error('Error clearing cache:', error)
+    toast.info('Función de limpieza de cache no disponible aún')
   }
 }
 
@@ -506,9 +508,10 @@ const confirmForceLogout = () => {
 
 const executeForceLogout = async () => {
   try {
-    await api.post('/superadmin/system/logout-all')
+    await api.post('/superadmin/system/force-logout')
   } catch (error) {
     console.error('Error forcing logout:', error)
+    toast.info('Función de logout forzado no disponible aún')
   }
 }
 
@@ -523,9 +526,10 @@ const confirmResetSessions = () => {
 
 const executeResetSessions = async () => {
   try {
-    await api.post('/superadmin/system/reset-sessions')
+    await api.post('/superadmin/system/sessions/reset')
   } catch (error) {
     console.error('Error resetting sessions:', error)
+    toast.info('Función de reset de sesiones no disponible aún')
   }
 }
 

@@ -118,7 +118,7 @@ const fetchDestinations = async () => {
 
 const toggleActive = async (dest: any) => {
   try {
-    await api.put(`/destinations/${dest.id}/active`, { is_active: !dest.is_active })
+    await api.put(`/destinations/${dest.id}`, { is_active: !dest.is_active })
     dest.is_active = !dest.is_active
   } catch (error) {
     console.error('Error toggling destination:', error)

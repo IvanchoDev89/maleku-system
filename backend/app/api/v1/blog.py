@@ -277,10 +277,10 @@ async def update_blog_post(
 
 @router.delete("/{post_id}", response_model=DeleteResponse,
                summary="Archive blog post",
-               description="Archives (soft-deletes) a blog post by setting status to ARCHIVED. SUPER_ADMIN role required.")
+               description="Archives (soft-deletes) a blog post by setting status to ARCHIVED. SUPER_ADMIN or ADMIN role required.")
 async def delete_blog_post(
     post_id: uuid.UUID,
-    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
+    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN, UserRole.ADMIN)),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(BlogPost).where(BlogPost.id == post_id))

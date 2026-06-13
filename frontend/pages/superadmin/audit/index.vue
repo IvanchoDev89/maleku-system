@@ -340,7 +340,7 @@ const loadSecurityLogs = async () => {
     const params = new URLSearchParams()
     params.append('limit', '100')
     
-    const response = await api.get(`/superadmin/audit/security-logs?${params}`)
+    const response = await api.get(`/superadmin/audit/security?${params}`)
     securityLogs.value = response
   } catch (error) {
     console.error('Error loading security logs:', error)

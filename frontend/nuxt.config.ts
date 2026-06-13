@@ -1,6 +1,5 @@
 export default defineNuxtConfig({
   devtools: { enabled: false },
-  ssr: false,
   
   modules: [
     '@pinia/nuxt',
@@ -8,8 +7,55 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@nuxt/image',
     '@nuxtjs/color-mode',
-    '@nuxt/icon'
+    '@nuxt/icon',
+    '@vite-pwa/nuxt'
   ],
+
+  pwa: {
+    registerType: 'autoUpdate',
+    includeAssets: ['favicon.svg'],
+    manifest: {
+      name: 'Costa Rica Travel',
+      short_name: 'CR Travel',
+      description: 'Tu guía completa para descubrir Costa Rica: hoteles, tours y planificador de viajes.',
+      theme_color: '#0D9488',
+      background_color: '#ffffff',
+      display: 'standalone',
+      orientation: 'portrait',
+      scope: '/',
+      start_url: '/',
+      icons: [
+        { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' }
+      ]
+    },
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2}'],
+      runtimeCaching: [
+        {
+          urlPattern: /^https:\/\/api\.costaricatravel\.dev\/.*/i,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'api-cache',
+            expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
+            networkTimeoutSeconds: 10
+          }
+        },
+        {
+          urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'cloudinary-images',
+            expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            cacheableResponse: { statuses: [0, 200] }
+          }
+        }
+      ]
+    },
+    client: {
+      installPrompt: true,
+      periodicSyncForUpdates: 60 * 60
+    }
+  },
   
   components: [
     { path: '~/components', pathPrefix: false }
@@ -57,7 +103,7 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
-        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        { rel: 'apple-touch-icon', href: '/favicon.svg' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         { rel: 'dns-prefetch', href: 'https://fonts.googleapis.com' }

@@ -1,18 +1,17 @@
-from typing import Annotated
-from fastapi import Depends, Query
+from typing import AsyncGenerator
+from fastapi import BackgroundTasks, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
-from app.core.security import get_current_user, require_role
-from app.models import User, UserRole
-from app.schemas import PaginationParams
+from app.core.database import AsyncSessionLocal
 
-SessionDep = Annotated[AsyncSession, Depends(get_db)]
 
-CurrentUserDep = Annotated[User, Depends(get_current_user)]
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
 
-PaginationDep = Annotated[PaginationParams, Query()]
 
-VendorDep = Annotated[User, Depends(require_role(UserRole.VENDOR))]
-AdminDep = Annotated[User, Depends(require_role(UserRole.SUPER_ADMIN, UserRole.ADMIN))]
-SuperAdminDep = Annotated[User, Depends(require_role(UserRole.SUPER_ADMIN))]
+def get_background_tasks(request: Request) -> BackgroundTasks:
+    return request.state.background_tasks

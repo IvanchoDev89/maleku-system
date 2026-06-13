@@ -353,7 +353,8 @@ const rejectVendor = async () => {
 
 const requestDocuments = async (vendor: any) => {
   try {
-    await api.post(`/superadmin/vendors/${vendor.id}/request-documents`, {
+    await api.post(`/superadmin/vendors/${vendor.id}/approval`, {
+      action: 'request_documents',
       message: 'Por favor proporcione los documentos requeridos para completar su registro.',
     })
     toast.success('Solicitud de documentos enviada')

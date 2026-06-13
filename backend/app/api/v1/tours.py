@@ -164,11 +164,12 @@ async def create_tour(
     slug = f"{base_slug}-{str(uuid.uuid4())[:8]}"
     
     # SECURITY: Prevent mass assignment - only allow specific fields
-    allowed_fields = ['name', 'description', 'short_description', 'tour_type', 'location',
-                     'duration_hours', 'difficulty', 'meeting_point', 'max_participants',
-                     'min_participants', 'price', 'currency', 'included_items', 'excluded_items',
-                     'important_notes', 'what_to_bring', 'photos', 'featured_photo', 'video_url',
-                     'is_published', 'is_featured']
+    allowed_fields = {'name', 'description', 'category', 'location',
+                     'duration_hours', 'difficulty', 'meeting_point', 'max_group_size',
+                     'price', 'currency', 'duration_text', 'min_age',
+                     'included', 'not_included', 'itinerary',
+                     'images', 'cover_image', 'schedule_days',
+                     'is_active', 'is_featured'}
     tour_data_filtered = {k: v for k, v in data.model_dump().items() if k in allowed_fields}
     
     tour = Tour(
@@ -221,11 +222,12 @@ async def update_tour(
         )
     
     # SECURITY: Prevent mass assignment - only allow specific fields
-    allowed_fields = {'name', 'description', 'short_description', 'tour_type', 'location',
-                     'duration_hours', 'difficulty', 'meeting_point', 'max_participants',
-                     'min_participants', 'price', 'currency', 'included_items', 'excluded_items',
-                     'important_notes', 'what_to_bring', 'photos', 'featured_photo', 'video_url',
-                     'is_published', 'is_featured'}
+    allowed_fields = {'name', 'description', 'category', 'location',
+                     'duration_hours', 'difficulty', 'meeting_point', 'max_group_size',
+                     'price', 'currency', 'duration_text', 'min_age',
+                     'included', 'not_included', 'itinerary',
+                     'images', 'cover_image', 'schedule_days',
+                     'is_active', 'is_featured'}
     
     for field, value in data.model_dump(exclude_unset=True).items():
         if field in allowed_fields:

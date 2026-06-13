@@ -334,7 +334,7 @@ const loadProperties = async () => {
     if (filters.value.type) params.property_type = filters.value.type
     if (filters.value.region) params.region = filters.value.region
     
-    const response = await api.get('/superadmin/properties', params)
+    const response = await api.get('/properties', params)
     properties.value = response.items || response
     total.value = response.total || properties.value.length
   } catch (error) {
@@ -366,7 +366,7 @@ const loadStats = async () => {
 
 const loadModerationQueue = async () => {
   try {
-    moderationQueue.value = await api.get('/superadmin/properties/moderation-queue')
+    moderationQueue.value = await api.get('/properties', { status: 'pending_review' })
   } catch (error) {
     console.error('Error loading moderation queue:', error)
   }
@@ -383,9 +383,7 @@ const confirmToggleFeatured = (property: any) => {
 
 const executeToggleFeatured = async (property: any) => {
   try {
-    await api.post(`/superadmin/properties/${property.id}/feature`, {
-      featured: !property.is_featured,
-    })
+    await api.put(`/properties/${property.id}`, { is_featured: !property.is_featured })
     await loadProperties()
     await loadStats()
   } catch (error) {
@@ -404,7 +402,7 @@ const confirmApproveProperty = (property: any) => {
 
 const executeApproveProperty = async (property: any) => {
   try {
-    await api.post(`/superadmin/properties/${property.id}/approve`)
+    await api.put(`/properties/${property.id}`, { is_active: true })
     await loadProperties()
     await loadStats()
   } catch (error) {
@@ -426,9 +424,7 @@ const confirmToggleStatus = (property: any) => {
 const executeToggleStatus = async (property: any) => {
   const newStatus = property.status === 'active' ? 'inactive' : 'active'
   try {
-    await api.post(`/superadmin/properties/${property.id}/status`, {
-      status: newStatus,
-    })
+    await api.put(`/properties/${property.id}`, { is_active: newStatus === 'active' })
     await loadProperties()
     await loadStats()
   } catch (error) {
@@ -438,7 +434,7 @@ const executeToggleStatus = async (property: any) => {
 
 const moderateItem = async (item: any, action: string) => {
   try {
-    await api.post(`/superadmin/properties/moderation/${item.id}`, { action })
+    await api.put(`/properties/${item.id}`, { is_active: action === 'approve' })
     await loadModerationQueue()
     await loadStats()
   } catch (error) {

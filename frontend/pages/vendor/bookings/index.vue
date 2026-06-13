@@ -206,7 +206,7 @@ const changePage = (p: number) => {
 
 const updateStatus = async (id: string, status: string) => {
   try {
-    await api.put(`/bookings/${id}`, { status })
+    await api.put(`/bookings/${id}/status`, { status })
     fetchBookings()
   } catch (e: any) {
     error.value = e?.data?.detail || 'Error al actualizar estado'
@@ -221,7 +221,7 @@ const confirmCancel = async () => {
   if (!bookingToCancel.value) return
   cancelling.value = true
   try {
-    await api.put(`/bookings/${bookingToCancel.value.id}`, { status: 'cancelled' })
+    await api.put(`/bookings/${bookingToCancel.value.id}/status`, { status: 'cancelled' })
     bookingToCancel.value = null
     fetchBookings()
   } catch (e: any) {

@@ -171,12 +171,17 @@ async def create_property(
     slug = f"{base_slug}-{str(uuid.uuid4())[:8]}"
     
     # SECURITY: Prevent mass assignment - only allow specific fields
-    allowed_fields = ['name', 'description', 'short_description', 'property_type', 'address',
-                     'city', 'region', 'country', 'latitude', 'longitude', 'max_guests',
-                     'bedrooms', 'bathrooms', 'amenities', 'house_rules', 'check_in_time',
-                     'check_out_time', 'cancellation_policy', 'price_per_night', 'currency',
-                     'min_nights', 'max_nights', 'photos', 'featured_photo', 'video_url',
-                     'is_published', 'is_featured']
+    allowed_fields = {'name', 'slug', 'short_description', 'description', 'property_type',
+                     'category', 'address', 'country', 'province', 'region', 'city', 'district',
+                     'latitude', 'longitude', 'map_address',
+                     'cover_image', 'images', 'videos', 'virtual_tour_url',
+                     'amenities', 'features',
+                     'check_in_time', 'check_out_time', 'cancellation_policy',
+                     'house_rules', 'important_info',
+                     'min_guests', 'max_guests', 'beds', 'baths', 'square_meters',
+                     'base_price', 'currency', 'weekend_price', 'weekly_discount',
+                     'seo_title', 'seo_description', 'seo_keywords', 'seo_slug',
+                     'is_active', 'is_featured'}
     property_data_filtered = {k: v for k, v in data.model_dump().items() if k in allowed_fields}
     
     property_obj = Property(
@@ -229,12 +234,17 @@ async def update_property(
         )
     
     # SECURITY: Prevent mass assignment - only allow specific fields
-    allowed_fields = {'name', 'description', 'short_description', 'property_type', 'address',
-                     'city', 'region', 'country', 'latitude', 'longitude', 'max_guests',
-                     'bedrooms', 'bathrooms', 'amenities', 'house_rules', 'check_in_time',
-                     'check_out_time', 'cancellation_policy', 'price_per_night', 'currency',
-                     'min_nights', 'max_nights', 'photos', 'featured_photo', 'video_url',
-                     'is_published', 'is_featured'}
+    allowed_fields = {'name', 'slug', 'short_description', 'description', 'property_type',
+                     'category', 'address', 'country', 'province', 'region', 'city', 'district',
+                     'latitude', 'longitude', 'map_address',
+                     'cover_image', 'images', 'videos', 'virtual_tour_url',
+                     'amenities', 'features',
+                     'check_in_time', 'check_out_time', 'cancellation_policy',
+                     'house_rules', 'important_info',
+                     'min_guests', 'max_guests', 'beds', 'baths', 'square_meters',
+                     'base_price', 'currency', 'weekend_price', 'weekly_discount',
+                     'seo_title', 'seo_description', 'seo_keywords', 'seo_slug',
+                     'is_active', 'is_featured'}
     
     for field, value in data.model_dump(exclude_unset=True).items():
         if field in allowed_fields:

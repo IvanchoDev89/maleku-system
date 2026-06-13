@@ -170,11 +170,55 @@ jobs:
         run: |
           npm audit --audit-level=high || echo "Vulnerabilities found - review manually"
 
-  deploy:
-    name: Deploy
-    if: github.ref == 'refs/heads/main'
+  deploy-staging:
+    name: Deploy Staging
+    if: github.ref == 'refs/heads/develop'
     needs: [test-backend, test-frontend, security-scan]
     runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add host to known_hosts
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+        run: |
+          if [ -n "$STAGING_HOST" ]; then
+            mkdir -p ~/.ssh
+            ssh-keyscan -H "$STAGING_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          fi
+
+      - name: Deploy to staging
+        env:
+          DEPLOY_HOST: ${{ secrets.STAGING_HOST }}
+          DEPLOY_USER: ${{ secrets.STAGING_USER }}
+          DEPLOY_KEY: ${{ secrets.STAGING_KEY }}
+          DEPLOY_PATH: ${{ secrets.STAGING_PATH || '/opt/costaricatravel-staging' }}
+        run: |
+          if [ -z "$DEPLOY_HOST" ]; then
+            echo "Staging host not configured — skipping deploy"
+            exit 0
+          fi
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -i ~/.ssh/deploy_key \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd $DEPLOY_PATH && \
+             git pull origin develop && \
+             docker compose -f docker-compose.staging.yml up -d --build && \
+             sleep 15 && \
+             curl -sf http://localhost:8000/health/ready && \
+             docker compose -f docker-compose.staging.yml exec -T backend alembic upgrade head && \
+             echo 'Staging deploy successful'" || \
+            (echo "Staging deploy failed" && exit 1)
+
+  deploy:
+    name: Deploy Production
+    if: github.ref == 'refs/heads/main'
+    needs: [test-backend, test-frontend, security-scan, deploy-staging]
+    runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - uses: actions/checkout@v4
@@ -186,6 +230,15 @@ jobs:
           if [ -n "$DEPLOY_HOST" ]; then
             mkdir -p ~/.ssh
             ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          fi
+
+      - name: Create DB backup before deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -n "$DATABASE_URL" ]; then
+            docker run --rm -e DATABASE_URL="$DATABASE_URL" postgres:16-alpine sh -c \
+              'pg_dump "$DATABASE_URL" | gzip > /tmp/predeploy-backup.sql.gz'
           fi
 
       - name: Deploy via SSH
@@ -206,11 +259,13 @@ jobs:
             "cd $DEPLOY_PATH && \
              git pull origin main && \
              docker compose up -d --build && \
-             sleep 10 && \
+             sleep 15 && \
              curl -sf http://localhost:8000/health/ready && \
+             docker compose exec -T backend alembic upgrade head && \
              echo 'Deploy successful'" || \
             (echo "Deploy failed — attempting rollback" && \
              ssh -i ~/.ssh/deploy_key \
                "$DEPLOY_USER@$DEPLOY_HOST" \
-               "cd $DEPLOY_PATH && docker compose down && git checkout HEAD~1 && docker compose up -d --build" && \
-             echo "Rollback completed")
+               "cd $DEPLOY_PATH && docker compose down && git checkout HEAD~1 && docker compose up -d --build && \
+                sleep 15 && docker compose exec -T backend alembic upgrade head && \
+                echo 'Rollback completed'")

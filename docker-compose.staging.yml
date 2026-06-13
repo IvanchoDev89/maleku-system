@@ -1,0 +1,107 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: costarica_staging_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-costaricatravel_staging}
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - costarica_staging_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: costarica_staging_redis
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-}"]
+    ports:
+      - "6382:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - costarica_staging_network
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: costarica_staging_mailhog
+    ports:
+      - "1026:1025"
+      - "8026:8025"
+    networks:
+      - costarica_staging_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: costarica_staging_backend
+    environment:
+      - DATABASE_URL=${STAGING_DATABASE_URL:-postgresql+asyncpg://postgres:postgres@postgres:5432/costaricatravel_staging}
+      - REDIS_URL=${STAGING_REDIS_URL:-redis://:${REDIS_PASSWORD}@redis:6379/0}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - SECRET_KEY=${STAGING_SECRET_KEY:?STAGING_SECRET_KEY must be set}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - BACKEND_CORS_ORIGINS=["https://staging.costaricatravel.dev"]
+      - SITE_URL=https://staging.costaricatravel.dev
+      - ENVIRONMENT=staging
+      - LOG_LEVEL=INFO
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_FROM=noreply@costaricatravel.dev
+      - SMTP_FROM_NAME=Costa Rica Travel
+      - SMTP_USE_TLS=false
+      - EMAIL_FROM=noreply@costaricatravel.dev
+      - EMAIL_FROM_NAME=Costa Rica Travel
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - backend_staging_media:/app/uploads
+    networks:
+      - costarica_staging_network
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: costarica_staging_frontend
+    environment:
+      - NUXT_PUBLIC_API_URL=https://staging.costaricatravel.dev/api/v1
+      - NUXT_PUBLIC_SITE_URL=https://staging.costaricatravel.dev
+      - NUXT_PUBLIC_ENVIRONMENT=staging
+      - NUXT_HOST=0.0.0.0
+      - NUXT_PORT=3000
+    ports:
+      - "3001:3000"
+    depends_on:
+      - backend
+    networks:
+      - costarica_staging_network
+
+volumes:
+  postgres_staging_data:
+  backend_staging_media:
+
+networks:
+  costarica_staging_network:
+    driver: bridge

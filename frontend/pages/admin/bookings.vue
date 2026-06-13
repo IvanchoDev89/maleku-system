@@ -290,7 +290,7 @@ const viewBooking = (booking: Booking) => { selectedBooking.value = booking }
 
 const confirmBooking = async (booking: Booking) => {
   try {
-    await api.patch(`/bookings/${booking.id}`, { status: 'confirmed' })
+    await api.put(`/bookings/${booking.id}/status`, { status: 'confirmed' })
     fetchBookings()
   } catch (e) { console.error(e) }
 }
@@ -303,7 +303,7 @@ const confirmCancel = async () => {
   if (!bookingToCancel.value) return
   cancelling.value = true
   try {
-    await api.patch(`/bookings/${bookingToCancel.value.id}`, { status: 'cancelled' })
+    await api.put(`/bookings/${bookingToCancel.value.id}/status`, { status: 'cancelled' })
     bookingToCancel.value = null
     fetchBookings()
   } catch (e) { console.error(e) }
