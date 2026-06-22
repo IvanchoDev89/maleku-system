@@ -1,13 +1,15 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import get_current_user, require_role
 from app.models import User, UserRole, Vendor, Property, Tour, Booking, BookingStatus
 from app.schemas import VendorResponse, VendorUpdate, VendorPublicResponse
 from app.services.cache_service import cache
+from app.services.vendor_service import VendorService
 
 router = APIRouter(tags=["Vendors"])
 
@@ -22,7 +24,9 @@ CACHE_TTL_DETAIL = 600  # 10 minutes for vendor details
     description="Returns a list of active vendors sorted by rating. Supports limit and offset for pagination.",
 )
 async def get_vendors(
-    db: AsyncSession = Depends(get_db), limit: int = 20, offset: int = 0
+    db: AsyncSession = Depends(get_db),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = 0,
 ):
     cache_key = f"vendors:list:{limit}:{offset}"
 
@@ -66,13 +70,7 @@ async def get_vendor(vendor_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     if cached:
         return VendorResponse(**cached)
 
-    result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
-    vendor = result.scalar_one_or_none()
-
-    if not vendor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+    vendor = await VendorService.get_or_404(db, vendor_id)
 
     response = VendorResponse.model_validate(vendor)
     await cache.set(
@@ -150,7 +148,9 @@ async def get_my_vendor_profile(
     summary="Update vendor profile",
     description="Updates the authenticated vendor's profile. Only allows specific fields (business_name, description, phone, address, etc.) to prevent mass assignment.",
 )
+@limiter.limit("10/minute")
 async def update_my_vendor_profile(
+    request: Request,
     data: VendorUpdate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -189,10 +189,7 @@ async def update_my_vendor_profile(
     await db.flush()
     await db.commit()
 
-    # Invalidate vendor caches
-    await cache.delete(f"vendors:detail:{vendor.id}")
-    await cache.delete(f"vendors:slug:{vendor.business_slug}")
-    await cache.invalidate_tag("vendors")
+    await VendorService.invalidate_cache(vendor.id, vendor.business_slug)
 
     return VendorResponse.model_validate(vendor)
 
@@ -264,27 +261,20 @@ async def get_my_analytics(
     summary="Verify vendor",
     description="Marks a vendor as verified. SUPER_ADMIN role required.",
 )
+@limiter.limit("10/minute")
 async def verify_vendor(
+    request: Request,
     vendor_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
 ):
-    result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
-    vendor = result.scalar_one_or_none()
-
-    if not vendor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+    vendor = await VendorService.get_or_404(db, vendor_id)
 
     vendor.is_verified = True
     await db.flush()
     await db.commit()
 
-    # Invalidate vendor caches
-    await cache.delete(f"vendors:detail:{vendor.id}")
-    await cache.delete(f"vendors:slug:{vendor.business_slug}")
-    await cache.invalidate_tag("vendors")
+    await VendorService.invalidate_cache(vendor.id, vendor.business_slug)
 
     return {"message": "Vendor verified successfully"}
 
@@ -295,27 +285,20 @@ async def verify_vendor(
     summary="Toggle vendor active status",
     description="Activates or deactivates a vendor account. SUPER_ADMIN role required.",
 )
+@limiter.limit("10/minute")
 async def toggle_vendor_active(
+    request: Request,
     vendor_id: uuid.UUID,
     is_active: bool,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
 ):
-    result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
-    vendor = result.scalar_one_or_none()
-
-    if not vendor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+    vendor = await VendorService.get_or_404(db, vendor_id)
 
     vendor.is_active = is_active
     await db.flush()
     await db.commit()
 
-    # Invalidate vendor caches
-    await cache.delete(f"vendors:detail:{vendor.id}")
-    await cache.delete(f"vendors:slug:{vendor.business_slug}")
-    await cache.invalidate_tag("vendors")
+    await VendorService.invalidate_cache(vendor.id, vendor.business_slug)
 
     return {"message": f"Vendor {'activated' if is_active else 'deactivated'}"}

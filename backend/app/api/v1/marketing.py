@@ -7,13 +7,14 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, func
 from sqlalchemy.orm import joinedload
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin, require_role, get_current_user
 from app.models import User, UserRole, Vendor
 from app.models.marketing import (
@@ -270,7 +271,9 @@ async def list_all_campaigns(
 
 
 @router.post("/admin/campaigns", response_model=CampaignResponse)
+@limiter.limit("10/minute")
 async def create_admin_campaign(
+    request: Request,
     data: CampaignCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
@@ -297,7 +300,9 @@ async def create_admin_campaign(
 
 
 @router.post("/admin/campaigns/{campaign_id}/send", response_model=SendCampaignResponse)
+@limiter.limit("5/minute")
 async def send_admin_campaign(
+    request: Request,
     campaign_id: UUID,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
@@ -369,7 +374,9 @@ async def list_templates(
 
 
 @router.post("/admin/templates", response_model=TemplateResponse)
+@limiter.limit("10/minute")
 async def create_template(
+    request: Request,
     data: TemplateCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
@@ -492,7 +499,9 @@ async def list_vendor_campaigns(
 
 
 @router.post("/vendor/campaigns", response_model=CampaignResponse)
+@limiter.limit("10/minute")
 async def create_vendor_campaign(
+    request: Request,
     data: CampaignCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.VENDOR)),
@@ -605,7 +614,9 @@ async def get_user_inbox(
 
 
 @router.post("/inbox/send", response_model=SendInboxResponse)
+@limiter.limit("10/minute")
 async def send_inbox_message(
+    request: Request,
     data: InboxMessageCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -687,7 +698,9 @@ async def get_email_preferences(
 
 
 @router.put("/preferences", response_model=UpdatePreferencesResponse)
+@limiter.limit("10/minute")
 async def update_email_preferences(
+    request: Request,
     prefs: dict,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),

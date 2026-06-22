@@ -13,10 +13,15 @@ const toasts = ref<Toast[]>([])
 
 let nextId = 0
 
+const MAX_TOASTS = 50
+
 export function useToast() {
   function add(message: string, type: ToastType = 'info', duration = 4000) {
     const id = `toast-${++nextId}`
     toasts.value.push({ id, message, type, duration })
+    if (toasts.value.length > MAX_TOASTS) {
+      toasts.value.splice(0, toasts.value.length - MAX_TOASTS)
+    }
     if (duration > 0) {
       setTimeout(() => remove(id), duration)
     }

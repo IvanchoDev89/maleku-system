@@ -2,12 +2,19 @@
 Transportation Schemas - Transporte Privado
 """
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 
 from app.models import TransportServiceType, TransportVehicleType, PricingType
+from . import is_dangerous_sql
+
+
+def _sanitize_transport_field(cls, v: Optional[str]) -> Optional[str]:
+    if v is not None and is_dangerous_sql(v):
+        raise ValueError("Invalid input")
+    return v
 
 
 class TransportationBase(BaseModel):
@@ -23,6 +30,11 @@ class TransportationBase(BaseModel):
     price_per_hour: float = 0
     routes_served: List[dict] = []
     locations: List[str] = []
+
+    @field_validator("vehicle_description")
+    @classmethod
+    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+        return _sanitize_transport_field(cls, v)
 
 
 class TransportationCreate(TransportationBase):
@@ -43,6 +55,11 @@ class TransportationUpdate(BaseModel):
     routes_served: Optional[List[dict]] = None
     locations: Optional[List[str]] = None
     is_available: Optional[bool] = None
+
+    @field_validator("vehicle_description")
+    @classmethod
+    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+        return _sanitize_transport_field(cls, v)
 
 
 class TransportationResponse(TransportationBase):

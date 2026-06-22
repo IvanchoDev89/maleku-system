@@ -282,7 +282,7 @@
         </div>
 
         <!-- SEO -->
-        <div v-show="activeTab === 6" class="space-y-6">
+        <div v-show="activeTab === 7" class="space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Título SEO</label>
@@ -300,9 +300,186 @@
             </div>
             <div class="md:col-span-2">
               <label class="block text-sm font-medium text-gray-700 mb-1">Palabras Clave</label>
-              <input v-model="seoKeywordsInput" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" placeholder="hotel, playa, tamarindo, costa rica (separadas por comas)" />
+              <input v-model="seoKeywordsInput" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" placeholder="hotel, tamarindo, costa rica (separadas por comas)" />
             </div>
           </div>
+        </div>
+
+        <!-- Calendar - Gestión de Disponibilidad -->
+        <div v-show="activeTab === 6" class="space-y-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-medium text-gray-900">Calendario de Disponibilidad</h3>
+              <p class="text-sm text-gray-500">Gestiona la disponibilidad y precios especiales por fecha para cada habitación</p>
+            </div>
+          </div>
+
+          <!-- No rooms warning -->
+          <div v-if="form.rooms.length === 0" class="text-center py-8 bg-gray-50 rounded-lg">
+            <span class="text-4xl block mb-2">📅</span>
+            <p class="text-gray-500">Agrega habitaciones primero en la pestaña "Habitaciones"</p>
+          </div>
+
+          <template v-else>
+            <!-- Room selector -->
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Habitación</label>
+              <select
+                v-model="calendarRoomIndex"
+                class="w-full md:w-64 p-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary"
+              >
+                <option
+                  v-for="(room, idx) in form.rooms"
+                  :key="idx"
+                  :value="idx"
+                >
+                  {{ room.name || `Habitación ${idx + 1}` }}
+                </option>
+              </select>
+            </div>
+
+            <div v-if="calendarRoomIndex !== null && form.rooms[calendarRoomIndex]" class="grid lg:grid-cols-3 gap-6">
+              <!-- Calendar -->
+              <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                  <div class="flex items-center justify-between mb-4">
+                    <button @click="calendarPrevMonth" class="p-1.5 hover:bg-gray-100 rounded-lg">
+                      <ChevronLeft class="w-5 h-5 text-gray-600" />
+                    </button>
+                    <h4 class="font-semibold text-gray-900">
+                      {{ calendarMonthName }} {{ calendarYear }}
+                    </h4>
+                    <button @click="calendarNextMonth" class="p-1.5 hover:bg-gray-100 rounded-lg">
+                      <ChevronRight class="w-5 h-5 text-gray-600" />
+                    </button>
+                  </div>
+
+                  <div class="grid grid-cols-7 mb-1">
+                    <div v-for="dn in calendarDayNames" :key="dn" class="text-center text-xs font-medium text-gray-500 py-1">{{ dn }}</div>
+                  </div>
+
+                  <div class="grid grid-cols-7">
+                    <div
+                      v-for="(cell, idx) in calendarGrid"
+                      :key="idx"
+                      class="relative"
+                    >
+                      <button
+                        v-if="!cell.isPadding"
+                        @click="toggleCalendarDate(cell.date)"
+                        :class="[
+                          'w-full aspect-square flex flex-col items-center justify-center text-sm rounded-lg transition-colors relative',
+                          getCalendarDateClass(cell.date),
+                          cell.isPast ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer hover:ring-2 hover:ring-primary-300',
+                        ]"
+                        :disabled="cell.isPast"
+                      >
+                        <span>{{ cell.day }}</span>
+                        <span
+                          v-if="calendarPriceOverrides[cell.date] !== undefined"
+                          class="text-[9px] text-amber-600 font-medium leading-none"
+                        >${{ calendarPriceOverrides[cell.date] }}</span>
+                        <span
+                          v-if="calendarBlocked[cell.date]"
+                          class="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full"
+                        ></span>
+                      </button>
+                      <div v-else class="w-full aspect-square"></div>
+                    </div>
+                  </div>
+
+                  <!-- Legend -->
+                  <div class="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-green-100 border border-green-300"></span> Disponible</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-100 border border-red-200"></span> Bloqueado</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded border-2 border-amber-400"></span> Precio especial</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Controls -->
+              <div class="space-y-4">
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                  <h4 class="font-medium text-gray-900 mb-4">Acciones rápidas</h4>
+
+                  <div class="space-y-3">
+                    <button
+                      @click="blockSelectedDates"
+                      class="w-full py-2 px-4 bg-red-50 text-red-700 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+                    >
+                      Bloquear fechas seleccionadas
+                    </button>
+                    <button
+                      @click="unblockSelectedDates"
+                      class="w-full py-2 px-4 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors"
+                    >
+                      Desbloquear fechas seleccionadas
+                    </button>
+
+                    <hr class="border-gray-100" />
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Precio especial por noche</label>
+                      <div class="flex gap-2">
+                        <input
+                          v-model.number="calendarPriceInput"
+                          type="number"
+                          class="flex-1 p-2 border border-gray-300 rounded-lg text-sm"
+                          placeholder="$$$"
+                        />
+                        <button
+                          @click="setPriceForSelected"
+                          class="px-3 py-2 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium hover:bg-primary-100"
+                        >
+                          Aplicar
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Estadía mínima (noches)</label>
+                      <div class="flex gap-2">
+                        <input
+                          v-model.number="calendarMinStayInput"
+                          type="number"
+                          min="1"
+                          class="flex-1 p-2 border border-gray-300 rounded-lg text-sm"
+                          placeholder="1"
+                        />
+                        <button
+                          @click="setMinStayForSelected"
+                          class="px-3 py-2 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium hover:bg-primary-100"
+                        >
+                          Aplicar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-blue-50 rounded-xl p-4 text-sm text-blue-800">
+                  <p class="font-medium mb-1">💡 Tips</p>
+                  <ul class="space-y-1 text-blue-700">
+                    <li>• Haz clic en una fecha para bloquearla/desbloquearla</li>
+                    <li>• Las fechas pasadas no se pueden modificar</li>
+                    <li>• Los precios especiales sobreescriben el precio base de la habitación</li>
+                  </ul>
+                </div>
+
+                <button
+                  @click="saveCalendar"
+                  :disabled="savingCalendar"
+                  class="w-full py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Loader2 v-if="savingCalendar" class="w-4 h-4 animate-spin" />
+                  {{ savingCalendar ? 'Guardando...' : 'Guardar Calendario' }}
+                </button>
+
+                <div v-if="calendarSaveMessage" class="text-sm text-green-600 text-center">{{ calendarSaveMessage }}</div>
+                <div v-if="calendarSaveError" class="text-sm text-red-600 text-center">{{ calendarSaveError }}</div>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </div>
@@ -322,6 +499,8 @@
 </template>
 
 <script setup lang="ts">
+import { Loader2, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+
 const props = withDefaults(defineProps<{
   propertyId?: string
   cancelUrl?: string
@@ -377,7 +556,7 @@ const tabs = [
   { id: 'basic', label: 'Información', icon: '🏨' }, { id: 'location', label: 'Ubicación', icon: '📍' },
   { id: 'rooms', label: 'Habitaciones', icon: '🛏️' }, { id: 'amenities', label: 'Amenidades', icon: '✨' },
   { id: 'media', label: 'Fotos/Videos', icon: '📷' }, { id: 'pricing', label: 'Tarifas', icon: '💰' },
-  { id: 'seo', label: 'SEO', icon: '🔍' },
+  { id: 'calendar', label: 'Calendario', icon: '📅' }, { id: 'seo', label: 'SEO', icon: '🔍' },
 ]
 
 const activeTab = ref(0)
@@ -500,4 +679,146 @@ onMounted(() => {
     loadProperty()
   }
 })
+
+// === Calendar Management ===
+const calendarRoomIndex = ref<number>(0)
+const calendarCursor = ref(new Date())
+const calendarBlocked = ref<Record<string, boolean>>({})
+const calendarPriceOverrides = ref<Record<string, number>>({})
+const calendarMinStay = ref<Record<string, number>>({})
+const calendarSelected = ref<Set<string>>(new Set())
+const calendarPriceInput = ref<number | null>(null)
+const calendarMinStayInput = ref<number>(1)
+const savingCalendar = ref(false)
+const calendarSaveMessage = ref('')
+const calendarSaveError = ref('')
+
+const calendarMonthName = computed(() =>
+  calendarCursor.value.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+)
+const calendarYear = computed(() => calendarCursor.value.getFullYear())
+
+const calendarDayNames = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa']
+
+const calendarGrid = computed(() => {
+  const year = calendarCursor.value.getFullYear()
+  const month = calendarCursor.value.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const startPad = firstDay.getDay()
+  const cells: { isPadding: boolean; date: string; day: number }[] = []
+  for (let i = 0; i < startPad; i++) cells.push({ isPadding: true, date: '', day: 0 })
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    cells.push({ isPadding: false, date, day: d })
+  }
+  return cells
+})
+
+const calendarPrevMonth = () => {
+  calendarCursor.value = new Date(calendarCursor.value.getFullYear(), calendarCursor.value.getMonth() - 1, 1)
+  calendarSelected.value.clear()
+}
+const calendarNextMonth = () => {
+  calendarCursor.value = new Date(calendarCursor.value.getFullYear(), calendarCursor.value.getMonth() + 1, 1)
+  calendarSelected.value.clear()
+}
+
+const today = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const isPastDate = (date: string) => date < today()
+
+const toggleCalendarDate = (date: string) => {
+  if (isPastDate(date)) return
+  if (calendarSelected.value.has(date)) calendarSelected.value.delete(date)
+  else calendarSelected.value.add(date)
+}
+
+const getCalendarDateClass = (date: string) => {
+  if (isPastDate(date)) return 'text-gray-300'
+  const classes: string[] = []
+  if (calendarSelected.value.has(date)) classes.push('ring-2 ring-primary-500 bg-primary-50')
+  else if (calendarBlocked.value[date]) classes.push('bg-red-50 text-red-800')
+  else classes.push('bg-green-50 text-green-800')
+  if (calendarPriceOverrides.value[date] !== undefined) classes.push('border-2 border-amber-400')
+  return classes.join(' ')
+}
+
+const blockSelectedDates = () => {
+  for (const date of calendarSelected.value) calendarBlocked.value[date] = true
+  calendarSelected.value.clear()
+}
+
+const unblockSelectedDates = () => {
+  for (const date of calendarSelected.value) delete calendarBlocked.value[date]
+  calendarSelected.value.clear()
+}
+
+const setPriceForSelected = () => {
+  if (!calendarPriceInput.value) return
+  for (const date of calendarSelected.value) calendarPriceOverrides.value[date] = calendarPriceInput.value
+  calendarSelected.value.clear()
+}
+
+const setMinStayForSelected = () => {
+  if (!calendarMinStayInput.value || calendarMinStayInput.value < 1) return
+  for (const date of calendarSelected.value) calendarMinStay.value[date] = calendarMinStayInput.value
+  calendarSelected.value.clear()
+}
+
+const loadCalendarData = async () => {
+  if (!props.propertyId || calendarRoomIndex.value === null) return
+  const room = form.rooms[calendarRoomIndex.value]
+  if (!room?.id) return
+  try {
+    const data = await api.get(`/availability/rooms/${room.id}/calendar?year=${calendarCursor.value.getFullYear()}&month=${calendarCursor.value.getMonth() + 1}`)
+    calendarBlocked.value = {}
+    calendarPriceOverrides.value = {}
+    calendarMinStay.value = {}
+    for (const day of data.days || []) {
+      if (day.is_blocked) calendarBlocked.value[day.date] = true
+      if (day.price_override != null) calendarPriceOverrides.value[day.date] = day.price_override
+      if (day.min_stay != null) calendarMinStay.value[day.date] = day.min_stay
+    }
+  } catch {
+    // Room may not have availability records yet
+  }
+}
+
+watch(calendarRoomIndex, () => { loadCalendarData() })
+watch(calendarCursor, () => { loadCalendarData() })
+
+const buildCalendarPayload = () => {
+  const entries: any[] = []
+  for (const date of Object.keys(calendarBlocked.value)) entries.push({ date, is_blocked: true, price_override: calendarPriceOverrides.value[date] || null, min_stay: calendarMinStay.value[date] || null })
+  for (const date of Object.keys(calendarPriceOverrides.value)) {
+    if (!calendarBlocked.value[date]) entries.push({ date, is_blocked: false, price_override: calendarPriceOverrides.value[date], min_stay: calendarMinStay.value[date] || null })
+  }
+  for (const date of Object.keys(calendarMinStay.value)) {
+    if (!calendarBlocked.value[date] && !calendarPriceOverrides.value[date]) entries.push({ date, is_blocked: false, price_override: null, min_stay: calendarMinStay.value[date] })
+  }
+  return entries
+}
+
+const saveCalendar = async () => {
+  if (!props.propertyId || calendarRoomIndex.value === null) return
+  const room = form.rooms[calendarRoomIndex.value]
+  if (!room?.id) return
+  savingCalendar.value = true
+  calendarSaveMessage.value = ''
+  calendarSaveError.value = ''
+  try {
+    const payload = buildCalendarPayload()
+    await api.put(`/availability/rooms/${room.id}/calendar`, { entries: payload })
+    calendarSaveMessage.value = 'Calendario guardado exitosamente'
+    setTimeout(() => { calendarSaveMessage.value = '' }, 3000)
+  } catch (e: any) {
+    calendarSaveError.value = e?.data?.detail || 'Error al guardar calendario'
+  } finally {
+    savingCalendar.value = false
+  }
+}
 </script>

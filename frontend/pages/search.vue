@@ -96,7 +96,7 @@
               >
                 <div class="relative h-48 overflow-hidden">
                   <NuxtImg
-                    :src="prop.images?.[0] || prop.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80'"
+                    :src="prop.images?.[0] || prop.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945'"
                     :alt="prop.name"
                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     width="800"
@@ -145,7 +145,7 @@
               >
                 <div class="relative h-48 overflow-hidden">
                   <NuxtImg
-                    :src="tour.cover_image || tour.image || 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80'"
+                    :src="tour.cover_image || tour.image || 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7'"
                     :alt="tour.name"
                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     width="800"
@@ -200,7 +200,7 @@
               >
                 <div class="relative h-48 overflow-hidden">
                   <NuxtImg
-                    :src="dest.image || 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&q=80'"
+                    :src="dest.image || 'https://images.unsplash.com/photo-1538108149393-fbbd81895907'"
                     :alt="dest.name"
                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     width="800"
@@ -236,6 +236,7 @@ const searchInput = ref(query.value)
 const { data: results, pending, error } = useFetch(
   () => `${apiBase}/search/search`,
   {
+    key: 'search-results',
     query: { q: query.value },
     watch: [query],
     default: () => ({ properties: [], tours: [], destinations: [], blog: [] })

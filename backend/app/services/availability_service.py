@@ -1,13 +1,15 @@
 """
 Availability Service - Gestiona disponibilidad de habitaciones y tours
 Previene overbookings verificando conflictos con reservas existentes
+y entradas del calendario de disponibilidad.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
-from sqlalchemy import select, and_, or_, func
+from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models import Booking, BookingStatus, Tour
+from app.models import Booking, BookingStatus
+from app.models.room_availability import RoomAvailability
 
 
 async def check_room_availability(
@@ -20,9 +22,9 @@ async def check_room_availability(
     """
     Check if a room is available for the given date range.
 
-    A room is NOT available if there's an existing booking that:
-    - Is not cancelled/refunded
-    - Overlaps with the requested date range
+    A room is NOT available if:
+    - There's a non-cancelled booking that overlaps with the requested range
+    - There's a RoomAvailability entry marking a date as unavailable
 
     Args:
         db: Database session
@@ -34,6 +36,7 @@ async def check_room_availability(
     Returns:
         True if available, False if there's a conflict
     """
+    # Check 1: Existing bookings
     query = select(Booking).where(
         and_(
             Booking.room_id == room_id,
@@ -44,16 +47,8 @@ async def check_room_availability(
                     BookingStatus.COMPLETED,
                 ]
             ),
-            or_(
-                # Case 1: Existing booking starts during our stay
-                and_(Booking.check_in >= check_in, Booking.check_in < check_out),
-                # Case 2: Existing booking ends during our stay
-                and_(Booking.check_out > check_in, Booking.check_out <= check_out),
-                # Case 3: Existing booking completely covers our stay
-                and_(Booking.check_in <= check_in, Booking.check_out >= check_out),
-                # Case 4: Our stay completely covers existing booking
-                and_(Booking.check_in >= check_in, Booking.check_out <= check_out),
-            ),
+            Booking.check_in < check_out,
+            Booking.check_out > check_in,
         )
     )
 
@@ -63,7 +58,33 @@ async def check_room_availability(
     result = await db.execute(query)
     conflicting_bookings = result.scalars().all()
 
-    return len(conflicting_bookings) == 0
+    if conflicting_bookings:
+        return False
+
+    # Check 2: RoomAvailability entries (vendor-blocked dates)
+    # Generate the list of dates in the range
+    current = check_in.date()
+    end = check_out.date()
+    dates_in_range = []
+    while current < end:
+        dates_in_range.append(current)
+        current += timedelta(days=1)
+
+    if dates_in_range:
+        avail_result = await db.execute(
+            select(RoomAvailability).where(
+                and_(
+                    RoomAvailability.room_id == room_id,
+                    RoomAvailability.date.in_(dates_in_range),
+                    RoomAvailability.is_available == False,
+                )
+            )
+        )
+        blocked_dates = avail_result.scalars().all()
+        if blocked_dates:
+            return False
+
+    return True
 
 
 async def get_room_availability_calendar(
@@ -72,7 +93,20 @@ async def get_room_availability_calendar(
     """
     Get availability calendar for a room in a date range.
     Returns a list of dates with availability status.
+    Combines data from RoomAvailability table and existing bookings.
     """
+    # Get all RoomAvailability entries for the range
+    avail_result = await db.execute(
+        select(RoomAvailability).where(
+            and_(
+                RoomAvailability.room_id == room_id,
+                RoomAvailability.date >= start_date.date(),
+                RoomAvailability.date < end_date.date(),
+            )
+        )
+    )
+    avail_entries = {a.date.isoformat(): a for a in avail_result.scalars().all()}
+
     # Get all bookings for this room in the date range
     query = select(Booking).where(
         and_(
@@ -90,13 +124,50 @@ async def get_room_availability_calendar(
     availability = []
     current = start_date
     while current < end_date:
-        is_available = True
+        date_key = current.date().isoformat()
+        is_today = current.date() == datetime.now(timezone.utc).date()
+        is_past = current.date() < datetime.now(timezone.utc).date()
+
+        # Check RoomAvailability entry
+        avail_entry = avail_entries.get(date_key)
+
+        # Check if booked
+        is_booked = False
         for booking in bookings:
-            if booking.check_in <= current < booking.check_out:
-                is_available = False
+            if booking.check_in.date() <= current.date() < booking.check_out.date():
+                is_booked = True
                 break
 
-        availability.append({"date": current.isoformat(), "available": is_available})
+        # Determine availability: prefer RoomAvailability if set, else check bookings
+        if avail_entry is not None:
+            is_available = avail_entry.is_available and not is_booked
+            price_override = (
+                float(avail_entry.price_override)
+                if avail_entry.price_override
+                else None
+            )
+            min_stay = avail_entry.min_stay
+            max_stay = avail_entry.max_stay
+        else:
+            is_available = not is_booked and not is_past
+            price_override = None
+            min_stay = None
+            max_stay = None
+
+        day = {
+            "date": date_key,
+            "available": is_available,
+            "is_today": is_today,
+            "is_past": is_past,
+        }
+        if price_override is not None:
+            day["price_override"] = price_override
+        if min_stay is not None:
+            day["min_stay"] = min_stay
+        if max_stay is not None:
+            day["max_stay"] = max_stay
+
+        availability.append(day)
         current += timedelta(days=1)
 
     return availability
@@ -111,6 +182,8 @@ async def check_tour_availability(
     Returns:
         (is_available, reason)
     """
+    from app.models.tour import Tour
+
     # Get tour details
     tour_result = await db.execute(select(Tour).where(Tour.id == tour_id))
     tour = tour_result.scalar_one_or_none()

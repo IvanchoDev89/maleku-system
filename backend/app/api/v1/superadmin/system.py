@@ -5,12 +5,13 @@ Provides health checks, database stats, and system monitoring.
 
 from datetime import datetime, timezone, timedelta
 from typing import Optional
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import text, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin
 from app.models import User
 
@@ -267,7 +268,10 @@ async def get_backups(current_user: User = Depends(require_superadmin())):
 
 
 @router.post("/backups/trigger", response_model=dict)
-async def trigger_backup(current_user: User = Depends(require_superadmin())):
+@limiter.limit("5/minute")
+async def trigger_backup(
+    request: Request, current_user: User = Depends(require_superadmin())
+):
     """
     Manually trigger a database backup.
     Placeholder - would integrate with actual backup system.
@@ -345,7 +349,9 @@ async def _get_db_connection_count(db: AsyncSession) -> Optional[int]:
 
 
 @router.post("/maintenance-mode", response_model=dict)
+@limiter.limit("5/minute")
 async def toggle_maintenance_mode(
+    request: Request,
     enabled: bool,
     message: Optional[str] = None,
     current_user: User = Depends(require_superadmin()),

@@ -1,15 +1,20 @@
 """
-Availability API - Endpoints para consultar disponibilidad de habitaciones y tours
+Availability API - Endpoints para consultar y gestionar disponibilidad de habitaciones y tours
 """
 
-from datetime import datetime, timedelta, timezone
-from typing import Optional
-from fastapi import APIRouter, Depends, Query
+from datetime import datetime, timedelta, timezone, date as date_type
+from typing import Optional, List
+from fastapi import APIRouter, Depends, Query, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete
 from pydantic import BaseModel
 from uuid import UUID
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
+from app.core.security import require_permission
+from app.models import User, UserRole, Vendor, Room
+from app.models.room_availability import RoomAvailability
 from app.services.availability_service import (
     check_room_availability,
     get_room_availability_calendar,
@@ -20,49 +25,7 @@ from app.services.availability_service import (
 router = APIRouter()
 
 
-class DeleteResponse(BaseModel):
-    message: str
-
-
-class MessageResponse(BaseModel):
-    message: str
-
-
-class MarkReadResponse(BaseModel):
-    message: str
-    conversation_id: str
-
-
-class ReorderResponse(BaseModel):
-    message: str
-    items_updated: int
-
-
-class ActivateResponse(BaseModel):
-    message: str
-    is_active: bool
-
-
-class ChangeRoleResponse(BaseModel):
-    message: str
-    user_id: str
-    new_role: str
-
-
-class VerifyResponse(BaseModel):
-    message: str
-    is_verified: bool
-
-
-class ToggleActiveResponse(BaseModel):
-    message: str
-    is_active: bool
-
-
-class PresignedUrlResponse(BaseModel):
-    url: str
-    expires_in: int
-    fields: dict
+# ============ READ MODELS ============
 
 
 class AvailabilityCheckRequest(BaseModel):
@@ -76,14 +39,48 @@ class AvailabilityCheckResponse(BaseModel):
     alternative_dates: list = []
 
 
+class CalendarDay(BaseModel):
+    date: str
+    available: bool
+    price_override: Optional[float] = None
+    min_stay: Optional[int] = None
+    max_stay: Optional[int] = None
+
+
 class AvailabilityCalendarResponse(BaseModel):
     room_id: UUID
     dates: list
 
 
+# ============ WRITE MODELS ============
+
+
+class CalendarEntry(BaseModel):
+    date: date_type
+    is_available: bool = True
+    price_override: Optional[float] = None
+    min_stay: Optional[int] = None
+    max_stay: Optional[int] = None
+    notes: Optional[str] = None
+
+
+class BulkCalendarUpdate(BaseModel):
+    entries: List[CalendarEntry]
+
+
+class BulkCalendarResponse(BaseModel):
+    room_id: UUID
+    updated_count: int
+    message: str
+
+
+# ============ PUBLIC ENDPOINTS ============
+
+
 @router.post("/rooms/check", response_model=AvailabilityCheckResponse)
+@limiter.limit("30/minute")
 async def check_availability(
-    data: AvailabilityCheckRequest, db: AsyncSession = Depends(get_db)
+    data: AvailabilityCheckRequest, request: Request, db: AsyncSession = Depends(get_db)
 ):
     """
     Check if a room is available for specific dates.
@@ -98,7 +95,6 @@ async def check_availability(
 
     alternative_dates = []
     if not is_available:
-        # Suggest next available dates
         nights = (data.check_out - data.check_in).days
         alternative_dates = await get_next_available_dates(
             db=db,
@@ -117,12 +113,13 @@ async def check_availability(
 async def get_room_calendar(
     room_id: UUID,
     start_date: datetime = Query(..., description="Start date (ISO format)"),
-    days: int = Query(30, ge=1, le=90, description="Number of days to check"),
+    days: int = Query(30, ge=1, le=365, description="Number of days to check"),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Get availability calendar for a room.
     Returns daily availability status for the requested period.
+    Combines data from RoomAvailability table + existing bookings.
     """
     end_date = start_date + timedelta(days=days)
 
@@ -133,10 +130,12 @@ async def get_room_calendar(
     return AvailabilityCalendarResponse(room_id=room_id, dates=calendar)
 
 
-@router.post("/tours/check", response_model=AvailabilityCheckResponse)
+@router.post("/tours/check", response_model=dict)
+@limiter.limit("30/minute")
 async def check_tour_availability_endpoint(
     tour_id: UUID,
     booking_date: datetime,
+    request: Request,
     participants: int = Query(1, ge=1),
     db: AsyncSession = Depends(get_db),
 ):
@@ -183,3 +182,126 @@ async def get_next_available(
     )
 
     return {"room_id": room_id, "nights": nights, "available_ranges": available_ranges}
+
+
+# ============ MANAGEMENT ENDPOINTS (vendor/superadmin) ============
+
+
+@router.put(
+    "/rooms/{room_id}/calendar",
+    response_model=BulkCalendarResponse,
+    summary="Bulk update room calendar",
+    description="Upsert availability entries for a room. Replaces existing entries for the specified dates. Vendor must own the room's property or be superadmin.",
+)
+@limiter.limit("10/minute")
+async def bulk_update_calendar(
+    request: Request,
+    room_id: UUID,
+    data: BulkCalendarUpdate,
+    current_user: User = Depends(require_permission("properties", "update")),
+    db: AsyncSession = Depends(get_db),
+):
+    # Verify room exists and ownership
+    result = await db.execute(select(Room).where(Room.id == room_id))
+    room = result.scalar_one_or_none()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    if current_user.role == UserRole.VENDOR:
+        from app.models import Property
+
+        prop_result = await db.execute(
+            select(Property).where(Property.id == room.property_id)
+        )
+        prop = prop_result.scalar_one_or_none()
+        vendor_result = await db.execute(
+            select(Vendor).where(Vendor.user_id == current_user.id)
+        )
+        vendor = vendor_result.scalar_one_or_none()
+        if not vendor or not prop or prop.vendor_id != vendor.id:
+            raise HTTPException(
+                status_code=403, detail="Not authorized to modify this room's calendar"
+            )
+
+    # Delete existing entries for these dates, then insert new ones
+    dates = [e.date for e in data.entries]
+    if dates:
+        await db.execute(
+            delete(RoomAvailability).where(
+                RoomAvailability.room_id == room_id,
+                RoomAvailability.date.in_(dates),
+            )
+        )
+
+    for entry in data.entries:
+        ra = RoomAvailability(
+            room_id=room_id,
+            date=entry.date,
+            is_available=entry.is_available,
+            price_override=entry.price_override,
+            min_stay=entry.min_stay,
+            max_stay=entry.max_stay,
+            notes=entry.notes,
+        )
+        db.add(ra)
+
+    await db.commit()
+
+    return BulkCalendarResponse(
+        room_id=room_id,
+        updated_count=len(data.entries),
+        message=f"Calendar updated for {len(data.entries)} date(s)",
+    )
+
+
+@router.delete(
+    "/rooms/{room_id}/calendar/{date_str}",
+    response_model=dict,
+    summary="Delete a calendar entry",
+    description="Remove a specific date's availability entry from the calendar. Vendor must own the room's property or be superadmin.",
+)
+async def delete_calendar_entry(
+    room_id: UUID,
+    date_str: str,
+    current_user: User = Depends(require_permission("properties", "update")),
+    db: AsyncSession = Depends(get_db),
+):
+    # Verify room exists and ownership (same check as above)
+    result = await db.execute(select(Room).where(Room.id == room_id))
+    room = result.scalar_one_or_none()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    if current_user.role == UserRole.VENDOR:
+        from app.models import Property
+
+        prop_result = await db.execute(
+            select(Property).where(Property.id == room.property_id)
+        )
+        prop = prop_result.scalar_one_or_none()
+        vendor_result = await db.execute(
+            select(Vendor).where(Vendor.user_id == current_user.id)
+        )
+        vendor = vendor_result.scalar_one_or_none()
+        if not vendor or not prop or prop.vendor_id != vendor.id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+
+    try:
+        target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(
+            status_code=400, detail="Invalid date format. Use YYYY-MM-DD."
+        )
+
+    await db.execute(
+        delete(RoomAvailability).where(
+            RoomAvailability.room_id == room_id,
+            RoomAvailability.date == target_date,
+        )
+    )
+    await db.commit()
+
+    return {
+        "message": f"Calendar entry for {date_str} deleted",
+        "room_id": str(room_id),
+    }

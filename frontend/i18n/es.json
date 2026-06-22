@@ -527,6 +527,46 @@
   "tours": {
     "title": "Descubre Experiencias Únicas"
   },
+  "categories": {
+    "adventure": "Aventura",
+    "nature": "Naturaleza",
+    "wildlife": "Vida Silvestre",
+    "beach": "Playa",
+    "culture": "Cultura",
+    "wellness": "Bienestar"
+  },
+  "filters": {
+    "difficulty": {
+      "easy": "Fácil",
+      "medium": "Moderado",
+      "hard": "Difícil"
+    },
+    "price": {
+      "under50": "Hasta $50",
+      "50to100": "$50 - $100",
+      "100to200": "$100 - $200",
+      "over200": "Más de $200"
+    },
+    "duration": {
+      "halfDay": "Medio día",
+      "fullDay": "Día completo",
+      "multiDay": "Varios días"
+    },
+    "sort": {
+      "popular": "Populares",
+      "priceAsc": "Menor precio",
+      "priceDesc": "Mayor precio",
+      "rating": "Mejor calificación",
+      "newest": "Más recientes"
+    }
+  },
+  "regions": {
+    "guanacaste": "Guanacaste",
+    "puntarenas": "Puntarenas",
+    "limon": "Limón",
+    "alajuela": "Alajuela",
+    "sanjose": "San José"
+  },
   "properties": {
     "title": "Encuentra tu Estadía Perfecta"
   },

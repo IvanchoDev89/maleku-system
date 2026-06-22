@@ -13,7 +13,7 @@ from app.core.token_blacklist import token_blacklist
 from app.models import User
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=11)
 security = HTTPBearer()
 
 
@@ -161,6 +161,17 @@ async def get_current_active_user(
     return current_user
 
 
+async def require_verified_email(
+    current_user: User = Depends(get_current_active_user),
+) -> User:
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email verification required. Please verify your email before proceeding.",
+        )
+    return current_user
+
+
 def require_role(*roles):
     async def role_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in roles:
@@ -174,17 +185,128 @@ def require_role(*roles):
 
 
 def require_superadmin():
-    """Dependency to require SUPER_ADMIN role exclusively."""
-    from app.models import UserRole
+    """Dependency to require SUPER_ADMIN role exclusively.
 
-    async def superadmin_checker(
+    Delegates to require_role for consistent behavior.
+    """
+    from app.models import UserRole as _UserRole
+
+    return require_role(_UserRole.SUPER_ADMIN)
+
+
+DEFAULT_ROLE_PERMISSIONS: dict[str, dict[str, list[str]]] = {
+    "super_admin": {
+        "users": [
+            "create",
+            "read",
+            "update",
+            "delete",
+            "impersonate",
+            "block",
+            "export",
+        ],
+        "vendors": [
+            "create",
+            "read",
+            "update",
+            "delete",
+            "approve",
+            "suspend",
+            "export",
+        ],
+        "properties": ["create", "read", "update", "delete", "feature", "moderate"],
+        "tours": ["create", "read", "update", "delete"],
+        "bookings": ["create", "read", "update", "cancel", "refund", "export"],
+        "content": ["create", "read", "update", "delete", "publish", "seo"],
+        "analytics": ["read", "export", "reports"],
+        "chat": ["read", "create", "delete"],
+        "system": ["settings", "maintenance", "backup", "logs", "permissions"],
+    },
+    "admin": {
+        "users": ["read"],
+        "vendors": ["read", "approve"],
+        "properties": ["read", "create", "update", "feature"],
+        "tours": ["read", "create", "update"],
+        "bookings": ["read", "create", "update", "cancel", "export"],
+        "content": ["read", "create", "update", "delete", "publish"],
+        "analytics": ["read", "reports"],
+        "chat": ["read", "create"],
+        "system": ["logs"],
+    },
+    "agent": {
+        "bookings": ["read", "create", "update", "cancel"],
+        "properties": ["read"],
+        "tours": ["read"],
+        "chat": ["read", "create"],
+    },
+    "customer_service": {
+        "bookings": ["read", "update", "cancel"],
+        "chat": ["read", "create"],
+    },
+    "vendor": {
+        "properties": ["read", "create", "update", "delete"],
+        "tours": ["read", "create", "update", "delete"],
+        "bookings": ["read", "update"],
+        "content": ["read", "create", "update"],
+        "chat": ["read", "create"],
+    },
+    "client": {
+        "bookings": ["read", "create", "cancel"],
+        "chat": ["read", "create"],
+        "properties": ["read"],
+        "tours": ["read"],
+        "content": ["read"],
+    },
+}
+
+
+def require_permission(module: str, action: str):
+    """Dependency that checks if the current user can perform `action` on `module`.
+
+    Checks the ``role_permissions`` database table first.  If no row exists
+    for the user's role + module, falls back to ``DEFAULT_ROLE_PERMISSIONS``.
+    SUPER_ADMIN is always allowed.
+    """
+
+    async def permission_checker(
         current_user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
     ) -> User:
-        if current_user.role != UserRole.SUPER_ADMIN:
+        role = current_user.role
+        from app.models import UserRole
+
+        if role == UserRole.SUPER_ADMIN:
+            return current_user
+
+        # Consultar configuración en DB (superadmin puede personalizar)
+        from sqlalchemy import select
+        from app.models import RolePermission
+
+        result = await db.execute(
+            select(RolePermission).where(
+                RolePermission.role == role,
+                RolePermission.module == module,
+                RolePermission.is_active,
+            )
+        )
+        rp = result.scalar_one_or_none()
+
+        if rp is not None:
+            if action in rp.permissions:
+                return current_user
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Permission denied. Super Admin access required.",
+                detail=f"Permission denied: {role} cannot '{action}' on {module}",
             )
-        return current_user
 
-    return superadmin_checker
+        # Fallback a defaults
+        role_defaults = DEFAULT_ROLE_PERMISSIONS.get(role, {})
+        if action in role_defaults.get(module, []):
+            return current_user
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Permission denied: {role} cannot '{action}' on {module}",
+        )
+
+    return permission_checker

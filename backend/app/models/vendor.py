@@ -14,12 +14,14 @@ from sqlalchemy import (
     Text,
     Float,
     Integer,
-    Enum,
     Numeric,
+    Index,
 )
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, column_property
+from sqlalchemy import select as sa_select, func as sa_func
 
+from app.models.booking import Booking
 from app.models.base import Base, VendorStatus
 
 
@@ -75,7 +77,7 @@ class Vendor(Base):
     stripe_connected = Column(Boolean, default=False)
     is_verified = Column(Boolean, default=False, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
-    status = Column(Enum(VendorStatus), default=VendorStatus.PENDING, nullable=False)
+    status = Column(String(20), default=VendorStatus.PENDING.value, nullable=False)
 
     # Soft Delete
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -103,3 +105,19 @@ class Vendor(Base):
     flights = relationship("Flight", back_populates="vendor")
     transportation = relationship("Transportation", back_populates="vendor")
     conversations = relationship("Conversation", back_populates="participant_vendor")
+
+    total_bookings = column_property(
+        sa_select(sa_func.count(Booking.id))
+        .where(Booking.vendor_id == id)
+        .correlate_except(Booking)
+        .scalar_subquery()
+    )
+
+    __table_args__ = (
+        Index("idx_vendor_user", "user_id"),
+        Index("idx_vendor_slug", "business_slug"),
+        Index("idx_vendor_verified", "is_verified"),
+        Index("idx_vendor_active", "is_active"),
+        Index("idx_vendor_business_type", "business_type"),
+        Index("idx_vendor_created_at", "created_at"),
+    )

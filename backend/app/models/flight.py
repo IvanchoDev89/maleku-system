@@ -23,7 +23,7 @@ from sqlalchemy.orm import relationship
 from app.models.base import Base
 
 
-class RouteType(enum.Enum):
+class RouteType(str, enum.Enum):
     """Flight route type enumeration."""
 
     INTERNATIONAL = "international"
@@ -109,6 +109,9 @@ class Flight(Base):
     # Indexes for performance
     __table_args__ = (
         Index("idx_flight_vendor", "vendor_id"),
+        Index("idx_flight_destination", "destination_airport"),
+        Index("idx_flight_departure", "departure_time"),
+        Index("idx_flight_active_departure", "is_active", "departure_time"),
         Index("idx_flight_route", "origin_airport", "destination_airport"),
         Index("idx_flight_route_type", "route_type"),
         Index("idx_flight_active", "is_active", "deleted_at"),

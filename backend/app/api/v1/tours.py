@@ -1,14 +1,16 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.pagination import paginate_flat
-from app.core.security import get_current_user
+from app.core.rate_limiter import limiter
+from app.core.security import require_permission
 from app.core.utils import escape_like_pattern
 from app.models import User, UserRole, Vendor, Tour
+from app.models.tour import TourCategory, TourDifficulty
 from app.schemas import (
     TourResponse,
     TourCreate,
@@ -30,21 +32,35 @@ CACHE_TTL_FEATURED = 180  # 3 minutes for featured tours
     "",
     response_model=PaginatedResponse,
     summary="List tours",
-    description="Paginated list of active tours with optional filters by category, difficulty, location, price range, rating, and featured status.",
+    description="Paginated list of active tours with optional filters by category, difficulty, location, price range, rating, featured status, duration, text search, and sorting.",
 )
 async def get_tours(
     params: PaginationParams = Depends(),
     category: str = None,
     difficulty: str = None,
     location: str = None,
+    destination: str = None,
     min_price: float = None,
     max_price: float = None,
     rating: float = None,
+    min_rating: float = None,
     featured: bool = None,
+    q: str = None,
+    min_duration: float = None,
+    max_duration: float = None,
+    sort: str = None,
     db: AsyncSession = Depends(get_db),
 ):
+    use_rating = rating if rating is not None else min_rating
+    use_location = location or destination
+
     # Generate cache key based on query parameters
-    cache_key = f"tours:list:{category}:{difficulty}:{location}:{min_price}:{max_price}:{rating}:{featured}:{params.page}:{params.page_size}"
+    cache_key = (
+        f"tours:list:{category}:{difficulty}:{use_location}:"
+        f"{min_price}:{max_price}:{use_rating}:{featured}:"
+        f"{q}:{min_duration}:{max_duration}:{sort}:"
+        f"{params.page}:{params.page_size}"
+    )
 
     # Try to get from cache
     cached = await cache.get(cache_key)
@@ -56,22 +72,44 @@ async def get_tours(
     query = query.options(selectinload(Tour.vendor))
 
     if category:
-        query = query.where(Tour.category == category)
+        query = query.where(Tour.category == TourCategory(category))
     if difficulty:
-        query = query.where(Tour.difficulty == difficulty)
-    if location:
-        query = query.where(Tour.location.ilike(f"%{escape_like_pattern(location)}%"))
-    if rating:
-        query = query.where(Tour.rating >= rating)
+        query = query.where(Tour.difficulty == TourDifficulty(difficulty))
+    if use_location:
+        pattern = f"%{escape_like_pattern(use_location)}%"
+        query = query.where(Tour.location.ilike(pattern))
+    if min_price is not None:
+        query = query.where(Tour.price >= min_price)
+    if max_price is not None:
+        query = query.where(Tour.price <= max_price)
+    if use_rating is not None:
+        query = query.where(Tour.rating >= use_rating)
     if featured:
         query = query.where(Tour.is_featured)
+    if q:
+        pattern = f"%{escape_like_pattern(q)}%"
+        query = query.where(Tour.name.ilike(pattern) | Tour.description.ilike(pattern))
+    if min_duration is not None:
+        query = query.where(Tour.duration_hours >= min_duration)
+    if max_duration is not None:
+        query = query.where(Tour.duration_hours <= max_duration)
+
+    # Map sort parameter to order_by
+    sort_map = {
+        "popular": Tour.rating.desc().nullslast(),
+        "price_asc": Tour.price.asc(),
+        "price_desc": Tour.price.desc(),
+        "rating": Tour.rating.desc().nullslast(),
+        "newest": Tour.created_at.desc(),
+    }
+    order = sort_map.get(sort, Tour.created_at.desc())
 
     response = await paginate_flat(
         db,
         query,
         params,
         transform_func=TourListResponse.model_validate,
-        order_by=Tour.created_at.desc(),
+        order_by=order,
     )
 
     # Cache the response
@@ -159,20 +197,13 @@ async def get_tour_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
     summary="Create tour",
     description="Creates a new tour listing. Vendor or SUPER_ADMIN role required.",
 )
+@limiter.limit("10/minute")
 async def create_tour(
+    request: Request,
     data: TourCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("tours", "create")),
     db: AsyncSession = Depends(get_db),
 ):
-    if (
-        current_user.role != UserRole.VENDOR
-        and current_user.role != UserRole.SUPER_ADMIN
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only vendors can create tours",
-        )
-
     result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     vendor = result.scalar_one_or_none()
 
@@ -229,10 +260,12 @@ async def create_tour(
     summary="Update tour",
     description="Updates a tour. Only the owning vendor or SUPER_ADMIN can update.",
 )
+@limiter.limit("10/minute")
 async def update_tour(
+    request: Request,
     tour_id: uuid.UUID,
     data: TourUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("tours", "update")),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Tour).where(Tour.id == tour_id))
@@ -243,23 +276,17 @@ async def update_tour(
             status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found"
         )
 
-    # Check ownership
-    result_vendor = await db.execute(
-        select(Vendor).where(Vendor.user_id == current_user.id)
-    )
-    vendor = result_vendor.scalar_one_or_none()
-
-    if not vendor and current_user.role != UserRole.SUPER_ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Vendor profile required to update tours",
+    # Ownership check: vendor solo puede editar sus propios tours
+    if current_user.role == UserRole.VENDOR:
+        result_vendor = await db.execute(
+            select(Vendor).where(Vendor.user_id == current_user.id)
         )
-
-    if current_user.role != UserRole.SUPER_ADMIN and tour.vendor_id != vendor.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this tour",
-        )
+        vendor = result_vendor.scalar_one_or_none()
+        if not vendor or tour.vendor_id != vendor.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to update this tour",
+            )
 
     # SECURITY: Prevent mass assignment - only allow specific fields
     allowed_fields = {
@@ -309,7 +336,7 @@ async def update_tour(
 )
 async def delete_tour(
     tour_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("tours", "delete")),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Tour).where(Tour.id == tour_id))
@@ -320,22 +347,17 @@ async def delete_tour(
             status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found"
         )
 
-    result_vendor = await db.execute(
-        select(Vendor).where(Vendor.user_id == current_user.id)
-    )
-    vendor = result_vendor.scalar_one_or_none()
-
-    if not vendor and current_user.role != UserRole.SUPER_ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Vendor profile required to delete tours",
+    # Ownership check
+    if current_user.role == UserRole.VENDOR:
+        result_vendor = await db.execute(
+            select(Vendor).where(Vendor.user_id == current_user.id)
         )
-
-    if current_user.role != UserRole.SUPER_ADMIN and tour.vendor_id != vendor.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this tour",
-        )
+        vendor = result_vendor.scalar_one_or_none()
+        if not vendor or tour.vendor_id != vendor.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to delete this tour",
+            )
 
     tour.is_active = False
     await db.flush()
@@ -358,7 +380,7 @@ async def delete_tour(
 )
 async def get_my_tours(
     params: PaginationParams = Depends(),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("tours", "read")),
     db: AsyncSession = Depends(get_db),
 ):
     if current_user.role != UserRole.VENDOR:

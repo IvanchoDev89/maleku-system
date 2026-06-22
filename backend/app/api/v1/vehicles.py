@@ -4,11 +4,12 @@ Vehicles API - Rent a Car
 
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import get_current_user, require_role
 from app.core.utils import escape_like_pattern
 from app.models import User, UserRole, Vendor, Vehicle, VehicleType
@@ -68,21 +69,25 @@ async def list_vehicles(
     location: str | None = None,
     vehicle_type: VehicleType | None = None,
     seats: int | None = None,
+    skip: int = 0,
+    limit: int = 20,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> list[vehicle_schema.VehicleResponse]:
+) -> dict:
     """
-    List all available vehicles with optional filters.
+    List all available vehicles with optional filters and pagination.
 
     Args:
         location: Filter by location (partial match)
         vehicle_type: Filter by vehicle type (car, suv, van, etc.)
         seats: Minimum seating capacity
+        skip: Number of records to skip (pagination offset)
+        limit: Maximum number of records to return
         db: Database session
         current_user: Authenticated user
 
     Returns:
-        List of vehicles matching the filters
+        Paginated list of vehicles matching the filters
     """
     query = select(Vehicle).where(Vehicle.is_active, Vehicle.is_available)
 
@@ -95,10 +100,36 @@ async def list_vehicles(
     if seats:
         query = query.where(Vehicle.seats >= seats)
 
-    result = await db.execute(query.order_by(Vehicle.price_per_day))
+    count_query = select(
+        select(Vehicle.id)
+        .where(Vehicle.is_active, Vehicle.is_available)
+        .subquery()
+        .c.id
+    )
+    if location:
+        count_query = count_query.where(
+            Vehicle.location.ilike(f"%{escape_like_pattern(location)}%")
+        )
+    if vehicle_type:
+        count_query = count_query.where(Vehicle.vehicle_type == vehicle_type)
+    if seats:
+        count_query = count_query.where(Vehicle.seats >= seats)
+
+    limit = min(limit, 100)
+    result = await db.execute(
+        query.order_by(Vehicle.price_per_day).offset(skip).limit(limit)
+    )
     vehicles = result.scalars().all()
 
-    return vehicles
+    total_result = await db.execute(count_query)
+    total = len(total_result.scalars().all())
+
+    return {
+        "items": vehicles,
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+    }
 
 
 @router.get("/{vehicle_id}", response_model=vehicle_schema.VehicleDetailResponse)
@@ -128,7 +159,9 @@ async def get_vehicle(
 
 
 @router.post("", response_model=vehicle_schema.VehicleResponse)
+@limiter.limit("10/minute")
 async def create_vehicle(
+    request: Request,
     vehicle_data: vehicle_schema.VehicleCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.VENDOR)),
@@ -177,7 +210,9 @@ async def create_vehicle(
 
 
 @router.put("/{vehicle_id}", response_model=vehicle_schema.VehicleResponse)
+@limiter.limit("10/minute")
 async def update_vehicle(
+    request: Request,
     vehicle_id: uuid.UUID,
     vehicle_data: vehicle_schema.VehicleUpdate,
     db: AsyncSession = Depends(get_db),

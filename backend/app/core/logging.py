@@ -6,8 +6,25 @@ Replaces print statements with proper logging
 import logging
 import json
 import sys
+import re
 from datetime import datetime, timezone
 from typing import Any, Dict
+
+
+EMAIL_PATTERN = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
+
+
+def redact_email(value: str) -> str:
+    """Redact email addresses in log messages: user@example.com -> u***@example.com"""
+
+    def _replace(m: re.Match) -> str:
+        email = m.group(0)
+        local, domain = email.split("@", 1)
+        if len(local) <= 1:
+            return f"{local}***@{domain}"
+        return f"{local[0]}***{local[-1]}@{domain}"
+
+    return EMAIL_PATTERN.sub(_replace, value)
 
 
 class JSONFormatter(logging.Formatter):
@@ -21,7 +38,7 @@ class JSONFormatter(logging.Formatter):
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
-            "message": record.getMessage(),
+            "message": redact_email(record.getMessage()),
         }
 
         # Add extra fields if present
@@ -30,7 +47,7 @@ class JSONFormatter(logging.Formatter):
 
         # Add exception info if present
         if record.exc_info:
-            log_obj["exception"] = self.formatException(record.exc_info)
+            log_obj["exception"] = redact_email(self.formatException(record.exc_info))
 
         # Add file location for debugging
         if record.levelno >= logging.WARNING:
@@ -64,10 +81,11 @@ class SimpleFormatter(logging.Formatter):
 
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
-        log_message = f"{color}[{timestamp}] {record.levelname:8} | {record.name:20} | {record.getMessage()}{reset}"
+        msg = redact_email(record.getMessage())
+        log_message = f"{color}[{timestamp}] {record.levelname:8} | {record.name:20} | {msg}{reset}"
 
         if record.exc_info:
-            log_message += f"\n{self.formatException(record.exc_info)}"
+            log_message += f"\n{redact_email(self.formatException(record.exc_info))}"
 
         return log_message
 

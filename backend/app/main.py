@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -37,6 +37,8 @@ from app.api.v1.stripe import router as stripe_router
 from app.api.v1.marketing import router as marketing_router
 from app.api.v1.newsletter import router as newsletter_router
 from app.api.v1.contact import router as contact_router
+from app.api.v1.planner import router as planner_router
+from app.api.v1.trip_planner import router as trip_planner_router
 from app.api.v1.superadmin import router as superadmin_router
 from app.core.logging import setup_logging, get_logger
 from app.core.token_blacklist import token_blacklist
@@ -159,16 +161,20 @@ async def security_headers_middleware(request: Request, call_next):
     # Security headers
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Permissions-Policy"] = (
+        "camera=(), microphone=(), geolocation=(), fullscreen=(), payment=(), autoplay=(), clipboard-read=(), display-capture=(), screen-wake-lock=()"
+    )
     response.headers["Strict-Transport-Security"] = (
         "max-age=31536000; includeSubDomains"
     )
-    # Content Security Policy (CSP)
+    response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+    # Content Security Policy (CSP) - API only, no inline scripts needed
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "
+        "script-src 'self'; "
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: https:; "
         "font-src 'self'; "
@@ -180,6 +186,19 @@ async def security_headers_middleware(request: Request, call_next):
         "form-action 'self';"
     )
     return response
+
+
+# HTTPS enforcement middleware (production only)
+@app.middleware("http")
+async def https_redirect_middleware(request: Request, call_next):
+    if settings.is_production:
+        forwarded_proto = request.headers.get("x-forwarded-proto", "")
+        if forwarded_proto.lower() == "http":
+            return JSONResponse(
+                status_code=status.HTTP_403_FORBIDDEN,
+                content={"detail": "HTTPS required"},
+            )
+    return await call_next(request)
 
 
 # Request logging middleware
@@ -287,6 +306,10 @@ app.include_router(
     newsletter_router, prefix=f"{api_v1}/newsletter", tags=["Newsletter"]
 )
 app.include_router(contact_router, prefix=api_v1, tags=["Contact"])
+app.include_router(planner_router, prefix=f"{api_v1}/planner", tags=["Planner"])
+app.include_router(
+    trip_planner_router, prefix=f"{api_v1}/trip-planner", tags=["Trip Planner"]
+)
 
 # Marketing routes (BillionMail integration)
 app.include_router(marketing_router, prefix=f"{api_v1}/marketing", tags=["Marketing"])

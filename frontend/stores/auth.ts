@@ -74,7 +74,12 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     async login(email: string, password: string): Promise<{ success: boolean; error?: string; user?: User }> {
-      const api = useApi()
+      let api: ReturnType<typeof useApi>
+      try {
+        api = useApi()
+      } catch (e: any) {
+        return { success: false, error: 'Error al inicializar conexión API' }
+      }
 
       try {
         const response = await api.post<{
@@ -177,7 +182,6 @@ export const useAuthStore = defineStore('auth', {
       this.isAuthenticated = false
 
       clearAuthFromSession()
-      navigateTo('/login')
     },
 
     async refreshToken() {

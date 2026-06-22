@@ -1,3 +1,4 @@
+import { useI18n } from 'vue-i18n'
 import type { Tour, SearchFilters, TourSearchResponse } from '~/types'
 import { TOUR_CATEGORIES, PAGINATION, SEARCH_FILTERS } from '~/config/constants'
 
@@ -7,6 +8,7 @@ export function useSearch() {
   const route = useRoute()
   const router = useRouter()
   const api = useApi()
+  const { t } = useI18n()
 
   // State
   const tours = ref<Tour[]>([])
@@ -32,18 +34,36 @@ export function useSearch() {
     sortBy: (route.query.sortBy as SearchFilters['sortBy']) || 'popular'
   })
 
-  // Opciones de filtros disponibles - using centralized constants
+  // Opciones de filtros disponibles - using centralized constants with i18n
   const filterOptions = computed(() => ({
     categories: TOUR_CATEGORIES.map((cat: typeof TOUR_CATEGORIES[number]) => ({
       value: cat.value,
-      label: cat.key, // i18n key, actual label resolved in component
+      label: t(cat.key),
       icon: cat.icon
     })),
-    difficulties: SEARCH_FILTERS.difficulties,
-    priceRanges: SEARCH_FILTERS.priceRanges,
-    durations: SEARCH_FILTERS.durations,
-    sortOptions: SEARCH_FILTERS.sortOptions.map(o => ({ value: o.value, label: o.key })),
-    regions: SEARCH_FILTERS.regions
+    difficulties: SEARCH_FILTERS.difficulties.map(d => ({
+      value: d.value,
+      label: t(d.key),
+      color: d.color
+    })),
+    priceRanges: SEARCH_FILTERS.priceRanges.map(r => ({
+      min: r.min,
+      max: r.max,
+      label: t(r.key)
+    })),
+    durations: SEARCH_FILTERS.durations.map(d => ({
+      min: d.min,
+      max: d.max,
+      label: t(d.key)
+    })),
+    sortOptions: SEARCH_FILTERS.sortOptions.map(o => ({
+      value: o.value,
+      label: t(o.key)
+    })),
+    regions: SEARCH_FILTERS.regions.map(r => ({
+      value: r.value,
+      label: t(r.key)
+    }))
   }))
 
   // Computed

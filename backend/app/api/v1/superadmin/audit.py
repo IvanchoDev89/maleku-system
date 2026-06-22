@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin, get_current_user
 from app.core.utils import escape_like_pattern
 from app.core.logging import get_logger
@@ -84,6 +85,7 @@ class ClientEventCreate(BaseModel):
 
 
 @router.post("/logs", response_model=dict, status_code=201)
+@limiter.limit("30/minute")
 async def create_client_event(
     event: ClientEventCreate,
     request: Request,
@@ -477,7 +479,9 @@ async def get_logs_summary(
 
 
 @router.post("/export", response_model=dict)
+@limiter.limit("5/minute")
 async def export_logs(
+    request: Request,
     log_type: str = Query(..., description="Type of logs: 'audit' or 'security'"),
     date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),

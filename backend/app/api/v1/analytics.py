@@ -70,52 +70,42 @@ async def get_overview_stats(
     if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    # Total users
+    # Parallelizable queries (3 round-trips instead of 7)
     users_result = await db.execute(select(func.count(User.id)))
     total_users = users_result.scalar() or 0
 
-    # Total vendors
     vendors_result = await db.execute(select(func.count(Vendor.id)))
     total_vendors = vendors_result.scalar() or 0
 
-    # Total bookings
-    bookings_result = await db.execute(select(func.count(Booking.id)))
-    total_bookings = bookings_result.scalar() or 0
-
-    # Revenue calculations
-    revenue_result = await db.execute(
-        select(func.coalesce(func.sum(Booking.total_amount), 0))
+    # Aggregated booking stats in a single query
+    booking_stats = await db.execute(
+        select(
+            func.count(Booking.id).label("total"),
+            func.coalesce(func.sum(Booking.total_amount), 0).label("total_revenue"),
+            func.sum(
+                func.case((Booking.status == BookingStatus.PENDING, 1), else_=0)
+            ).label("pending"),
+            func.sum(
+                func.case((Booking.status == BookingStatus.CONFIRMED, 1), else_=0)
+            ).label("confirmed"),
+            func.sum(
+                func.case((Booking.status == BookingStatus.CANCELLED, 1), else_=0)
+            ).label("cancelled"),
+        )
     )
-    total_revenue = float(revenue_result.scalar() or 0)
+    stats = booking_stats.one()
 
-    # Net revenue (after 10% commission)
-    net_revenue = total_revenue * 0.90
-
-    # Booking status counts
-    pending_result = await db.execute(
-        select(func.count(Booking.id)).where(Booking.status == BookingStatus.PENDING)
-    )
-    pending_bookings = pending_result.scalar() or 0
-
-    completed_result = await db.execute(
-        select(func.count(Booking.id)).where(Booking.status == BookingStatus.CONFIRMED)
-    )
-    completed_bookings = completed_result.scalar() or 0
-
-    cancelled_result = await db.execute(
-        select(func.count(Booking.id)).where(Booking.status == BookingStatus.CANCELLED)
-    )
-    cancelled_bookings = cancelled_result.scalar() or 0
+    total_revenue = float(stats.total_revenue or 0)
 
     return OverviewStats(
         total_users=total_users,
         total_vendors=total_vendors,
-        total_bookings=total_bookings,
+        total_bookings=stats.total or 0,
         total_revenue=round(total_revenue, 2),
-        net_revenue=round(net_revenue, 2),
-        pending_bookings=pending_bookings,
-        completed_bookings=completed_bookings,
-        cancelled_bookings=cancelled_bookings,
+        net_revenue=round(total_revenue * 0.90, 2),
+        pending_bookings=stats.pending or 0,
+        completed_bookings=stats.confirmed or 0,
+        cancelled_bookings=stats.cancelled or 0,
     )
 
 
@@ -131,38 +121,37 @@ async def get_revenue_stats(
     days = int(period)
     start_date = datetime.now(timezone.utc) - timedelta(days=days)
 
+    # Single aggregated query instead of per-day loop
+    result = await db.execute(
+        select(
+            func.date_trunc("day", Booking.created_at).label("day"),
+            func.coalesce(func.sum(Booking.total_amount), 0).label("revenue"),
+            func.count(Booking.id).label("count"),
+        )
+        .where(
+            and_(
+                Booking.created_at >= start_date,
+                Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED]),
+            )
+        )
+        .group_by(func.date_trunc("day", Booking.created_at))
+        .order_by(func.date_trunc("day", Booking.created_at))
+    )
+    rows = {r.day.strftime("%Y-%m-%d"): r for r in result.all()}
+
     results = []
     for i in range(days):
         date = start_date + timedelta(days=i)
         date_str = date.strftime("%Y-%m-%d")
+        row = rows.get(date_str)
 
-        day_start = date.replace(hour=0, minute=0, second=0)
-        day_end = day_start + timedelta(days=1)
-
-        # Get bookings for this day
-        result = await db.execute(
-            select(
-                func.coalesce(func.sum(Booking.total_amount), 0).label("revenue"),
-                func.count(Booking.id).label("count"),
-            ).where(
-                and_(
-                    Booking.created_at >= day_start,
-                    Booking.created_at < day_end,
-                    Booking.status.in_(
-                        [BookingStatus.CONFIRMED, BookingStatus.COMPLETED]
-                    ),
-                )
-            )
-        )
-        row = result.one()
-
-        gross = float(row.revenue or 0)
+        gross = float(row.revenue) if row else 0
         results.append(
             RevenueData(
                 date=date_str,
                 gross_revenue=round(gross, 2),
                 net_revenue=round(gross * 0.90, 2),
-                bookings_count=row.count or 0,
+                bookings_count=row.count if row else 0,
             )
         )
 
@@ -176,24 +165,24 @@ async def get_bookings_by_status(
     if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    results = []
-    for status in BookingStatus:
-        result = await db.execute(
-            select(
-                func.count(Booking.id).label("count"),
-                func.coalesce(func.sum(Booking.total_amount), 0).label("revenue"),
-            ).where(Booking.status == status)
-        )
-        row = result.one()
-        results.append(
-            BookingStatusData(
-                status=status.value,
-                count=row.count or 0,
-                revenue=float(row.revenue or 0),
-            )
-        )
+    # Single aggregated query
+    result = await db.execute(
+        select(
+            Booking.status,
+            func.count(Booking.id).label("count"),
+            func.coalesce(func.sum(Booking.total_amount), 0).label("revenue"),
+        ).group_by(Booking.status)
+    )
+    row_map = {r.status: r for r in result.all()}
 
-    return results
+    return [
+        BookingStatusData(
+            status=s.value,
+            count=row_map.get(s).count if row_map.get(s) else 0,
+            revenue=float(row_map.get(s).revenue) if row_map.get(s) else 0,
+        )
+        for s in BookingStatus
+    ]
 
 
 @router.get("/top-vendors", response_model=list[TopVendorData])
@@ -241,33 +230,32 @@ async def get_user_stats(
     week_start = today_start - timedelta(days=now.weekday())
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    # Total
-    total_result = await db.execute(select(func.count(User.id)))
-    total = total_result.scalar() or 0
-
-    # New today
-    new_today_result = await db.execute(
-        select(func.count(User.id)).where(User.created_at >= today_start)
+    # Single aggregated query for user counts and role breakdown
+    result = await db.execute(
+        select(
+            func.count(User.id).label("total"),
+            func.sum(func.case((User.created_at >= today_start, 1), else_=0)).label(
+                "new_today"
+            ),
+            func.sum(func.case((User.created_at >= week_start, 1), else_=0)).label(
+                "new_week"
+            ),
+            func.sum(func.case((User.created_at >= month_start, 1), else_=0)).label(
+                "new_month"
+            ),
+            User.role,
+            func.count(User.id).label("role_count"),
+        ).group_by(User.role)
     )
-    new_today = new_today_result.scalar() or 0
+    rows = result.all()
 
-    # New this week
-    new_week_result = await db.execute(
-        select(func.count(User.id)).where(User.created_at >= week_start)
-    )
-    new_this_week = new_week_result.scalar() or 0
-
-    # New this month
-    new_month_result = await db.execute(
-        select(func.count(User.id)).where(User.created_at >= month_start)
-    )
-    new_this_month = new_month_result.scalar() or 0
-
-    # By role
-    role_result = await db.execute(
-        select(User.role, func.count(User.id)).group_by(User.role)
-    )
-    by_role = {row[0].value: row[1] for row in role_result.all()}
+    total = sum(r.total for r in rows) if rows else 0
+    new_today = sum(r.new_today for r in rows) if rows else 0
+    new_this_week = sum(r.new_week for r in rows) if rows else 0
+    new_this_month = sum(r.new_month for r in rows) if rows else 0
+    by_role = {
+        r.role.value if hasattr(r.role, "value") else r.role: r.role_count for r in rows
+    }
 
     return UserStatsData(
         total=total,
@@ -318,22 +306,26 @@ async def get_booking_trends(
         raise HTTPException(status_code=403, detail="Access denied")
 
     days = int(period)
-    results = []
+    start_date = datetime.now(timezone.utc) - timedelta(days=days)
 
-    for i in range(days):
-        date = datetime.now(timezone.utc) - timedelta(days=days - i - 1)
-        date_str = date.strftime("%Y-%m-%d")
-
-        day_start = date.replace(hour=0, minute=0, second=0)
-        day_end = day_start + timedelta(days=1)
-
-        result = await db.execute(
-            select(func.count(Booking.id)).where(
-                and_(Booking.created_at >= day_start, Booking.created_at < day_end)
-            )
+    # Single aggregated query
+    result = await db.execute(
+        select(
+            func.date_trunc("day", Booking.created_at).label("day"),
+            func.count(Booking.id).label("count"),
         )
-        count = result.scalar() or 0
+        .where(Booking.created_at >= start_date)
+        .group_by(func.date_trunc("day", Booking.created_at))
+        .order_by(func.date_trunc("day", Booking.created_at))
+    )
+    counts = {r.day.strftime("%Y-%m-%d"): r.count for r in result.all()}
 
-        results.append({"date": date_str, "bookings": count})
-
-    return results
+    return [
+        {
+            "date": (start_date + timedelta(days=i)).strftime("%Y-%m-%d"),
+            "bookings": counts.get(
+                (start_date + timedelta(days=i)).strftime("%Y-%m-%d"), 0
+            ),
+        }
+        for i in range(days)
+    ]

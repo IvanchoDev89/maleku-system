@@ -12,6 +12,9 @@ Strategy
 """
 
 import os
+
+os.environ["ENVIRONMENT"] = "test"
+
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -26,7 +29,7 @@ from app.models import User, UserRole
 # Fall back to in-memory SQLite only when no PostgreSQL is reachable.
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
-    "postgresql+asyncpg://crtravel:crtravel123@127.0.0.1:5433/costaricatravel_test",
+    "postgresql+asyncpg://crtravel:crtravel123@127.0.0.1:5432/costaricatravel_test",
 )
 if not os.environ.get("TEST_DATABASE_URL") and "DATABASE_URL" not in os.environ:
     TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -41,6 +44,7 @@ async def engine():
         future=True,
     )
 
+    # Drop and recreate schema to ensure clean types
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -90,10 +94,25 @@ async def client(db_session):
 
     app.dependency_overrides[get_db] = override_get_db
 
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    # Remove BaseHTTPMiddleware during tests. These middlewares internally
+    # schedule tasks with asyncio.ensure_future on the default event loop,
+    # which conflicts with the session-scoped test loop used by asyncpg.
+    from starlette.middleware.base import BaseHTTPMiddleware
+
+    original_middleware = [m for m in app.user_middleware]
+    app.user_middleware = [
+        m
+        for m in app.user_middleware
+        if not (hasattr(m.cls, "__mro__") and BaseHTTPMiddleware in m.cls.__mro__)
+    ]
+    app.middleware_stack = None  # force rebuild
+
+    async with AsyncClient(app=app, base_url="http://localhost") as ac:
         yield ac
 
     app.dependency_overrides.clear()
+    app.user_middleware = original_middleware
+    app.middleware_stack = None
 
 
 @pytest.fixture
@@ -200,7 +219,7 @@ async def second_user(db_session) -> User:
 
 
 def _auth_header(user: User) -> dict[str, str]:
-    token = create_access_token({"sub": str(user.id), "type": "access"})
+    token = create_access_token(subject=str(user.id))
     return {"Authorization": f"Bearer {token}"}
 
 

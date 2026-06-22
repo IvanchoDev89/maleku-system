@@ -52,20 +52,20 @@ export const TOUR_CATEGORIES = [
 // ============================================
 export const DEFAULT_IMAGES = {
   destinations: {
-    guanacaste: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&q=80',
-    laFortuna: 'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=800&q=80',
-    monteverde: 'https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?w=800&q=80',
-    manuelAntonio: 'https://images.unsplash.com/photo-1586861203927-800a5acd4c90?w=800&q=80',
-    caribe: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80',
-    valleCentral: 'https://images.unsplash.com/photo-1588708885923-98c04a8e4c3f?w=800&q=80'
+    guanacaste: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907',
+    laFortuna: 'https://images.unsplash.com/photo-1560493676-04071c5f467b',
+    monteverde: 'https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9',
+    manuelAntonio: 'https://images.unsplash.com/photo-1586861203927-800a5acd4c90',
+    caribe: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5',
+    valleCentral: 'https://images.unsplash.com/photo-1588708885923-98c04a8e4c3f'
   },
 
   // Generic fallbacks
   generic: {
-    hotel: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80',
-    tour: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80',
-    beach: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80',
-    mountain: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80'
+    hotel: 'https://images.unsplash.com/photo-1566073771259-6a8506099945',
+    tour: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800',
+    beach: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e',
+    mountain: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b'
   }
 } as const
 

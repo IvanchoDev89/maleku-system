@@ -12,7 +12,7 @@ const defaultPackages = [
   {
     id: 1,
     name: 'Aventura de 7 Días',
-    image: 'https://images.unsplash.com/photo-1518457607834-6e8d80c183c5?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1518457607834-6e8d80c183c5',
     duration: '7 días / 6 noches',
     price: 1299,
     originalPrice: 1599,
@@ -23,7 +23,7 @@ const defaultPackages = [
   {
     id: 2,
     name: 'Escapada Romántica',
-    image: 'https://images.unsplash.com/photo-1540541338287-41795007eca6?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1540541338287-41795007eca6',
     duration: '4 días / 3 noches',
     price: 899,
     originalPrice: 1099,
@@ -34,7 +34,7 @@ const defaultPackages = [
   {
     id: 3,
     name: 'Expedición Familiar',
-    image: 'https://images.unsplash.com/photo-1567696911980-2eed69a46042?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1567696911980-2eed69a46042',
     duration: '5 días / 4 noches',
     price: 699,
     originalPrice: 849,
@@ -51,7 +51,7 @@ function mapTourToPackage(tour: any) {
   return {
     id: tour.id,
     name: tour.title,
-    image: tour.image_url || 'https://images.unsplash.com/photo-1518457607834-6e8d80c183c5?w=600&q=80',
+    image: tour.image_url || 'https://images.unsplash.com/photo-1518457607834-6e8d80c183c5',
     duration: tour.duration || '1 día',
     price: tour.base_price || 99,
     originalPrice: Math.round((tour.base_price || 99) * 1.2),

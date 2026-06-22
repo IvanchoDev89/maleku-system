@@ -5,13 +5,14 @@ Moderation of reviews and ratings.
 
 from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from pydantic import BaseModel
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin
 from app.core.pagination import paginate_flat
 from app.models import Review, User
@@ -114,7 +115,9 @@ async def list_reviews(
     summary="Update review moderation",
     description="Approve or reject a review.",
 )
+@limiter.limit("10/minute")
 async def update_review(
+    request: Request,
     review_id: UUID,
     body: ReviewUpdateRequest,
     db: AsyncSession = Depends(get_db),

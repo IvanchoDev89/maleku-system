@@ -29,30 +29,30 @@
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <UiCard padding="xs">
         <p class="text-sm text-gray-500">Total Vendors</p>
         <p class="text-2xl font-bold text-gray-900">{{ stats.total }}</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      </UiCard>
+      <UiCard padding="xs">
         <p class="text-sm text-gray-500">Pendientes</p>
         <p class="text-2xl font-bold text-amber-600">{{ stats.pending }}</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      </UiCard>
+      <UiCard padding="xs">
         <p class="text-sm text-gray-500">Activos</p>
         <p class="text-2xl font-bold text-green-600">{{ stats.active }}</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      </UiCard>
+      <UiCard padding="xs">
         <p class="text-sm text-gray-500">Suspendidos</p>
         <p class="text-2xl font-bold text-red-600">{{ stats.suspended }}</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      </UiCard>
+      <UiCard padding="xs">
         <p class="text-sm text-gray-500">Destacados</p>
         <p class="text-2xl font-bold text-purple-600">{{ stats.featured }}</p>
-      </div>
+      </UiCard>
     </div>
 
     <!-- Filters -->
-    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+    <UiCard padding="xs">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
@@ -87,10 +87,10 @@
           </label>
         </div>
       </div>
-    </div>
+    </UiCard>
 
     <!-- Vendors Table -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <UiCard padding="none" class="overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead class="bg-gray-50">
@@ -197,7 +197,7 @@
 
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center py-12">
-        <Loader2 class="w-8 h-8 animate-spin text-slate-600" />
+        <UiSpinner size="md" color="primary" />
       </div>
 
       <!-- Empty State -->
@@ -208,7 +208,7 @@
         <h3 class="text-lg font-medium text-gray-900 mb-1">{{ $t('superadmin.vendors.noVendors') }}</h3>
         <p class="text-gray-500 text-sm">{{ $t('superadmin.vendors.noVendorsDescription') }}</p>
       </div>
-    </div>
+    </UiCard>
 
     <!-- Analytics Modal -->
     <UiModal v-if="showAnalytics" :model-value="showAnalytics" title="Analytics de Vendors" max-width="max-w-5xl" @update:model-value="showAnalytics = false">
@@ -299,7 +299,7 @@
 </template>
 
 <script setup lang="ts">
-import { Search, Filter, Download, Plus, MoreVertical, Edit, Trash2, Eye, CheckCircle, XCircle, Star, Store, MapPin, Phone, Mail, Calendar, TrendingUp, Users, DollarSign, Package, BarChart3, HeartOff, Clock, X, Loader2 } from 'lucide-vue-next'
+import { Search, Filter, Download, Plus, MoreVertical, Edit, Trash2, Eye, CheckCircle, XCircle, Star, Store, MapPin, Phone, Mail, Calendar, TrendingUp, Users, DollarSign, Package, BarChart3, HeartOff, Clock, X } from 'lucide-vue-next'
 
 definePageMeta({
   layout: 'superadmin',
@@ -386,17 +386,17 @@ const loadVendors = async () => {
   loading.value = true
   try {
     const params: Record<string, any> = {
-      page: page.value,
-      page_size: pageSize.value,
+      offset: (page.value - 1) * pageSize.value,
+      limit: pageSize.value,
     }
     if (filters.value.status !== 'all') params.status = filters.value.status
     if (filters.value.search) params.search = filters.value.search
     if (filters.value.type) params.business_type = filters.value.type
     if (filters.value.featured_only) params.featured_only = 'true'
 
-    const response = await api.get<{ items: any[]; total: number }>('/superadmin/vendors', params)
-    vendors.value = response.items || response
-    total.value = response.total || vendors.value.length
+    const response = await api.get<any>('/superadmin/vendors', params)
+    vendors.value = Array.isArray(response) ? response : (response.items || [])
+    total.value = Array.isArray(response) ? response.length : (response.total ?? 0)
   } catch (error) {
     console.error('Error loading vendors:', error)
   } finally {
@@ -429,6 +429,11 @@ const loadStats = async () => {
       rejected: response.rejected_vendors,
     }
     pendingCount.value = response.pending_approval
+    if (filters.value.search || filters.value.status !== 'all' || filters.value.type || filters.value.featured_only) {
+      // Keep current total from filtered loadVendors
+    } else if (total.value < response.total_vendors) {
+      total.value = response.total_vendors
+    }
   } catch (error) {
     console.error('Error loading stats:', error)
   }

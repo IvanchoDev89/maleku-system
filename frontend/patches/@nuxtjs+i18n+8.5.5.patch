@@ -1,0 +1,14 @@
+diff --git a/node_modules/@nuxtjs/i18n/dist/runtime/composables/index.js b/node_modules/@nuxtjs/i18n/dist/runtime/composables/index.js
+index abc123..def456 100644
+--- a/node_modules/@nuxtjs/i18n/dist/runtime/composables/index.js
++++ b/node_modules/@nuxtjs/i18n/dist/runtime/composables/index.js
+@@ -2,7 +2,7 @@
+ import { useRequestHeaders, useCookie as useNuxtCookie } from "#imports";
+ import { ref, computed, watch, onUnmounted } from "vue";
+ import { parseAcceptLanguage, wrapComposable, runtimeDetectBrowserLanguage } from "../internal.js";
+ import { localeCodes, normalizedLocales } from "#build/i18n.options.mjs";
+-import { getActiveHead } from "unhead";
++import { getActiveHead } from "unhead/legacy";
+ import { getNormalizedLocales, initCommonComposableOptions } from "../utils.js";
+ import {
+   getAlternateOgLocales,

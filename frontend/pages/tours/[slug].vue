@@ -35,7 +35,7 @@
         <!-- Hero Image -->
         <div class="relative h-80 md:h-96 rounded-2xl overflow-hidden mb-8">
           <NuxtImg
-            :src="tour.cover_image || 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=1200&q=80'"
+            :src="tour.cover_image || 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7'"
             :alt="tour.name"
             class="w-full h-full object-cover"
             width="1200"
@@ -221,7 +221,7 @@
 
 <script setup lang="ts">
 import type { Tour } from '~/types'
-import { Clock, Users, MapPin, Check, Phone, Mail } from 'lucide-vue-next'
+import { Clock, Users, MapPin, Check, Phone, Mail, AlertCircle } from 'lucide-vue-next'
 
 const persons = ref('2')
 const tourDate = ref('')
@@ -255,9 +255,10 @@ const apiBase = config.public.apiBase
 const slug = route.params.slug
 
 const { data: tour, pending, error } = useFetch<Tour | null>(
-  () => `${apiBase}/tours/${slug}`,
+  () => `${apiBase}/tours/slug/${slug}`,
   {
-    default: () => null
+    default: () => null,
+    key: slug as string,
   }
 )
 
@@ -288,34 +289,21 @@ const difficultyLabel = computed(() => {
 })
 
 const getIncludes = () => {
-  return [
-    'Transporte ida y vuelta',
-    'Guía profesional bilingüe',
-    'Equipo de seguridad',
-    'Snack y bebida',
-    'Fotos del tour'
-  ]
+  if (tour.value?.included?.length) {
+    return tour.value.included
+  }
+  return []
 }
 
 const getItinerary = () => {
-  const duration = tour.value?.duration_hours || 3
-  const startHour = 8
-  const endHour = startHour + duration
-  const formatHour = (h: number) => {
-    const hours = Math.floor(h)
-    const minutes = Math.round((h % 1) * 60)
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+  if (tour.value?.itinerary?.length) {
+    return tour.value.itinerary
   }
-  return [
-    { time: '08:00', activity: 'Recogida en hotel' },
-    { time: '09:00', activity: 'Llegada e instrucciones' },
-    { time: '09:30', activity: 'Inicio de la aventura' },
-    { time: formatHour(endHour), activity: 'Fin del tour y regreso' }
-  ]
+  return []
 }
 
 const getWhatToBring = () => {
-  return ['Zapatos cerrados', 'Ropa de cambio', 'Repelente', 'Gorra', 'Cámara']
+  return []
 }
 
 useSeo({

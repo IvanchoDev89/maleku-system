@@ -10,6 +10,8 @@ const api = useApi()
 const toast = useToast()
 const userId = route.params.id as string
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 const loading = ref(true)
 const error = ref('')
 const user = ref<any>(null)
@@ -56,11 +58,15 @@ const updateRole = async (newRole: string) => {
 }
 
 onMounted(async () => {
+  if (!UUID_REGEX.test(route.params.id as string)) {
+    await router.replace('/superadmin/users')
+    return
+  }
   loading.value = true
   try {
     const [userData, logs] = await Promise.all([
       api.get(`/superadmin/users/${userId}`),
-      api.get<any[]>(`/superadmin/users/${userId}/activity`).catch(() => []),
+      api.get<any[]>(`/superadmin/users/${userId}/activity`).catch((e) => { console.warn('Failed to load activity logs:', e); return [] }),
     ])
     user.value = userData
     activityLogs.value = logs

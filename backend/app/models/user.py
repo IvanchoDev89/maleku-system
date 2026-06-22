@@ -5,7 +5,7 @@ Handles user accounts, authentication, and profile data.
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Boolean, DateTime, Enum, Integer, Index
+from sqlalchemy import Column, String, Boolean, DateTime, Integer, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -45,7 +45,7 @@ class User(Base):
     full_name = Column(String(255), nullable=False)
     phone = Column(String(20), nullable=True)
     avatar_url = Column(String(500), nullable=True)
-    role = Column(Enum(UserRole), default=UserRole.CLIENT, nullable=False)
+    role = Column(String(20), default=UserRole.CLIENT.value, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
 

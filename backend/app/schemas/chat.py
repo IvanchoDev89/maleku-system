@@ -2,12 +2,13 @@
 Chat/Conversation Schemas
 """
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 
 from app.models import ChatServiceType, MessageType
+from . import is_dangerous_sql
 
 
 class ConversationBase(BaseModel):
@@ -45,6 +46,13 @@ class MessageBase(BaseModel):
     message_type: MessageType = MessageType.TEXT
     content: str = Field(..., min_length=1)
     attachments: List[dict] = []
+
+    @field_validator("content")
+    @classmethod
+    def sanitize_content(cls, v: str) -> str:
+        if is_dangerous_sql(v):
+            raise ValueError("Invalid input")
+        return v
 
 
 class MessageCreate(MessageBase):

@@ -530,6 +530,46 @@
     "system": "System",
     "configuration": "Configuration"
   },
+  "categories": {
+    "adventure": "Adventure",
+    "nature": "Nature",
+    "wildlife": "Wildlife",
+    "beach": "Beach",
+    "culture": "Culture",
+    "wellness": "Wellness"
+  },
+  "filters": {
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Moderate",
+      "hard": "Hard"
+    },
+    "price": {
+      "under50": "Up to $50",
+      "50to100": "$50 - $100",
+      "100to200": "$100 - $200",
+      "over200": "Over $200"
+    },
+    "duration": {
+      "halfDay": "Half day",
+      "fullDay": "Full day",
+      "multiDay": "Multi-day"
+    },
+    "sort": {
+      "popular": "Popular",
+      "priceAsc": "Lowest price",
+      "priceDesc": "Highest price",
+      "rating": "Best rating",
+      "newest": "Newest"
+    }
+  },
+  "regions": {
+    "guanacaste": "Guanacaste",
+    "puntarenas": "Puntarenas",
+    "limon": "Limón",
+    "alajuela": "Alajuela",
+    "sanjose": "San José"
+  },
   "errors": {
     "dashboard": {
       "load": "Error loading dashboard",

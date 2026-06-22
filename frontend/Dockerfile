@@ -3,9 +3,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies
+# Install all dependencies (devDependencies needed for build)
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production || npm install --prefer-offline
+RUN npm ci || npm install --prefer-offline
 
 # Copy source code
 COPY . .

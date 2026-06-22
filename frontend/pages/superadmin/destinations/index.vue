@@ -97,18 +97,36 @@ const toggleActive = async (dest: Destination) => {
   }
 }
 
-const deleteDestination = async (dest: Destination) => {
-  if (!confirm(`Eliminar destino "${dest.name}"?`)) return
+const showConfirm = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmLoading = ref(false)
+let pendingDeleteDest: Destination | null = null
+
+const confirmDeleteDestination = (dest: Destination) => {
+  pendingDeleteDest = dest
+  confirmTitle.value = 'Eliminar Destino'
+  confirmMessage.value = `¿Eliminar destino "${dest.name}" permanentemente?`
+  showConfirm.value = true
+}
+
+const executeDeleteDestination = async () => {
+  if (!pendingDeleteDest) return
+  confirmLoading.value = true
   try {
-    await api.delete(`/destinations/${dest.id}`)
+    await api.delete(`/destinations/${pendingDeleteDest.id}`)
     await fetchDestinations()
   } catch (error) {
     console.error('Error deleting destination:', error)
+  } finally {
+    confirmLoading.value = false
+    showConfirm.value = false
+    pendingDeleteDest = null
   }
 }
 
 const regionColors: Record<string, string> = {
-  'Pacic': 'bg-blue-100 text-blue-800',
+  'Pacific': 'bg-blue-100 text-blue-800',
   'Caribe': 'bg-green-100 text-green-800',
   'Central': 'bg-purple-100 text-purple-800',
   'North': 'bg-yellow-100 text-yellow-800',
@@ -162,7 +180,7 @@ onMounted(() => {
 
     <!-- Loading -->
     <div v-if="loading" class="bg-white rounded-lg shadow p-12 text-center">
-      <div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+      <UiSpinner size="lg" color="primary" class="mx-auto mb-4" />
       <p class="text-gray-500">Cargando destinos...</p>
     </div>
 
@@ -210,7 +228,7 @@ onMounted(() => {
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <button @click="openEdit(dest)" class="text-primary-600 hover:text-primary-900 mr-3">Editar</button>
-                <button @click="deleteDestination(dest)" class="text-red-600 hover:text-red-900">Eliminar</button>
+                <button @click="confirmDeleteDestination(dest)" class="text-red-600 hover:text-red-900">Eliminar</button>
               </td>
             </tr>
           </tbody>
@@ -252,5 +270,16 @@ onMounted(() => {
         </div>
       </div>
     </Teleport>
+
+    <!-- Confirm Dialog -->
+    <UiConfirmDialog
+      v-model="showConfirm"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      confirm-text="Eliminar"
+      variant="danger"
+      :loading="confirmLoading"
+      @confirm="executeDeleteDestination"
+    />
   </div>
 </template>

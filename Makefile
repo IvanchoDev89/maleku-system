@@ -1,6 +1,14 @@
-.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend lint-frontend migrate backup clean pre-commit install
+.PHONY: start dev dev-backend dev-frontend stop build build-backend build-frontend test test-backend test-frontend lint lint-backend lint-frontend migrate backup clean pre-commit install
 
 # ─── Development ───────────────────────────────────────────────
+
+start:
+	bash start.sh
+
+stop:
+	pkill -f "uvicorn app.main:app" 2>/dev/null || true
+	pkill -f "node.*nuxt" 2>/dev/null || true
+	@echo "Servidores detenidos"
 
 dev: dev-backend dev-frontend
 
@@ -26,6 +34,9 @@ build-frontend:
 # ─── Tests ─────────────────────────────────────────────────────
 
 test: test-backend test-frontend
+
+test-reservation:  # smoke test: full reservation flow via live API
+	bash backend/tests/test_reservation_flow.sh
 
 test-backend:
 	cd backend && python -m pytest -v --tb=short -x
@@ -100,7 +111,7 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
-	rm -rf frontend/.nuxt frontend/.output frontend/node_modules
+	rm -rf frontend/.output frontend/node_modules
 	rm -rf backend/venv
 
 # ─── Pre-commit ────────────────────────────────────────────────

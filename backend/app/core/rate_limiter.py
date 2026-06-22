@@ -73,6 +73,12 @@ def _build_limiter() -> Limiter:
     starts; a warning is logged. This is a graceful-degradation only —
     production must have Redis healthy.
     """
+    if settings.ENVIRONMENT == "test":
+        limiter = Limiter(
+            key_func=_get_role_key,
+            enabled=False,
+        )
+        return limiter
     storage_uri = settings.REDIS_URL
     try:
         return Limiter(

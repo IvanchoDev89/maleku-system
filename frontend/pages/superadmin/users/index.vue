@@ -16,7 +16,7 @@
     </div>
 
     <!-- Filters -->
-    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+    <UiCard padding="xs">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
@@ -47,10 +47,10 @@
           <UiSelect v-model="filters.is_verified" :options="verifiedOptions" placeholder="Todos" @update:model-value="loadUsers" />
         </div>
       </div>
-    </div>
+    </UiCard>
 
     <!-- Users Table -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <UiCard padding="none" class="overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead class="bg-gray-50 border-b border-gray-200">
@@ -144,7 +144,7 @@
 
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center py-12">
-        <Loader2 class="w-8 h-8 animate-spin text-slate-600" />
+        <UiSpinner size="md" color="primary" />
       </div>
 
       <!-- Empty State -->
@@ -181,7 +181,7 @@
           </button>
         </div>
       </div>
-    </div>
+    </UiCard>
 
     <UiConfirmDialog
       v-model="showConfirm"
@@ -196,7 +196,7 @@
 </template>
 
 <script setup lang="ts">
-import { Search, Filter, Download, Plus, MoreVertical, Edit, Trash2, Eye, CheckCircle, XCircle, Loader2, UserCircle, Lock, LockOpen } from 'lucide-vue-next'
+import { Search, Filter, Download, Plus, MoreVertical, Edit, Trash2, Eye, CheckCircle, XCircle, UserCircle, Lock, LockOpen } from 'lucide-vue-next'
 
 definePageMeta({
   layout: 'superadmin',
@@ -362,7 +362,7 @@ const executeImpersonateUser = async (user: any) => {
   auth.token = response.impersonation_token
   auth.user = response.target_user
 
-  navigateTo('/dashboard')
+  navigateTo('/')
 }
 
 const confirmToggleUserStatus = (user: any) => {

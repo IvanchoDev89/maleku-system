@@ -6,15 +6,17 @@ Provides comprehensive CRUD for users with audit logging.
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, EmailStr
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin, get_password_hash
 from app.core.utils import escape_like_pattern
 from app.models import User, UserRole, Vendor, Booking, AuditAction
+from app.models.audit import SecurityAction
 from app.services.audit_service import log_create, log_update, log_delete, AuditService
 
 router = APIRouter()
@@ -158,7 +160,7 @@ async def list_users(
                 "id": str(user.id),
                 "email": user.email,
                 "full_name": user.full_name,
-                "role": user.role.value,
+                "role": user.role,
                 "is_active": user.is_active,
                 "is_verified": user.is_verified,
                 "phone": user.phone,
@@ -228,7 +230,7 @@ async def get_user_detail(
         "full_name": user.full_name,
         "phone": user.phone,
         "avatar_url": user.avatar_url,
-        "role": user.role.value,
+        "role": user.role,
         "is_active": user.is_active,
         "is_verified": user.is_verified,
         "last_login": user.last_login,
@@ -240,8 +242,10 @@ async def get_user_detail(
 
 
 @router.post("", response_model=UserDetail, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 async def create_user(
-    request: UserCreateRequest,
+    request: Request,
+    data: UserCreateRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
 ):
@@ -250,7 +254,7 @@ async def create_user(
     Only Super Admin can create users with admin/agent roles.
     """
     # Check if email already exists
-    existing_result = await db.execute(select(User).where(User.email == request.email))
+    existing_result = await db.execute(select(User).where(User.email == data.email))
     if existing_result.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
@@ -258,12 +262,12 @@ async def create_user(
 
     # Create user
     new_user = User(
-        email=request.email,
-        password_hash=get_password_hash(request.password),
-        full_name=request.full_name,
-        phone=request.phone,
-        role=request.role,
-        is_active=request.is_active,
+        email=data.email,
+        password_hash=get_password_hash(data.password),
+        full_name=data.full_name,
+        phone=data.phone,
+        role=data.role,
+        is_active=data.is_active,
         is_verified=True,  # Super Admin created users are pre-verified
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc),
@@ -282,7 +286,7 @@ async def create_user(
         new_values={
             "email": new_user.email,
             "full_name": new_user.full_name,
-            "role": new_user.role.value,
+            "role": new_user.role,
             "is_active": new_user.is_active,
         },
     )
@@ -295,7 +299,7 @@ async def create_user(
         "full_name": new_user.full_name,
         "phone": new_user.phone,
         "avatar_url": new_user.avatar_url,
-        "role": new_user.role.value,
+        "role": new_user.role,
         "is_active": new_user.is_active,
         "is_verified": new_user.is_verified,
         "last_login": new_user.last_login,
@@ -307,9 +311,11 @@ async def create_user(
 
 
 @router.put("/{user_id}", response_model=UserDetail)
+@limiter.limit("10/minute")
 async def update_user(
+    request: Request,
     user_id: UUID,
-    request: UserUpdateRequest,
+    data: UserUpdateRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
 ):
@@ -329,7 +335,7 @@ async def update_user(
         "email": user.email,
         "full_name": user.full_name,
         "phone": user.phone,
-        "role": user.role.value,
+        "role": user.role,
         "is_active": user.is_active,
         "is_verified": user.is_verified,
     }
@@ -338,43 +344,43 @@ async def update_user(
     changes = []
 
     # Update fields
-    if request.email is not None and request.email != user.email:
+    if data.email is not None and data.email != user.email:
         # Check if new email is available
         existing_result = await db.execute(
-            select(User).where(User.email == request.email).where(User.id != user_id)
+            select(User).where(User.email == data.email).where(User.id != user_id)
         )
         if existing_result.scalar_one_or_none():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Email already in use"
             )
-        user.email = request.email
-        changes.append(f"email: {old_values['email']} -> {request.email}")
+        user.email = data.email
+        changes.append(f"email: {old_values['email']} -> {data.email}")
 
-    if request.full_name is not None:
-        if request.full_name != user.full_name:
-            changes.append(f"full_name: {user.full_name} -> {request.full_name}")
-        user.full_name = request.full_name
+    if data.full_name is not None:
+        if data.full_name != user.full_name:
+            changes.append(f"full_name: {user.full_name} -> {data.full_name}")
+        user.full_name = data.full_name
 
-    if request.phone is not None:
-        if request.phone != user.phone:
+    if data.phone is not None:
+        if data.phone != user.phone:
             changes.append("phone updated")
-        user.phone = request.phone
+        user.phone = data.phone
 
-    if request.role is not None:
-        if request.role != user.role:
-            changes.append(f"role: {user.role.value} -> {request.role.value}")
-        user.role = request.role
+    if data.role is not None:
+        if data.role != user.role:
+            changes.append(f"role: {user.role} -> {data.role.value}")
+        user.role = data.role
 
-    if request.is_active is not None:
-        if request.is_active != user.is_active:
-            status_text = "activated" if request.is_active else "deactivated"
+    if data.is_active is not None:
+        if data.is_active != user.is_active:
+            status_text = "activated" if data.is_active else "deactivated"
             changes.append(f"account {status_text}")
-        user.is_active = request.is_active
+        user.is_active = data.is_active
 
-    if request.is_verified is not None:
-        if request.is_verified != user.is_verified:
-            changes.append(f"verification: {user.is_verified} -> {request.is_verified}")
-        user.is_verified = request.is_verified
+    if data.is_verified is not None:
+        if data.is_verified != user.is_verified:
+            changes.append(f"verification: {user.is_verified} -> {data.is_verified}")
+        user.is_verified = data.is_verified
 
     user.updated_at = datetime.now(timezone.utc)
 
@@ -385,7 +391,7 @@ async def update_user(
         "email": user.email,
         "full_name": user.full_name,
         "phone": user.phone,
-        "role": user.role.value,
+        "role": user.role,
         "is_active": user.is_active,
         "is_verified": user.is_verified,
     }
@@ -411,7 +417,7 @@ async def update_user(
         "full_name": user.full_name,
         "phone": user.phone,
         "avatar_url": user.avatar_url,
-        "role": user.role.value,
+        "role": user.role,
         "is_active": user.is_active,
         "is_verified": user.is_verified,
         "last_login": user.last_login,
@@ -458,7 +464,7 @@ async def delete_user(
     old_values = {
         "email": user.email,
         "full_name": user.full_name,
-        "role": user.role.value,
+        "role": user.role,
         "created_at": user.created_at.isoformat(),
     }
 
@@ -519,7 +525,9 @@ async def get_user_activity(
 
 
 @router.post("/{user_id}/impersonate", response_model=dict)
+@limiter.limit("10/minute")
 async def impersonate_user(
+    request: Request,
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
@@ -577,7 +585,7 @@ async def impersonate_user(
             "id": str(target_user.id),
             "email": target_user.email,
             "full_name": target_user.full_name,
-            "role": target_user.role.value,
+            "role": target_user.role,
         },
         "impersonation_token": impersonation_token,
         "expires_in": "1 hour",
@@ -586,7 +594,9 @@ async def impersonate_user(
 
 
 @router.post("/{user_id}/block", response_model=dict)
+@limiter.limit("10/minute")
 async def block_user(
+    request: Request,
     user_id: UUID,
     reason: str = Query(..., max_length=500, description="Reason for blocking"),
     duration_hours: Optional[int] = Query(
@@ -635,6 +645,15 @@ async def block_user(
         metadata={"reason": reason, "duration_hours": duration_hours},
     )
 
+    await AuditService.log_security_event(
+        db=db,
+        action=SecurityAction.ACCOUNT_LOCKED,
+        user=user,
+        severity="critical",
+        description=f"Account locked by super admin: {reason}"
+        + (f" for {duration_hours}h" if duration_hours else " permanently"),
+    )
+
     await db.commit()
 
     return {
@@ -646,7 +665,9 @@ async def block_user(
 
 
 @router.post("/{user_id}/unblock", response_model=dict)
+@limiter.limit("10/minute")
 async def unblock_user(
+    request: Request,
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
@@ -669,8 +690,6 @@ async def unblock_user(
     await db.flush()
 
     # Log the action
-    from app.services.audit_service import AuditService
-
     await AuditService.log_action(
         db=db,
         user=current_user,
@@ -679,6 +698,13 @@ async def unblock_user(
         entity_id=user.id,
         entity_name=user.full_name,
         changes_summary="User account unblocked/reactivated",
+    )
+
+    await AuditService.log_security_event(
+        db=db,
+        action=SecurityAction.ACCOUNT_UNLOCKED,
+        user=user,
+        description="Account unlocked by super admin",
     )
 
     await db.commit()

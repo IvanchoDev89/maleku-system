@@ -71,13 +71,31 @@ const rejectReview = async (review: Review) => {
   }
 }
 
-const deleteReview = async (review: Review) => {
-  if (!confirm('Eliminar esta resena?')) return
+const showConfirm = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmLoading = ref(false)
+let pendingDeleteReview: Review | null = null
+
+const confirmDeleteReview = (review: Review) => {
+  pendingDeleteReview = review
+  confirmTitle.value = 'Eliminar Reseña'
+  confirmMessage.value = '¿Eliminar esta reseña permanentemente?'
+  showConfirm.value = true
+}
+
+const executeDeleteReview = async () => {
+  if (!pendingDeleteReview) return
+  confirmLoading.value = true
   try {
-    await api.delete(`/superadmin/reviews/${review.id}`)
-    reviews.value = reviews.value.filter(r => r.id !== review.id)
+    await api.delete(`/superadmin/reviews/${pendingDeleteReview.id}`)
+    reviews.value = reviews.value.filter(r => r.id !== pendingDeleteReview!.id)
   } catch (error) {
     console.error('Error deleting review:', error)
+  } finally {
+    confirmLoading.value = false
+    showConfirm.value = false
+    pendingDeleteReview = null
   }
 }
 
@@ -131,7 +149,7 @@ watch(filterStatus, () => {
 
     <!-- Loading -->
     <div v-if="loading" class="bg-white rounded-lg shadow p-12 text-center">
-      <div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+      <UiSpinner size="lg" color="primary" class="mx-auto mb-4" />
       <p class="text-gray-500">Cargando resenas...</p>
     </div>
 
@@ -174,7 +192,7 @@ watch(filterStatus, () => {
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <button v-if="!review.is_approved" @click="approveReview(review)" class="text-green-600 hover:text-green-900 mr-2">Aprobar</button>
                 <button v-if="review.is_approved" @click="rejectReview(review)" class="text-yellow-600 hover:text-yellow-900 mr-2">Rechazar</button>
-                <button @click="deleteReview(review)" class="text-red-600 hover:text-red-900">Eliminar</button>
+                <button @click="confirmDeleteReview(review)" class="text-red-600 hover:text-red-900">Eliminar</button>
               </td>
             </tr>
           </tbody>
@@ -192,5 +210,16 @@ watch(filterStatus, () => {
         </div>
       </div>
     </div>
+
+    <!-- Confirm Dialog -->
+    <UiConfirmDialog
+      v-model="showConfirm"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      confirm-text="Eliminar"
+      variant="danger"
+      :loading="confirmLoading"
+      @confirm="executeDeleteReview"
+    />
   </div>
 </template>

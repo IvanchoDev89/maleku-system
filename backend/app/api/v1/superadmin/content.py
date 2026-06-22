@@ -9,11 +9,12 @@ from typing import List, Optional
 from datetime import datetime, timezone
 from enum import Enum
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin
 from app.models import User
 from app.services.audit_service import AuditService
@@ -312,7 +313,9 @@ async def get_blog_post(
 
 
 @router.post("/blog", response_model=BlogPost, status_code=201)
+@limiter.limit("10/minute")
 async def create_blog_post(
+    request: Request,
     data: BlogPostCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
@@ -356,7 +359,9 @@ async def create_blog_post(
 
 
 @router.put("/blog/{post_id}", response_model=BlogPost)
+@limiter.limit("10/minute")
 async def update_blog_post(
+    request: Request,
     post_id: str,
     data: BlogPostUpdate,
     db: AsyncSession = Depends(get_db),
@@ -454,7 +459,9 @@ async def get_static_page(
 
 
 @router.put("/pages/{page_id}", response_model=StaticPage)
+@limiter.limit("10/minute")
 async def update_static_page(
+    request: Request,
     page_id: str,
     data: StaticPageUpdate,
     db: AsyncSession = Depends(get_db),
@@ -503,7 +510,9 @@ async def get_seo_settings(
 
 
 @router.put("/seo", response_model=SEOSettings)
+@limiter.limit("10/minute")
 async def update_seo_settings(
+    request: Request,
     data: SEOSettings,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),

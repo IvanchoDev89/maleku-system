@@ -11,7 +11,7 @@ from slowapi.util import get_remote_address
 
 from app.core.database import get_db
 from app.core.pagination import paginate_flat
-from app.core.security import get_current_user, require_role
+from app.core.security import require_role, require_permission, require_verified_email
 from app.core.config import settings
 from app.models import (
     User,
@@ -47,7 +47,7 @@ from app.core.logging import get_logger
 
 router = APIRouter(tags=["Bookings"])
 logger = get_logger(__name__)
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=get_remote_address, enabled=settings.ENVIRONMENT != "test")
 
 
 def generate_confirmation_code():
@@ -76,9 +76,12 @@ def _generate_room_lock_key(
     summary="Create property booking",
     description="Creates a new property/room booking with advisory lock to prevent race conditions. Calculates pricing with weekend rates, extra guests, and weekly discounts.",
 )
+@limiter.limit("10/minute")
 async def create_property_booking(
+    request: Request,
     data: BookingPropertyRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("bookings", "create")),
+    _: User = Depends(require_verified_email),
     db: AsyncSession = Depends(get_db),
 ):
     # Get property
@@ -177,7 +180,7 @@ async def create_property_booking(
         subtotal = round(subtotal - discount_amount, 2)
 
     commission_rate = (
-        vendor.commission_rate if vendor else settings.STRIPE_COMMISSION_RATE
+        float(vendor.commission_rate) if vendor else settings.STRIPE_COMMISSION_RATE
     )
     commission = calculate_commission(subtotal, commission_rate)
     total = subtotal  # Total before payment processing fees (added by Stripe)
@@ -259,9 +262,12 @@ async def _send_booking_confirmation_emails(
     summary="Create tour booking",
     description="Creates a new tour booking with advisory lock to prevent overbooking. Validates participants against max group size.",
 )
+@limiter.limit("10/minute")
 async def create_tour_booking(
+    request: Request,
     data: BookingTourRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("bookings", "create")),
+    _: User = Depends(require_verified_email),
     db: AsyncSession = Depends(get_db),
 ):
     # Get tour
@@ -327,7 +333,7 @@ async def create_tour_booking(
     pricing = calculate_tour_price(tour=tour, participants=data.participants)
     subtotal = pricing["subtotal"]
     commission_rate = (
-        vendor.commission_rate if vendor else settings.STRIPE_COMMISSION_RATE
+        float(vendor.commission_rate) if vendor else settings.STRIPE_COMMISSION_RATE
     )
     commission = calculate_commission(subtotal, commission_rate)
     total = subtotal
@@ -426,7 +432,7 @@ async def get_bookings(
     params: PaginationParams = Depends(),
     status: str = None,
     booking_type: str = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("bookings", "read")),
     db: AsyncSession = Depends(get_db),
 ):
     # Base query - users see their own, vendors see theirs, admins see all
@@ -477,7 +483,7 @@ async def preview_price(
     request: Request,
     data: PricePreviewRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("bookings", "read")),
 ):
     """
     Preview price breakdown for a room booking without creating a booking.
@@ -534,7 +540,7 @@ async def preview_price(
         )
         vendor = vendor_result.scalar_one_or_none()
         if vendor:
-            commission = calculate_commission(subtotal, vendor.commission_rate)
+            commission = calculate_commission(subtotal, float(vendor.commission_rate))
 
     return PricePreviewResponse(
         nights=pricing["nights"],
@@ -567,7 +573,7 @@ async def preview_price(
 )
 async def get_booking(
     booking_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("bookings", "read")),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -613,10 +619,12 @@ async def get_booking(
     summary="Update booking status",
     description="Updates booking status. VENDOR can confirm/cancel. CLIENT can only cancel their own bookings.",
 )
+@limiter.limit("10/minute")
 async def update_booking_status(
+    request: Request,
     booking_id: uuid.UUID,
     data: BookingUpdateStatus,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("bookings", "update")),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -759,7 +767,7 @@ async def get_vendor_booking_stats(
 async def get_vendor_my_bookings(
     params: PaginationParams = Depends(),
     status: str = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("bookings", "read")),
     db: AsyncSession = Depends(get_db),
 ):
     if current_user.role != UserRole.VENDOR:

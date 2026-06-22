@@ -29,7 +29,7 @@ onMounted(async () => {
     packages.value = tours.map((tour: any) => ({
       id: tour.id,
       name: tour.title,
-      image: tour.image_url || 'https://images.unsplash.com/photo-1518457607834-6e8d80c183c5?w=600&q=80',
+      image: tour.image_url || 'https://images.unsplash.com/photo-1518457607834-6e8d80c183c5',
       duration: tour.duration || '1 día',
       price: tour.base_price || 99,
       originalPrice: Math.round((tour.base_price || 99) * 1.2),
@@ -50,7 +50,7 @@ onMounted(async () => {
       </div>
 
       <div v-if="pending" class="text-center py-16">
-        <div class="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <UiSpinner size="lg" color="primary" class="mx-auto mb-4" />
         <p class="text-gray-500">Cargando paquetes...</p>
       </div>
 

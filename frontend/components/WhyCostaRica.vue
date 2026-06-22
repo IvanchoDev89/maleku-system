@@ -24,7 +24,7 @@
 
         <div class="relative">
           <NuxtImg
-            src="https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=600&q=80"
+            src="https://images.unsplash.com/photo-1519823551278-64ac92734fb1"
             alt="Costa Rica sloth"
             class="rounded-2xl shadow-2xl w-full"
             width="600"

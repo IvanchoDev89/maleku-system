@@ -13,6 +13,11 @@ RUN apt-get update && apt-get install -y \
 RUN python -m venv /app/venv
 ENV PATH="/app/venv/bin:$PATH"
 
+# Create non-root user
+RUN addgroup --gid 1001 appgroup && \
+    adduser --uid 1001 --gid 1001 --disabled-password --gecos "" appuser && \
+    chown -R appuser:appgroup /app
+
 # Copy and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
@@ -20,7 +25,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh && \
+    chown appuser:appgroup /app/docker-entrypoint.sh
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8000

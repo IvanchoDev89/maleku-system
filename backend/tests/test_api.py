@@ -13,7 +13,9 @@ class TestAuth:
     @pytest.mark.asyncio
     async def test_register_user(self, client, sample_user_data):
         response = await client.post("/api/v1/auth/register", json=sample_user_data)
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED, (
+            f"Expected 201, got {response.status_code}: {response.text}"
+        )
         data = response.json()
         assert "access_token" in data
         assert data["user"]["email"] == sample_user_data["email"]

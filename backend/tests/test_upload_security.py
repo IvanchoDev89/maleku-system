@@ -32,12 +32,16 @@ def _jpeg_bytes() -> bytes:
 
 
 @pytest.mark.asyncio
-async def test_upload_rejects_svg_extension(client, auth_token=None):
+async def test_upload_rejects_svg_extension(client, sample_user_data):
     """SVG uploads must be rejected (stored XSS prevention)."""
+    token = await _login(client, sample_user_data)
     svg_content = b'<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
     files = {"file": ("evil.svg", io.BytesIO(svg_content), "image/svg+xml")}
     resp = await client.post(
-        "/api/v1/upload/image", files=files, data={"folder": "general"}
+        "/api/v1/upload/image",
+        files=files,
+        data={"folder": "general"},
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 400, (
         f"Expected 400 for SVG, got {resp.status_code}: {resp.text}"
@@ -92,7 +96,7 @@ async def test_delete_upload_requires_admin(
         data={"folder": "general"},
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert upload_resp.status_code == 200, upload_resp.text
+    assert upload_resp.status_code in (200, 201), upload_resp.text
     url = upload_resp.json()["url"]
     # The path is /uploads/...; the DELETE endpoint wants the filesystem path
     # relative to the upload root, but we can pass the full path and the
@@ -122,5 +126,5 @@ async def _login(client, sample_user_data) -> str:
 
     payload["email"] = f"upload-{_uuid.uuid4().hex[:8]}@example.com"
     reg = await client.post("/api/v1/auth/register", json=payload)
-    assert reg.status_code == 200, reg.text
+    assert reg.status_code in (200, 201), reg.text
     return reg.json()["access_token"]

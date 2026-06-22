@@ -25,7 +25,7 @@ const totalItems = ref(0)
 const fetchRefunds = async () => {
   loading.value = true
   try {
-    const response = await api.get('/bookings', {
+    const response = await api.get('/superadmin/bookings', {
       page: currentPage.value,
       page_size: 20,
       status: 'cancelled',
@@ -41,13 +41,31 @@ const fetchRefunds = async () => {
   }
 }
 
-const processRefund = async (booking: Booking) => {
-  if (!confirm(`Procesar reembolso para reserva ${booking.id?.slice(0, 8)}?`)) return
+const showConfirm = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmLoading = ref(false)
+let pendingRefundBooking: Booking | null = null
+
+const confirmProcessRefund = (booking: Booking) => {
+  pendingRefundBooking = booking
+  confirmTitle.value = 'Procesar Reembolso'
+  confirmMessage.value = `Procesar reembolso para reserva ${booking.id?.slice(0, 8)}?`
+  showConfirm.value = true
+}
+
+const executeRefund = async () => {
+  if (!pendingRefundBooking) return
+  confirmLoading.value = true
   try {
-    await api.post(`/stripe/bookings/${booking.id}/refund`, { reason: 'Admin initiated refund' })
+    await api.post(`/stripe/bookings/${pendingRefundBooking.id}/refund`, { reason: 'Admin initiated refund' })
     await fetchRefunds()
   } catch (error) {
     console.error('Error processing refund:', error)
+  } finally {
+    confirmLoading.value = false
+    showConfirm.value = false
+    pendingRefundBooking = null
   }
 }
 
@@ -88,7 +106,7 @@ onMounted(() => {
 
     <!-- Loading -->
     <div v-if="loading" class="bg-white rounded-lg shadow p-12 text-center">
-      <div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+      <UiSpinner size="lg" color="primary" class="mx-auto mb-4" />
       <p class="text-gray-500">Cargando reembolsos...</p>
     </div>
 
@@ -130,7 +148,7 @@ onMounted(() => {
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <button
-                  @click="processRefund(booking)"
+                  @click="confirmProcessRefund(booking)"
                   class="text-primary-600 hover:text-primary-900"
                 >
                   Procesar Reembolso
@@ -152,5 +170,16 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- Confirm Dialog -->
+    <UiConfirmDialog
+      v-model="showConfirm"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      confirm-text="Procesar Reembolso"
+      variant="warning"
+      :loading="confirmLoading"
+      @confirm="executeRefund"
+    />
   </div>
 </template>

@@ -22,7 +22,7 @@ from sqlalchemy.orm import relationship
 from app.models.base import Base
 
 
-class ChatServiceType(enum.Enum):
+class ChatServiceType(str, enum.Enum):
     """Type of service related to the conversation."""
 
     GENERAL = "general"
@@ -34,7 +34,7 @@ class ChatServiceType(enum.Enum):
     TRANSPORTATION = "transportation"
 
 
-class MessageType(enum.Enum):
+class MessageType(str, enum.Enum):
     """Type of message content."""
 
     TEXT = "text"

@@ -66,7 +66,7 @@
             <div class="flex items-center justify-between mb-6">
               <div class="text-gray-600">
                 <span v-if="loading" class="flex items-center gap-2">
-                  <Loader2 class="w-4 h-4 animate-spin" />
+                  <UiSpinner size="sm" color="primary" />
                   Buscando...
                 </span>
                 <span v-else>
@@ -158,7 +158,6 @@
 <script setup lang="ts">
 import {
   Search,
-  Loader2,
   AlertCircle,
   SearchX,
   Grid3X3,

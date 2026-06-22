@@ -62,10 +62,19 @@ export const useApi = () => {
         throw { status: 408, data: { detail: 'Request timed out' } }
       }
 
-      if (error.response?.status === 401 && endpoint !== '/auth/refresh') {
+      const retryCount = options.retryCount ?? 0
+      const status = error.response?.status
+      const isNetworkError = !error.response && error.name !== 'AbortError'
+      const isServerError = status && status >= 500
+
+      if (retryCount < 2 && (isNetworkError || isServerError)) {
+        await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)))
+        return fetchApi<T>(endpoint, { ...options, retryCount: retryCount + 1 })
+      }
+
+      if (status === 401 && endpoint !== '/auth/refresh') {
         const refreshed = await tryRefreshToken()
         if (refreshed) {
-          const retryCount = options.retryCount ?? 0
           if (retryCount < 1) {
             const newToken = useAuthStore().token
             headers['Authorization'] = `Bearer ${newToken}`
@@ -75,7 +84,6 @@ export const useApi = () => {
       }
 
       console.error(`API Error [${options.method || 'GET'} ${endpoint}]:`, error)
-      useToast().add(`API Error: ${error?.status || ''} ${endpoint}`.trim(), 'error')
 
       if (error.response) {
         throw {
@@ -117,7 +125,6 @@ export const useApi = () => {
         throw { status: 408, data: { detail: 'Upload timed out' } }
       }
       console.error(`Upload Error [${endpoint}]:`, error)
-      useToast().add(`Upload failed: ${endpoint}`, 'error')
       if (error.response) {
         throw {
           status: error.response.status,

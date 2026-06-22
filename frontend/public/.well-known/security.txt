@@ -1,0 +1,4 @@
+Contact: mailto:security@costaricatravel.dev
+Preferred-Languages: es, en
+Canonical: https://costaricatravel.dev/.well-known/security.txt
+Policy: https://costaricatravel.dev/security-policy

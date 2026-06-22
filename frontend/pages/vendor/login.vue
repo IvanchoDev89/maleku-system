@@ -63,7 +63,6 @@ import { Store, ArrowLeft } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const router = useRouter()
-
 definePageMeta({
   layout: 'auth'
 })
@@ -80,17 +79,21 @@ const handleLogin = async () => {
   loading.value = true
   error.value = ''
 
-  const result = await auth.login(form.email, form.password)
+  try {
+    const result = await auth.login(form.email, form.password)
 
-  if (result.success) {
-    if (auth.isVendor) {
-      router.push('/vendor/dashboard')
+    if (result.success && result.user) {
+      if (result.user.role === 'vendor') {
+        router.push('/vendor/dashboard')
+      } else {
+        error.value = 'No tienes acceso de proveedor'
+        auth.logout()
+      }
     } else {
-      error.value = 'No tienes acceso de proveedor'
-      auth.logout()
+      error.value = result.error || 'Error inesperado al iniciar sesión'
     }
-  } else {
-    error.value = result.error || 'Error al iniciar sesión'
+  } catch (e) {
+    error.value = 'Error inesperado al iniciar sesión'
   }
 
   loading.value = false

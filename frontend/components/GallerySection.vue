@@ -4,12 +4,12 @@
  * Masonry gallery de fotos de Costa Rica
  */
 const galleryImages = [
-  { src: 'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=600&q=80', alt: 'Selva tropical', span: 'row-span-2' },
-  { src: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=600&q=80', alt: 'Playa', span: '' },
-  { src: 'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=600&q=80', alt: 'Volcán', span: '' },
-  { src: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=600&q=80', alt: 'Fauna', span: 'row-span-2' },
-  { src: 'https://images.unsplash.com/photo-1518457607834-6e8d80c183c5?w=600&q=80', alt: 'Aventura', span: '' },
-  { src: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80', alt: 'Caribe', span: '' }
+  { src: 'https://images.unsplash.com/photo-1518638150340-f706e86654de', alt: 'Selva tropical', span: 'row-span-2' },
+  { src: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907', alt: 'Playa', span: '' },
+  { src: 'https://images.unsplash.com/photo-1560493676-04071c5f467b', alt: 'Volcán', span: '' },
+  { src: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46', alt: 'Fauna', span: 'row-span-2' },
+  { src: 'https://images.unsplash.com/photo-1518457607834-6e8d80c183c5', alt: 'Aventura', span: '' },
+  { src: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5', alt: 'Caribe', span: '' }
 ]
 </script>
 

@@ -66,13 +66,12 @@ export default defineNuxtConfig({
   postcss: {
     plugins: {
       tailwindcss: {},
-      autoprefixer: {},
     },
   },
 
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
+      apiBase: process.env.NUXT_PUBLIC_API_URL || '/api/v1',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://costaricatravel.dev',
       cdnUrl: process.env.NUXT_PUBLIC_CDN_URL || '',
       siteName: 'Costa Rica Travel',
@@ -111,11 +110,6 @@ export default defineNuxtConfig({
     }
   },
 
-  // Alias para resolución de tipos
-  alias: {
-    '~/types': './types/index.ts'
-  },
-
   i18n: {
     locales: [
       { code: 'es', name: 'Español', language: 'es-CR', file: 'es.json' },
@@ -137,6 +131,12 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: 'node-server',
+    devProxy: {
+      '/api': {
+        target: 'http://localhost:8000/api',
+        changeOrigin: true
+      }
+    },
     // SECURITY: Add security headers
     routeRules: {
       '/**': {
@@ -146,10 +146,10 @@ export default defineNuxtConfig({
           'Referrer-Policy': 'strict-origin-when-cross-origin',
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self), payment=()',
           'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-          'X-XSS-Protection': '1; mode=block',
           'Content-Security-Policy': [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://js.stripe.com",
+            "script-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://js.stripe.com 'unsafe-eval'",
+            "worker-src blob:",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com data:",
             "img-src 'self' data: https: blob:",
@@ -178,5 +178,16 @@ export default defineNuxtConfig({
     domains: ['images.unsplash.com', 'picsum.photos', 'randomuser.me', 'res.cloudinary.com'],
     quality: 80,
     format: ['webp', 'jpg']
+  },
+
+  icon: {
+    provider: 'server',
+    mode: 'svg'
+  },
+
+  vite: {
+    optimizeDeps: {
+      exclude: ['nuxt']
+    }
   }
 })

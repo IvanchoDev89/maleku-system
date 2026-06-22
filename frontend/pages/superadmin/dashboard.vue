@@ -116,13 +116,20 @@
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div
+      <UiCard
         v-for="(stat, index) in statsCards"
         :key="index"
-        class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+        padding="sm"
+        hover
+        class="cursor-pointer"
         @click="navigateTo(stat.link)"
       >
-        <div class="flex items-start justify-between">
+        <div v-if="loading && !stats.total_users" class="animate-pulse space-y-3">
+          <div class="h-4 bg-gray-200 rounded w-24" />
+          <div class="h-8 bg-gray-200 rounded w-32" />
+          <div class="h-3 bg-gray-200 rounded w-20" />
+        </div>
+        <div v-else class="flex items-start justify-between">
           <div>
             <p class="text-gray-500 text-sm font-medium">{{ stat.label }}</p>
             <p class="text-2xl font-bold text-gray-900 mt-1">{{ stat.value }}</p>
@@ -133,17 +140,17 @@
               <span class="text-gray-400 text-xs">vs mes anterior</span>
             </div>
           </div>
-          <div :class="`w-12 h-12 rounded-xl flex items-center justify-center ${stat.bgClass}`">
-            <span class="text-2xl">{{ stat.icon }}</span>
+          <div :class="`w-12 h-12 rounded-xl flex items-center justify-center ${stat.iconBg}`">
+            <component :is="stat.icon" class="w-6 h-6" :class="stat.iconColor" />
           </div>
         </div>
-      </div>
+      </UiCard>
     </div>
 
     <!-- Main Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Revenue Chart -->
-      <div class="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md" class="lg:col-span-2">
         <div class="flex justify-between items-center mb-6">
           <div>
             <h3 class="text-lg font-bold text-gray-900">Ingresos y Tendencias</h3>
@@ -162,12 +169,18 @@
           </div>
         </div>
         <div class="h-72">
-          <canvas ref="revenueChartRef"></canvas>
+          <div v-if="loading && revenueData.length === 0" class="h-full flex items-center justify-center">
+            <div class="animate-pulse space-y-4 w-full px-8">
+              <div class="h-4 bg-gray-200 rounded w-1/4" />
+              <div class="h-48 bg-gray-100 rounded-lg" />
+            </div>
+          </div>
+          <canvas v-else ref="revenueChartRef"></canvas>
         </div>
-      </div>
+      </UiCard>
 
       <!-- System Health -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <h3 class="text-lg font-bold text-gray-900 mb-4">Salud del Sistema</h3>
         <div class="space-y-4">
           <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
@@ -193,32 +206,23 @@
           </div>
 
           <div class="mt-4 p-4 bg-primary-50 rounded-lg">
-            <div class="flex justify-between text-sm mb-2">
-              <span class="text-gray-600">Uso de memoria</span>
-              <span class="font-medium text-gray-700">256 MB / 512 MB</span>
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-gray-600">Usuarios nuevos (hoy)</span>
+              <span class="font-bold text-primary-700">{{ stats.new_users_today || 0 }}</span>
             </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-primary-600 h-2 rounded-full" style="width: 50%"></div>
-            </div>
-          </div>
-
-          <div class="p-4 bg-primary-50 rounded-lg">
-            <div class="flex justify-between text-sm mb-2">
-              <span class="text-gray-600">Almacenamiento DB</span>
-              <span class="font-medium text-gray-700">1.2 GB / 10 GB</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-primary-600 h-2 rounded-full" style="width: 12%"></div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Vendors pendientes</span>
+              <span class="font-bold text-amber-600">{{ stats.pending_vendors || 0 }}</span>
             </div>
           </div>
         </div>
-      </div>
+      </UiCard>
     </div>
 
     <!-- Second Row -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Top Vendors -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
             <Trophy class="w-5 h-5 text-primary-600" />
@@ -229,7 +233,17 @@
             <ArrowRight class="w-4 h-4" />
           </NuxtLink>
         </div>
-        <div class="space-y-3">
+        <div v-if="loading && topVendors.length === 0" class="space-y-3">
+          <div v-for="i in 5" :key="i" class="flex items-center gap-3 p-3 animate-pulse">
+            <div class="w-10 h-10 bg-gray-200 rounded-full shrink-0" />
+            <div class="flex-1 space-y-2">
+              <div class="h-3 bg-gray-200 rounded w-3/4" />
+              <div class="h-2 bg-gray-100 rounded w-1/2" />
+            </div>
+            <div class="h-4 bg-gray-200 rounded w-16" />
+          </div>
+        </div>
+        <div v-else class="space-y-3">
           <div
             v-for="(vendor, index) in topVendors.slice(0, 5)"
             :key="vendor.vendor_id"
@@ -250,7 +264,7 @@
               </p>
             </div>
             <div class="text-right">
-              <p class="font-bold text-green-600">${{ formatNumber(vendor.total_revenue) }}</p>
+              <p class="font-bold text-green-600">{{ formatCurrency(vendor.total_revenue) }}</p>
               <NuxtLink
                 :to="`/superadmin/vendors/${vendor.vendor_id}`"
                 class="text-xs text-primary-600 hover:text-primary-700 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -264,15 +278,25 @@
             No hay datos aún
           </p>
         </div>
-      </div>
+      </UiCard>
 
       <!-- Recent Activity -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-bold text-gray-900">Actividad Reciente</h3>
           <NuxtLink to="/superadmin/audit" class="text-primary-600 text-sm hover:underline">Ver logs →</NuxtLink>
         </div>
-        <div class="space-y-3">
+        <div v-if="loading && recentActivity.length === 0" class="space-y-3">
+          <div v-for="i in 5" :key="i" class="flex items-start gap-3 p-3 animate-pulse">
+            <div class="w-10 h-10 bg-gray-200 rounded-full shrink-0" />
+            <div class="flex-1 space-y-2">
+              <div class="h-3 bg-gray-200 rounded w-3/4" />
+              <div class="h-2 bg-gray-100 rounded w-full" />
+              <div class="h-2 bg-gray-100 rounded w-1/4" />
+            </div>
+          </div>
+        </div>
+        <div v-else class="space-y-3">
           <div
             v-for="activity in recentActivity"
             :key="activity.id"
@@ -298,10 +322,10 @@
             No hay actividad reciente
           </p>
         </div>
-      </div>
+      </UiCard>
 
       <!-- Quick Actions & Security -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <h3 class="text-lg font-bold text-gray-900 mb-4">Acciones Rápidas</h3>
         <div class="grid grid-cols-2 gap-3 mb-6">
           <NuxtLink to="/superadmin/users" class="p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors text-center group border border-primary-100">
@@ -327,36 +351,41 @@
           Seguridad
         </h4>
         <div class="space-y-2">
-          <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-100">
+          <div class="flex justify-between items-center p-3 rounded-lg border" :class="(securityStats.failed_logins_24h || 0) > 20 ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'">
             <div class="flex items-center gap-2">
-              <UserX class="w-4 h-4 text-green-600" />
-              <span class="text-sm text-gray-600">Intentos fallidos (24h)</span>
+              <UserX class="w-4 h-4" :class="(securityStats.failed_logins_24h || 0) > 20 ? 'text-red-600' : 'text-amber-600'" />
+              <span class="text-sm" :class="(securityStats.failed_logins_24h || 0) > 20 ? 'text-red-700' : 'text-amber-700'">Intentos fallidos (24h)</span>
             </div>
-            <span class="font-bold text-green-600">{{ securityStats.failed_logins_24h || 0 }}</span>
+            <span class="font-bold" :class="(securityStats.failed_logins_24h || 0) > 20 ? 'text-red-600' : 'text-amber-600'">{{ securityStats.failed_logins_24h || 0 }}</span>
           </div>
-          <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-100">
+          <div class="flex justify-between items-center p-3 rounded-lg border" :class="(securityStats.critical_events_24h || 0) > 5 ? 'bg-red-50 border-red-100' : 'bg-red-50 border-red-100'">
             <div class="flex items-center gap-2">
-              <AlertCircle class="w-4 h-4 text-green-600" />
-              <span class="text-sm text-gray-600">Eventos críticos (24h)</span>
+              <AlertCircle class="w-4 h-4 text-red-600" />
+              <span class="text-sm text-red-700">Eventos críticos (24h)</span>
             </div>
-            <span class="font-bold text-green-600">{{ securityStats.critical_events_24h || 0 }}</span>
+            <span class="font-bold text-red-600">{{ securityStats.critical_events_24h || 0 }}</span>
           </div>
           <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-100">
             <div class="flex items-center gap-2">
               <Activity class="w-4 h-4 text-blue-600" />
-              <span class="text-sm text-gray-600">Usuarios activos</span>
+              <span class="text-sm text-blue-700">Usuarios activos</span>
             </div>
             <span class="font-bold text-blue-600">{{ stats.active_users_today || 0 }}</span>
           </div>
         </div>
-      </div>
+      </UiCard>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Chart, registerables } from 'chart.js'
-import { Crown, CheckCircle, Database, Save, RefreshCw, AlertTriangle, AlertCircle, Info, Clock, Eye, X, Trophy, ArrowRight, Store, Calendar, Activity, ChevronRight, Inbox, UserPlus, FileText, Settings, ShieldCheck, UserX, User } from 'lucide-vue-next'
+import {
+  Crown, CheckCircle, Database, Save, RefreshCw, AlertTriangle, AlertCircle,
+  Info, Clock, Eye, X, Trophy, ArrowRight, Store, Calendar, Activity,
+  ChevronRight, Inbox, UserPlus, FileText, Settings, ShieldCheck, UserX, User,
+  Users, Building2, CalendarCheck, DollarSign,
+} from 'lucide-vue-next'
 
 Chart.register(...registerables)
 
@@ -382,16 +411,19 @@ const currentTime = computed(() => new Date().toLocaleTimeString('es-CR', {
 }))
 
 const statsCards = computed(() => [
-  { label: 'Usuarios Totales', value: formatNumber(stats.value.total_users), icon: '👥', bgClass: 'bg-primary-100', trend: 12, link: '/superadmin/users' },
-  { label: 'Proveedores', value: formatNumber(stats.value.total_vendors), icon: '🏪', bgClass: 'bg-primary-100', trend: 8, link: '/superadmin/vendors' },
-  { label: 'Reservas', value: formatNumber(stats.value.total_bookings), icon: '📋', bgClass: 'bg-primary-100', trend: -3, link: '/superadmin/bookings' },
-  { label: 'Ingresos Netos', value: `$${formatNumber(stats.value.net_revenue)}`, icon: '💰', bgClass: 'bg-green-100', trend: 15, link: '/superadmin/reports' },
+  { label: 'Usuarios Totales', value: formatNumber(stats.value.total_users), icon: Users, iconBg: 'bg-primary-100', iconColor: 'text-primary-600', trend: 12, link: '/superadmin/users' },
+  { label: 'Proveedores', value: formatNumber(stats.value.total_vendors), icon: Store, iconBg: 'bg-primary-100', iconColor: 'text-primary-600', trend: 8, link: '/superadmin/vendors' },
+  { label: 'Reservas', value: formatNumber(stats.value.total_bookings), icon: CalendarCheck, iconBg: 'bg-primary-100', iconColor: 'text-primary-600', trend: -3, link: '/superadmin/bookings' },
+  { label: 'Ingresos Netos', value: formatCurrency(stats.value.net_revenue), icon: DollarSign, iconBg: 'bg-green-100', iconColor: 'text-green-600', trend: 15, link: '/superadmin/reports' },
 ])
 
 function buildRevenueChart() {
   const data = revenueData.value
   if (revenueChart) revenueChart.destroy()
   if (!revenueChartRef.value || !data.length) return
+
+  const maxBookings = Math.max(...data.map((r: any) => r.bookings_count || 0), 1)
+  const bookingScaleFactor = maxBookings > 0 ? Math.ceil(Math.max(...data.map((r: any) => r.revenue || 0)) / maxBookings / 10) * 10 : 100
 
   revenueChart = new Chart(revenueChartRef.value, {
     type: 'line',
@@ -405,10 +437,11 @@ function buildRevenueChart() {
           backgroundColor: 'rgba(13, 148, 136, 0.1)',
           borderWidth: 2, fill: true, tension: 0.4,
           pointRadius: 3, pointBackgroundColor: '#0d9488',
+          yAxisID: 'y',
         },
         {
           label: 'Reservas',
-          data: data.map((r: any) => r.bookings_count * 100),
+          data: data.map((r: any) => (r.bookings_count || 0) * bookingScaleFactor),
           borderColor: '#3b82f6',
           backgroundColor: 'transparent',
           borderWidth: 2, borderDash: [5, 5], tension: 0.4,
@@ -427,7 +460,10 @@ function buildRevenueChart() {
           callbacks: {
             label(context: any) {
               const label = context.dataset.label || ''
-              if (context.dataset.label === 'Reservas') return `${label}: ${Math.round(context.parsed.y / 100)}`
+              if (context.dataset.label === 'Reservas') {
+                const raw = (context.parsed.y / bookingScaleFactor)
+                return `${label}: ${raw}`
+              }
               return `${label}: $${context.parsed.y.toLocaleString()}`
             },
           },
@@ -435,15 +471,28 @@ function buildRevenueChart() {
       },
       scales: {
         x: { grid: { display: false }, ticks: { color: '#6b7280', maxTicksLimit: 8 } },
-        y: { grid: { color: '#e5e7eb' }, ticks: { color: '#6b7280', callback: (v: any) => '$' + (v / 1000) + 'K' } },
-        y1: { position: 'right', grid: { display: false }, ticks: { display: false }, min: 0 },
+        y: {
+          grid: { color: '#e5e7eb' },
+          ticks: {
+            color: '#6b7280',
+            callback: (v: any) => '$' + Math.round(v / 1000) + 'K',
+          },
+        },
+        y1: {
+          position: 'right',
+          grid: { display: false },
+          ticks: {
+            color: '#3b82f6',
+            callback: (v: any) => Math.round(v / bookingScaleFactor).toString(),
+          },
+          min: 0,
+        },
       },
     },
   })
 }
 
 watch(revenueData, buildRevenueChart)
-
 watch(revenuePeriod, loadDashboardData)
 
 const refreshDashboard = loadDashboardData

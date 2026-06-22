@@ -3,21 +3,39 @@ import { ref, computed } from 'vue'
 import {
   User, Mail, Phone, CreditCard, Shield, Check,
   ChevronRight, ChevronLeft, Lock, Calendar, Users,
-  MapPin, Sparkles, AlertCircle, Info, Loader2
+  MapPin, Sparkles, AlertCircle, Info, Loader2, Building2
 } from 'lucide-vue-next'
 
 const props = defineProps<{
-  totalPrice: number
+  // Tour booking
+  totalPrice?: number
   travelers?: number
   experienceName?: string
   tourId?: string
   tourDate?: string
+
+  // Property booking
+  roomId?: string
+  propertyId?: string
+  checkIn?: string
+  checkOut?: string
+  roomName?: string
+  guests?: number
 }>()
 
 const emit = defineEmits<{
   complete: [bookingData: any]
   cancel: []
 }>()
+
+const isPropertyBooking = computed(() => !!props.roomId && !!props.propertyId)
+const isTourBooking = computed(() => !!props.tourId)
+
+const bookingTypeLabel = computed(() => {
+  if (isPropertyBooking.value) return 'Hotel'
+  if (isTourBooking.value) return 'Tour'
+  return 'Reserva'
+})
 
 // Wizard state
 const currentStep = ref(1)
@@ -98,11 +116,12 @@ const extrasTotal = computed(() => {
   if (extras.value.insurance) total += 45
   if (extras.value.flexibleCancel) total += 25
   if (extras.value.prioritySupport) total += 15
-  return total * travelers.value.length
+  const count = isPropertyBooking.value ? (props.guests || 1) : travelers.value.length
+  return total * count
 })
 
 const finalTotal = computed(() => {
-  return props.totalPrice + extrasTotal.value
+  return (props.totalPrice || 0) + extrasTotal.value
 })
 
 // Methods
@@ -141,10 +160,6 @@ const submitBooking = async () => {
   const toast = useToast()
 
   try {
-    if (!props.tourId || !props.tourDate) {
-      throw new Error('Missing tour reference. Please go back and pick a tour.')
-    }
-
     const auth = useAuthStore()
     if (!auth.isAuthenticated) {
       throw new Error('You must be signed in to book. Redirecting to login...')
@@ -155,21 +170,45 @@ const submitBooking = async () => {
     const guestName = `${firstTraveler.firstName} ${firstTraveler.lastName}`.trim()
       || `${contactForm.value.firstName} ${contactForm.value.lastName}`.trim()
 
-    const response = await api.post<{
-      id: string
-      confirmation_code: string
-      status: string
-      total_amount: number
-      currency: string
-    }>('/bookings/tour', {
-      tour_id: props.tourId,
-      tour_date: props.tourDate,
-      participants: travelers.value.length,
-      guest_name: guestName,
-      guest_email: contactForm.value.email,
-      guest_phone: contactForm.value.phone || null,
-      guest_notes: null,
-    })
+    let response: any
+
+    if (isPropertyBooking.value) {
+      response = await api.post<{
+        id: string
+        confirmation_code: string
+        status: string
+        total_amount: number
+        currency: string
+      }>('/bookings/property', {
+        property_id: props.propertyId,
+        room_id: props.roomId,
+        check_in: props.checkIn + 'T14:00:00Z',
+        check_out: props.checkOut + 'T12:00:00Z',
+        guests: props.guests || 1,
+        guest_name: guestName,
+        guest_email: contactForm.value.email,
+        guest_phone: contactForm.value.phone || null,
+        guest_notes: null,
+      })
+    } else if (isTourBooking.value) {
+      response = await api.post<{
+        id: string
+        confirmation_code: string
+        status: string
+        total_amount: number
+        currency: string
+      }>('/bookings/tour', {
+        tour_id: props.tourId,
+        tour_date: props.tourDate,
+        participants: travelers.value.length,
+        guest_name: guestName,
+        guest_email: contactForm.value.email,
+        guest_phone: contactForm.value.phone || null,
+        guest_notes: null,
+      })
+    } else {
+      throw new Error('No booking reference provided')
+    }
 
     const bookingData = {
       bookingId: response.confirmation_code || response.id,
@@ -179,6 +218,7 @@ const submitBooking = async () => {
       currency: response.currency || 'USD',
       contact: contactForm.value,
       travelers: travelers.value,
+      bookingType: isPropertyBooking.value ? 'property' : 'tour',
     }
 
     toast?.success?.('Reserva creada', `Código ${bookingData.bookingId}`)
@@ -186,7 +226,6 @@ const submitBooking = async () => {
   } catch (error: any) {
     const message = error?.data?.detail || error?.message || 'Error al procesar la reserva'
     toast?.error?.('Error en la reserva', message)
-    // Re-throw to let the success page know it failed
     throw error
   } finally {
     isProcessing.value = false
@@ -209,7 +248,7 @@ const formatExpiry = (value: string) => {
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-2xl font-bold">Checkout seguro</h2>
-          <p class="text-white/80 text-sm">Paso {{ currentStep }} de {{ totalSteps }}</p>
+          <p class="text-white/80 text-sm">{{ bookingTypeLabel }} • Paso {{ currentStep }} de {{ totalSteps }}</p>
         </div>
         <div class="text-right">
           <p class="text-3xl font-bold">${{ finalTotal.toLocaleString() }}</p>
@@ -323,7 +362,6 @@ const formatExpiry = (value: string) => {
           </div>
         </div>
 
-        <!-- Contact Summary -->
         <div class="mt-6 p-4 bg-blue-50 rounded-xl">
           <div class="flex items-start gap-3">
             <Info class="w-5 h-5 text-blue-600 mt-0.5" />
@@ -340,9 +378,10 @@ const formatExpiry = (value: string) => {
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
             <Users class="w-5 h-5 text-primary-600" />
-            Información de viajeros
+            {{ isPropertyBooking ? 'Información del huésped' : 'Información de viajeros' }}
           </h3>
           <button
+            v-if="!isPropertyBooking"
             @click="addTraveler"
             :disabled="travelers.length >= 10"
             class="px-4 py-2 bg-primary-50 text-primary-700 rounded-lg font-medium hover:bg-primary-100 transition-colors disabled:opacity-50"
@@ -358,9 +397,9 @@ const formatExpiry = (value: string) => {
             class="p-4 border border-gray-200 rounded-xl"
           >
             <div class="flex items-center justify-between mb-4">
-              <h4 class="font-medium text-gray-900">Viajero {{ index + 1 }}</h4>
+              <h4 class="font-medium text-gray-900">{{ isPropertyBooking ? 'Huésped principal' : 'Viajero ' + (index + 1) }}</h4>
               <button
-                v-if="travelers.length > 1"
+                v-if="!isPropertyBooking && travelers.length > 1"
                 @click="removeTraveler(index)"
                 class="text-red-500 text-sm hover:underline"
               >
@@ -426,7 +465,6 @@ const formatExpiry = (value: string) => {
               Método de pago
             </h3>
 
-            <!-- Payment Methods -->
             <div class="flex gap-3 mb-6">
               <button
                 @click="paymentForm.method = 'card'"
@@ -519,7 +557,6 @@ const formatExpiry = (value: string) => {
               </button>
             </div>
 
-            <!-- Security Badge -->
             <div class="mt-6 flex items-center justify-center gap-4 text-sm text-gray-500">
               <div class="flex items-center gap-1">
                 <Lock class="w-4 h-4" />
@@ -536,8 +573,19 @@ const formatExpiry = (value: string) => {
           <div class="lg:pl-8 lg:border-l border-gray-200">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Resumen del pedido</h3>
 
-            <!-- Experience -->
-            <div v-if="experienceName" class="flex items-start gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
+            <!-- Property Booking Summary -->
+            <div v-if="isPropertyBooking" class="flex items-start gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
+              <Building2 class="w-5 h-5 text-primary-600 mt-0.5" />
+              <div>
+                <p class="font-medium text-gray-900">{{ experienceName }}</p>
+                <p v-if="roomName" class="text-sm text-gray-500">{{ roomName }}</p>
+                <p class="text-sm text-gray-500">{{ checkIn }} → {{ checkOut }}</p>
+                <p class="text-sm text-gray-500">{{ guests }} huésped{{ (guests || 1) > 1 ? 'es' : '' }}</p>
+              </div>
+            </div>
+
+            <!-- Tour Booking Summary -->
+            <div v-if="isTourBooking" class="flex items-start gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
               <MapPin class="w-5 h-5 text-primary-600 mt-0.5" />
               <div>
                 <p class="font-medium text-gray-900">{{ experienceName }}</p>
@@ -598,8 +646,8 @@ const formatExpiry = (value: string) => {
             <!-- Totals -->
             <div class="border-t pt-4 space-y-2">
               <div class="flex justify-between text-gray-600">
-                <span>Experiencia</span>
-                <span>${{ totalPrice.toLocaleString() }}</span>
+                <span>{{ bookingTypeLabel }}</span>
+                <span>${{ (totalPrice || 0).toLocaleString() }}</span>
               </div>
               <div v-if="extrasTotal > 0" class="flex justify-between text-gray-600">
                 <span>Extras</span>
@@ -610,7 +658,7 @@ const formatExpiry = (value: string) => {
                 <span class="font-bold text-2xl text-primary-600">${{ finalTotal.toLocaleString() }}</span>
               </div>
               <p class="text-sm text-gray-500 text-right">
-                ${{ Math.round(finalTotal / travelers.length).toLocaleString() }} por persona
+                ${{ Math.round(finalTotal / (isPropertyBooking ? (guests || 1) : travelers.length)).toLocaleString() }} por {{ isPropertyBooking ? 'persona' : 'persona' }}
               </p>
             </div>
 

@@ -2,12 +2,19 @@
 Flight Schemas - Vuelos
 """
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 
 from app.models import RouteType
+from . import is_dangerous_sql
+
+
+def _sanitize_flight_field(cls, v: Optional[str]) -> Optional[str]:
+    if v is not None and is_dangerous_sql(v):
+        raise ValueError("Invalid input")
+    return v
 
 
 class FlightBase(BaseModel):
@@ -27,6 +34,17 @@ class FlightBase(BaseModel):
     baggage_allowance: dict = {}
     amenities: List[str] = []
     schedule_days: List[str] = []
+
+    @field_validator(
+        "airline",
+        "flight_number",
+        "origin_airport",
+        "destination_airport",
+        "aircraft_type",
+    )
+    @classmethod
+    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+        return _sanitize_flight_field(cls, v)
 
 
 class FlightCreate(FlightBase):
@@ -51,6 +69,17 @@ class FlightUpdate(BaseModel):
     amenities: Optional[List[str]] = None
     schedule_days: Optional[List[str]] = None
     is_active: Optional[bool] = None
+
+    @field_validator(
+        "airline",
+        "flight_number",
+        "origin_airport",
+        "destination_airport",
+        "aircraft_type",
+    )
+    @classmethod
+    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+        return _sanitize_flight_field(cls, v)
 
 
 class FlightResponse(FlightBase):

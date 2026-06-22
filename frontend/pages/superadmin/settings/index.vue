@@ -75,7 +75,7 @@ onMounted(() => {
 
     <!-- Loading -->
     <div v-if="loading" class="bg-white rounded-lg shadow p-12 text-center">
-      <div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+      <UiSpinner size="lg" color="primary" class="mx-auto mb-4" />
       <p class="text-gray-500">Cargando configuracion...</p>
     </div>
 

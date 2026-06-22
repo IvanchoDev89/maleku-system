@@ -8,31 +8,124 @@ export interface ApiResponse<T> {
   has_prev: boolean
 }
 
+export interface Room {
+  id: string
+  property_id: string
+  name: string
+  description: string | null
+  max_guests: number
+  beds: number
+  bed_type: string | null
+  price_per_night: number
+  weekend_price: number
+  extra_guest_price: number
+  cleaning_fee: number
+  images: string[]
+  is_available: boolean
+}
+
+export interface VendorInfo {
+  id: string
+  business_name: string
+  business_type: string
+  description: string | null
+  logo_url: string | null
+  rating: number | null
+  total_reviews: number | null
+}
+
 export interface Property {
   id: string
+  vendor_id: string
   name: string
   slug: string
   short_description: string | null
   description: string | null
   property_type: PropertyType
+  category: string | null
+  country: string
+  province: string | null
   region: string
   city: string
+  district: string | null
   address: string | null
   latitude: number | null
   longitude: number | null
-  base_price: number
-  price: number | null
+  map_address: string | null
   cover_image: string | null
   images: string[]
+  videos: string[]
+  virtual_tour_url: string | null
+  amenities: string[]
+  features: string[]
+  check_in_time: string
+  check_out_time: string
+  cancellation_policy: string | null
+  house_rules: string | null
+  important_info: string | null
+  min_guests: number
+  max_guests: number
+  beds: number
+  baths: number
+  square_meters: number | null
+  base_price: number
+  currency: string
+  weekend_price: number
+  weekly_discount: number
   rating: number | null
   total_reviews: number
-  amenities: string[]
+  is_featured: boolean
   is_active: boolean
+  is_verified: boolean
+  rooms: Room[]
+  vendor: VendorInfo | null
   created_at: string
   updated_at: string
 }
 
 export type PropertyType = 'hotel' | 'resort' | 'villa' | 'apartment' | 'hostel' | 'eco_lodge' | 'cabin' | 'glamping' | 'boutique'
+
+export interface CalendarDay {
+  date: string
+  available: boolean
+  price_override?: number | null
+  min_stay?: number | null
+  max_stay?: number | null
+  is_today: boolean
+  is_past: boolean
+}
+
+export interface AvailabilityCalendarData {
+  room_id: string
+  dates: CalendarDay[]
+}
+
+export interface AvailabilityCheckResult {
+  available: boolean
+  alternative_dates: { check_in: string; check_out: string; nights: number }[]
+}
+
+export interface PricePreview {
+  nights: number
+  weekday_nights: number
+  weekend_nights: number
+  weekday_price: number
+  weekend_price: number
+  weekday_total: number
+  weekend_total: number
+  base_subtotal: number
+  guests: number
+  max_occupancy: number
+  extra_guests: number
+  extra_guest_price: number
+  extra_guests_total: number
+  weekly_discount_percent: number
+  weekly_discount_amount: number
+  subtotal: number
+  commission_amount: number
+  total: number
+  currency: string
+}
 
 export interface Tour {
   id: string
@@ -75,29 +168,46 @@ export interface Destination {
   id: string
   name: string
   slug: string
-  region: DestinationRegion
-  short_description: string | null
   description: string | null
-  image: string | null
-  images: string[]
-  highlights: string[]
-  activities: Activity[]
-  weather_info: string | null
-  best_time_to_visit: string | null
+  country: string
+  region: string | null
+  province: string | null
+  canton: string | null
+  district: string | null
   latitude: number | null
   longitude: number | null
+  zoom: number
+  highlights: string[]
+  things_to_do: string[]
+  culture: string | null
+  gastronomy: string | null
+  history: string | null
+  best_time: string | null
+  weather_info: string | null
+  getting_there: string | null
+  local_tips: string | null
+  safety_info: string | null
+  language: string | null
+  currency: string | null
+  timezone: string | null
+  phone_code: string | null
+  visa_info: string | null
+  emergency_numbers: string[]
+  image: string | null
+  gallery: string[]
+  videos: string[]
+  featured_photo: string | null
+  seo_title: string | null
+  seo_description: string | null
+  seo_keywords: string[]
+  is_featured: boolean
   is_active: boolean
+  order: number
   created_at: string
   updated_at: string
 }
 
 export type DestinationRegion = 'Pacífico Norte' | 'Pacífico Central' | 'Pacífico Sur' | 'Norte' | 'Valle Central' | 'Caribe'
-
-export interface Activity {
-  icon: string
-  name: string
-  description: string
-}
 
 export interface Booking {
   id: string
@@ -197,18 +307,6 @@ export interface SearchResult {
   blog: BlogPost[]
 }
 
-export interface MapItem {
-  id: string
-  type: 'property' | 'tour'
-  name: string
-  slug: string
-  image: string | null
-  price: number
-  rating: number | null
-  latitude: number
-  longitude: number
-}
-
 export interface BookingStats {
   total_bookings: number
   pending: number
@@ -223,11 +321,6 @@ export interface AuthResponse {
   access_token: string
   token_type: string
   user: User
-}
-
-export interface PaginatedQuery {
-  page?: number
-  page_size?: number
 }
 
 export interface TourSearchResponse {

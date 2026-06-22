@@ -20,6 +20,6 @@
 
 <script setup lang="ts">
 const handleRefresh = () => {
-  window.location.reload()
+  clearError({ redirect: '/' })
 }
 </script>

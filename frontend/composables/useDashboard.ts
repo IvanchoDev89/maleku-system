@@ -14,11 +14,18 @@ const iconMap: Record<string, { name: string; bg: string }> = {
   default: { name: 'lucide:activity', bg: 'bg-gray-100 text-gray-600' },
 }
 
+const numberFormat = new Intl.NumberFormat('es-CR')
+
 export function formatNumber(num: number): string {
   if (!num) return '0'
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
-  return num.toString()
+  if (num >= 1000) return numberFormat.format(Math.round(num / 1000) * 1000)
+  return numberFormat.format(Math.round(num))
+}
+
+export function formatCurrency(num: number): string {
+  if (!num) return '$0'
+  return '$' + numberFormat.format(Math.round(num))
 }
 
 export function formatTimeAgo(timestamp: string): string {
@@ -56,7 +63,7 @@ export function useDashboard(revenuePeriod: Ref<string>) {
   const loadDashboardData = async () => {
     loading.value = true
     try {
-      const [dashboardStats, vendorsData, alertsData, revenueResult, activityData, auditSummary] = await Promise.all([
+      const results = await Promise.allSettled([
         api.get('/superadmin/dashboard/stats'),
         api.get('/superadmin/dashboard/top-vendors'),
         api.get('/superadmin/dashboard/alerts'),
@@ -65,42 +72,63 @@ export function useDashboard(revenuePeriod: Ref<string>) {
         api.get('/superadmin/audit/summary'),
       ])
 
-      stats.value = {
-        total_users: dashboardStats.total_users,
-        total_vendors: dashboardStats.total_vendors,
-        total_bookings: dashboardStats.total_bookings,
-        total_revenue: dashboardStats.total_revenue,
-        net_revenue: dashboardStats.net_revenue,
-        pending_vendors: dashboardStats.pending_vendors,
-        new_users_today: dashboardStats.new_users_today,
-        active_users_today: dashboardStats.active_users_today,
+      const [statsResult, vendorsResult, alertsResult, revenueResult, activityResult, auditResult] = results
+
+      if (statsResult.status === 'fulfilled') {
+        const d = statsResult.value
+        stats.value = {
+          total_users: d.total_users || 0,
+          total_vendors: d.total_vendors || 0,
+          total_bookings: d.total_bookings || 0,
+          total_revenue: d.total_revenue || 0,
+          net_revenue: d.net_revenue || 0,
+          pending_vendors: d.pending_vendors || 0,
+          new_users_today: d.new_users_today || 0,
+          active_users_today: d.active_users_today || 0,
+        }
       }
 
-      topVendors.value = vendorsData
-      alerts.value = alertsData
+      if (vendorsResult.status === 'fulfilled') {
+        topVendors.value = vendorsResult.value
+      }
 
-      revenueData.value = revenueResult.data || revenueResult
+      if (alertsResult.status === 'fulfilled') {
+        alerts.value = alertsResult.value
+      }
 
-      recentActivity.value = activityData.map((item: any) => {
-        const iconConfig = iconMap[item.type] || iconMap.default
-        return {
-          id: item.id,
-          title: item.user_name || item.title || 'Actividad',
-          description: item.description,
-          timestamp: item.timestamp,
-          iconName: iconConfig.name,
-          iconBg: iconConfig.bg,
-          link: item.link || null,
+      if (revenueResult.status === 'fulfilled') {
+        revenueData.value = revenueResult.value.data || revenueResult.value
+      }
+
+      if (activityResult.status === 'fulfilled') {
+        recentActivity.value = activityResult.value.map((item: any) => {
+          const iconConfig = iconMap[item.type] || iconMap.default
+          return {
+            id: item.id,
+            title: item.user_name || item.title || 'Actividad',
+            description: item.description,
+            timestamp: item.timestamp,
+            iconName: iconConfig.name,
+            iconBg: iconConfig.bg,
+            link: item.link || null,
+          }
+        })
+      }
+
+      if (auditResult.status === 'fulfilled') {
+        securityStats.value = {
+          failed_logins_24h: auditResult.value.failed_logins_24h || 0,
+          critical_events_24h: auditResult.value.critical_events_24h || 0,
         }
-      })
+      }
 
-      securityStats.value = {
-        failed_logins_24h: auditSummary.failed_logins_24h,
-        critical_events_24h: auditSummary.critical_events_24h,
+      const failures = results.filter(r => r.status === 'rejected')
+      if (failures.length > 0) {
+        console.warn(`${failures.length} dashboard API call(s) failed, partial data shown`)
       }
     } catch (error) {
       console.error('Error loading dashboard:', error)
-      useToast().add(t('errors.dashboard.load'), 'error')
+      useToast().add('Error al cargar el dashboard. Algunos datos pueden no estar disponibles.', 'warning')
     } finally {
       loading.value = false
     }
@@ -111,7 +139,7 @@ export function useDashboard(revenuePeriod: Ref<string>) {
       await api.post(`/superadmin/dashboard/alerts/${alertId}/dismiss`)
     } catch (error) {
       console.error('Error dismissing alert:', error)
-      useToast().add(t('errors.dashboard.dismiss'), 'error')
+      useToast().add('Error al descartar alerta', 'error')
     }
     alerts.value = alerts.value.filter(a => a.id !== alertId)
   }

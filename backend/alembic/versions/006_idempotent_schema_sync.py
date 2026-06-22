@@ -253,7 +253,7 @@ def downgrade() -> None:
 
     for name in ["idx_blog_fts", "idx_tour_fts", "idx_property_fts"]:
         if _index_exists(name):
-            op.execute(f"DROP INDEX {name}")
+            op.drop_index(name)
 
     if _table_exists("room_availability"):
         op.drop_table("room_availability")

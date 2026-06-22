@@ -116,8 +116,12 @@ class TokenBlacklist:
 
         try:
             # Store timestamp - any token issued before this is invalid
-            await self.redis_client.set(
-                f"blacklist:user:{user_id}", expire_all_after.isoformat()
+            # TTL matches default token lifetime (24h) to prevent memory leaks
+            ttl = int((expire_all_after - datetime.now(timezone.utc)).total_seconds())
+            await self.redis_client.setex(
+                f"blacklist:user:{user_id}",
+                max(ttl, 86400),
+                expire_all_after.isoformat(),
             )
             logger.info(f"All tokens blacklisted for user {user_id}")
             return True

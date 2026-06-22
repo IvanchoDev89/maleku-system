@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from slugify import slugify
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
@@ -20,6 +21,7 @@ from app.schemas import (
     PaginationParams,
     PaginatedResponse,
 )
+from app.core.config import settings
 from app.services.cache_service import cache
 from pydantic import BaseModel
 
@@ -34,7 +36,7 @@ class BlogCategoriesResponse(BaseModel):
     categories: list[str]
 
 
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=get_remote_address, enabled=settings.ENVIRONMENT != "test")
 
 
 def _sanitize_cache_key(value: str) -> str:
@@ -144,7 +146,11 @@ async def get_blog_post(post_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     if cached:
         return BlogPostResponse(**cached)
 
-    result = await db.execute(select(BlogPost).where(BlogPost.id == post_id))
+    result = await db.execute(
+        select(BlogPost)
+        .where(BlogPost.id == post_id)
+        .options(selectinload(BlogPost.author))
+    )
     post = result.scalar_one_or_none()
 
     if not post:
@@ -153,6 +159,7 @@ async def get_blog_post(post_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
         )
 
     response = BlogPostResponse.model_validate(post)
+    response.author_name = post.author.name if post.author else None
 
     # Increment views asynchronously (non-blocking)
     post.views_count += 1
@@ -182,7 +189,11 @@ async def get_blog_post_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
     if cached:
         return BlogPostResponse(**cached)
 
-    result = await db.execute(select(BlogPost).where(BlogPost.slug == slug))
+    result = await db.execute(
+        select(BlogPost)
+        .where(BlogPost.slug == slug)
+        .options(selectinload(BlogPost.author))
+    )
     post = result.scalar_one_or_none()
 
     if not post:
@@ -195,6 +206,7 @@ async def get_blog_post_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
     response = BlogPostResponse.model_validate(post)
+    response.author_name = post.author.name if post.author else None
     await cache.set(
         cache_key,
         response.model_dump(),

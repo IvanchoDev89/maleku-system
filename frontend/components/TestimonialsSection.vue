@@ -35,19 +35,19 @@ const testimonials = [
     name: 'Marie Dubois',
     country: 'Francia',
     text: 'Una experiencia increíble. Los eco-lodges eran perfectos y los tours muy bien organizados. ¡Volveré!',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80'
+    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80'
   },
   {
     name: 'James Wilson',
     country: 'Estados Unidos',
     text: 'El planificador de viajes fue clave para optimizar nuestro tiempo. Todo funcionó a la perfección.',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80'
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'
   },
   {
     name: 'Stefan Müller',
     country: 'Alemania',
     text: 'La mejor decisión fue contratar un guide local. Conocimos lugares que no aparecen en las guías.',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80'
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e'
   }
 ]
 </script>

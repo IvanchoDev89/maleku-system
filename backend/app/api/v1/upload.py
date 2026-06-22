@@ -6,14 +6,15 @@ from pathlib import Path
 from typing import List, Optional
 
 import aiofiles
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Form, Request
 from pydantic import BaseModel
 import re
 from PIL import Image, UnidentifiedImageError
 
 from app.core.logging import get_logger
-from app.core.security import get_current_user, require_role
-from app.models import User, UserRole
+from app.core.rate_limiter import limiter
+from app.core.security import get_current_user, require_permission
+from app.models import User
 from app.services.cloudinary_service import cloudinary_service, CloudinaryError
 
 logger = get_logger(__name__)
@@ -99,6 +100,21 @@ def validate_image_bytes(contents: bytes) -> None:
         )
 
 
+def _strip_exif(contents: bytes) -> bytes:
+    """SECURITY: Remove EXIF metadata from image bytes.
+
+    Strips GPS coordinates, camera serial numbers, timestamps,
+    and other potentially sensitive metadata embedded in images.
+    """
+    try:
+        img = Image.open(io.BytesIO(contents))
+        cleaned = io.BytesIO()
+        img.save(cleaned, format=img.format or "JPEG", exif=b"")
+        return cleaned.getvalue()
+    except Exception:
+        return contents
+
+
 def validate_folder(folder: str) -> str:
     folder = folder.strip().lower()
     folder = re.sub(r"[^a-z0-9_-]", "", folder)
@@ -138,6 +154,9 @@ async def save_upload_file(file: UploadFile, folder: str) -> UploadResponse:
     # SECURITY: verify magic bytes match the claimed image type
     validate_image_bytes(contents)
 
+    # SECURITY: strip EXIF metadata (GPS, camera serial, etc.)
+    contents = _strip_exif(contents)
+
     ext = Path(file.filename).suffix.lower()
     unique_id = uuid.uuid4().hex
     unique_filename = f"{unique_id}{ext}"
@@ -171,6 +190,9 @@ async def upload_to_cloudinary(file: UploadFile, folder: str) -> UploadResponse:
     # SECURITY: verify magic bytes match the claimed image type
     validate_image_bytes(contents)
 
+    # SECURITY: strip EXIF metadata (GPS, camera serial, etc.)
+    contents = _strip_exif(contents)
+
     ext = Path(file.filename).suffix.lower()
     unique_id = uuid.uuid4().hex[:16]
     unique_filename = f"{folder}_{unique_id}{ext}"
@@ -202,11 +224,13 @@ async def upload_to_cloudinary(file: UploadFile, folder: str) -> UploadResponse:
     summary="Upload single image",
     description="Uploads a single image file (JPG, PNG, GIF, WebP). Max 10MB. Validates MIME type and image integrity.",
 )
+@limiter.limit("10/minute")
 async def upload_image(
     file: UploadFile = File(...),
     folder: str = Form(default="general"),
     use_cloudinary: bool = Form(default=True),
     current_user: User = Depends(get_current_user),
+    request: Request = None,
 ):
     if use_cloudinary and cloudinary_service.is_configured():
         try:
@@ -225,10 +249,13 @@ async def upload_image(
     summary="Upload multiple images",
     description="Uploads up to 10 images in parallel. Each file is validated and saved independently. Max total: 10 files.",
 )
+@limiter.limit("5/minute")
 async def upload_images(
     files: List[UploadFile] = File(...),
-    folder: str = Form(default="gallery"),
+    folder: str = Form(default="general"),
+    use_cloudinary: bool = Form(default=True),
     current_user: User = Depends(get_current_user),
+    request: Request = None,
 ):
     if len(files) > 10:
         raise HTTPException(status_code=400, detail="Maximum 10 files allowed at once")
@@ -257,7 +284,7 @@ async def delete_image(
     path: str,
     public_id: Optional[str] = None,
     provider: str = "local",
-    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.SUPER_ADMIN)),
+    current_user: User = Depends(require_permission("content", "delete")),
 ):
     try:
         if provider == "cloudinary" and public_id:
@@ -296,7 +323,9 @@ async def get_presigned_url(
     filename: str,
     folder: str = "general",
     current_user: User = Depends(get_current_user),
+    request: Request = None,
 ):
+    validate_file(file)
     folder = validate_folder(folder)
     ext = Path(filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:

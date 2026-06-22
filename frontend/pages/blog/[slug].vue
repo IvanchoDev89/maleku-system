@@ -13,9 +13,16 @@
       </nav>
 
       <!-- Loading -->
-      <div v-if="loading" class="text-center py-12">
+      <div v-if="pending" class="text-center py-12">
         <p class="text-gray-500">Cargando artículo...</p>
       </div>
+
+      <template v-else-if="error">
+        <div class="text-center py-12">
+          <p class="text-gray-500">Error al cargar el artículo</p>
+          <button @click="refresh" class="text-primary hover:underline mt-2 inline-block">Intentar de nuevo</button>
+        </div>
+      </template>
 
       <template v-else-if="!post">
         <div class="text-center py-12">
@@ -28,34 +35,51 @@
       <!-- Article Header -->
       <header class="mb-8">
         <span class="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-          {{ post?.category }}
+          {{ post?.category || 'Blog' }}
         </span>
         <h1 class="text-4xl md:text-5xl font-bold mt-4">{{ post?.title }}</h1>
 
         <div class="flex items-center gap-6 mt-6 text-gray-500">
           <span class="flex items-center gap-2">
             <span class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white">A</span>
-            {{ post?.author }}
+            {{ post?.author || 'Costa Rica Travel' }}
           </span>
-          <span>📅 {{ formatDate(post?.published_at) }}</span>
-          <span>👁️ {{ post?.views_count }} vistas</span>
+          <span class="flex items-center gap-2" v-if="post?.published_at">
+            <Calendar class="w-4 h-4" />
+            {{ formatDate(post?.published_at) }}
+          </span>
+          <span class="flex items-center gap-2" v-if="post?.views_count !== undefined">
+            <Eye class="w-4 h-4" />
+            {{ post?.views_count }} vistas
+          </span>
         </div>
       </header>
 
       <!-- Featured Image -->
-      <div class="aspect-video bg-gradient-to-br from-primary to-primary-700 rounded-2xl mb-8 flex items-center justify-center">
-        <span class="text-8xl">📝</span>
+      <div v-if="post?.featured_image" class="aspect-video rounded-2xl mb-8 overflow-hidden">
+        <NuxtImg
+          :src="post.featured_image"
+          :alt="post.title"
+          class="w-full h-full object-cover"
+          width="1200"
+          height="675"
+          format="webp"
+          loading="lazy"
+        />
+      </div>
+      <div v-else class="aspect-video bg-gradient-to-br from-primary to-primary-700 rounded-2xl mb-8 flex items-center justify-center">
+        <FileText class="w-16 h-16 text-white/50" />
       </div>
 
       <!-- Article Content -->
       <article class="prose prose-lg max-w-none">
-        <p class="lead text-xl text-gray-600 mb-8">{{ post?.excerpt }}</p>
+        <p v-if="post?.excerpt" class="lead text-xl text-gray-600 mb-8">{{ post.excerpt }}</p>
 
         <div v-html="sanitizeHtml(post?.content)"></div>
       </article>
 
       <!-- Tags -->
-      <div class="mt-12 pt-8 border-t">
+      <div v-if="post?.tags?.length" class="mt-12 pt-8 border-t">
         <div class="flex flex-wrap gap-2">
           <span
             v-for="tag in post?.tags"
@@ -66,40 +90,14 @@
           </span>
         </div>
       </div>
-
-      <!-- Share -->
-      <div class="mt-8 flex items-center gap-4">
-        <span class="text-gray-500">Compartir:</span>
-        <button class="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600">F</button>
-        <button class="w-10 h-10 bg-sky-500 text-white rounded-full flex items-center justify-center hover:bg-sky-600">T</button>
-        <button class="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600">W</button>
-      </div>
-
-      <!-- Related Posts -->
-      <section class="mt-16">
-        <h3 class="text-2xl font-bold mb-6">Artículos Relacionados</h3>
-        <div class="grid md:grid-cols-3 gap-6">
-          <NuxtLink
-            v-for="related in relatedPosts"
-            :key="related.id"
-            :to="`/blog/${related.slug}`"
-            class="group"
-          >
-            <div class="aspect-video bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-              <span class="text-3xl">📄</span>
-            </div>
-            <h4 class="font-semibold group-hover:text-primary transition-colors">{{ related.title }}</h4>
-          </NuxtLink>
-        </div>
-      </section>
       </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
 import DOMPurify from 'dompurify'
+import { Calendar, Eye, FileText } from 'lucide-vue-next'
 
 const sanitizeHtml = (html: string | null | undefined): string => {
   if (!html) return ''
@@ -115,61 +113,46 @@ const sanitizeHtml = (html: string | null | undefined): string => {
 }
 
 const route = useRoute()
-const api = useApi()
 const slug = route.params.slug as string
 
-const post = ref<any>(null)
-const relatedPosts = ref<any[]>([])
-const loading = ref(true)
+const { data: post, pending, error, refresh } = await useAsyncData<Record<string, any> | null>(
+  `blog-${slug}`,
+  async () => {
+    const api = useApi()
+    return await api.get(`/blog/slug/${slug}`)
+  },
+  { default: () => null }
+)
 
 const formatDate = (date: string | undefined) => {
   if (!date) return ''
   return new Date(date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-const loadPost = async () => {
-  try {
-    const data = await api.get(`/blog?page_size=100&status=published`)
-    const items: any[] = Array.isArray(data) ? data : data.items || data.results || []
-    const found = items.find((p: any) => p.slug === slug)
-    if (found) {
-      post.value = found
-    }
-    relatedPosts.value = items.filter((p: any) => p.id !== found?.id).slice(0, 3)
-  } catch (error) {
-    console.error('Error loading blog post:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-watch(post, (newPost) => {
-  if (!newPost) return
+if (post.value) {
   useSeo({
-    title: newPost.title,
-    description: newPost.excerpt,
-    keywords: newPost.tags?.join(', '),
+    title: post.value.title,
+    description: post.value.excerpt,
+    keywords: post.value.tags?.join(', '),
     ogType: 'article',
-    ogImage: newPost.featured_image || 'https://costaricatravel.dev/images/blog-default.jpg',
+    ogImage: post.value.featured_image || 'https://costaricatravel.dev/images/blog-default.jpg',
     canonical: `https://costaricatravel.dev/blog/${slug}`
   })
   useJsonLd({
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "headline": newPost.title,
-    "description": newPost.excerpt,
+    "headline": post.value.title,
+    "description": post.value.excerpt,
     "url": `https://costaricatravel.dev/blog/${slug}`,
-    "datePublished": newPost.published_at,
+    "datePublished": post.value.published_at,
     "author": {
       "@type": "Organization",
-      "name": newPost.author
+      "name": post.value.author || 'Costa Rica Travel'
     },
-    "articleSection": newPost.category,
-    "keywords": newPost.tags?.join(', ')
+    "articleSection": post.value.category,
+    "keywords": post.value.tags?.join(', ')
   })
-})
-
-onMounted(loadPost)
+}
 </script>
 
 <style>

@@ -62,7 +62,7 @@ const fetchBookings = async () => {
     }
     if (filterStatus.value !== 'all') params.status = filterStatus.value
 
-    const response = await api.get('/bookings', params)
+    const response = await api.get('/superadmin/bookings', params)
     bookings.value = response.items || []
     totalPages.value = response.total_pages || 1
     totalItems.value = response.total || 0
@@ -154,7 +154,7 @@ watch(filterStatus, () => {
 
     <!-- Loading -->
     <div v-if="loading" class="bg-white rounded-lg shadow p-12 text-center">
-      <div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+      <UiSpinner size="lg" color="primary" class="mx-auto mb-4" />
       <p class="text-gray-500">Cargando reservas...</p>
     </div>
 

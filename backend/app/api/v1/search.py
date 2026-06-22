@@ -7,6 +7,8 @@ from typing import Optional
 from app.core.database import get_db
 from app.core.utils import escape_like_pattern
 from app.models import Property, Tour, Destination, BlogPost, BlogPostStatus
+from app.models.tour import TourCategory
+from app.services.search_service import SearchService
 
 router = APIRouter(tags=["Search"])
 
@@ -88,6 +90,80 @@ class SearchResponse(BaseModel):
     blog: list[SearchResultItem]
 
 
+class TextSearchItem(BaseModel):
+    id: str
+    name: str
+    slug: str
+    property_type: Optional[str] = None
+    category: Optional[str] = None
+    region: Optional[str] = None
+    city: Optional[str] = None
+    cover_image: Optional[str] = None
+    base_price: float = 0
+    rating: Optional[float] = None
+    total_reviews: Optional[int] = None
+    match_type: str = "text"
+    rank: float = 0.0
+
+
+class TextSearchResponse(BaseModel):
+    items: list[TextSearchItem]
+    total: int
+    query: str
+
+
+@router.get(
+    "/properties",
+    response_model=TextSearchResponse,
+    summary="Full-text search properties",
+    description="Searches properties using PostgreSQL full-text search with optional filters by type, category, region, and price range.",
+)
+async def search_properties(
+    q: str = Query(..., min_length=1, max_length=200),
+    db: AsyncSession = Depends(get_db),
+    property_type: Optional[str] = None,
+    category: Optional[str] = None,
+    region: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    limit: int = Query(20, ge=1, le=100),
+):
+    q = q.strip()[:200]
+    service = SearchService()
+    results = await service.search_properties(
+        db=db,
+        query=q,
+        property_type=property_type,
+        category=category,
+        region=region,
+        min_price=min_price,
+        max_price=max_price,
+        limit=limit,
+    )
+    return {
+        "items": [
+            {
+                "id": str(r.item.id),
+                "name": r.item.name,
+                "slug": r.item.slug,
+                "property_type": r.item.property_type,
+                "category": r.item.category,
+                "region": r.item.region,
+                "city": r.item.city,
+                "cover_image": r.item.cover_image,
+                "base_price": r.item.base_price or 0,
+                "rating": r.item.rating,
+                "total_reviews": r.item.total_reviews,
+                "match_type": "text",
+                "rank": r.rank,
+            }
+            for r in results
+        ],
+        "total": len(results),
+        "query": q,
+    }
+
+
 @router.get(
     "/map",
     response_model=MapDataResponse,
@@ -145,7 +221,7 @@ async def get_map_data(
     )
 
     if category:
-        tour_query = tour_query.where(Tour.category == category)
+        tour_query = tour_query.where(Tour.category == TourCategory(category))
     if min_price:
         tour_query = tour_query.where(Tour.price >= min_price)
     if max_price:

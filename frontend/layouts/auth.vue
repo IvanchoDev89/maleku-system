@@ -8,7 +8,7 @@
       <!-- Background Image -->
       <div class="absolute inset-0">
         <NuxtImg
-          src="https://images.unsplash.com/photo-1518638150340-f706e86654de?w=1200&q=85"
+          src="https://images.unsplash.com/photo-1518638150340-f706e86654de"
           alt="Costa Rica"
           class="w-full h-full object-cover opacity-30"
           width="1200"

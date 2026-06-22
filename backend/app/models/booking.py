@@ -135,6 +135,10 @@ class Booking(Base):
 
     __table_args__ = (
         Index("idx_booking_user", "user_id"),
+        Index("idx_booking_check_out", "check_out"),
+        Index("idx_booking_status_created", "status", "created_at"),
+        Index("idx_booking_user_status", "user_id", "status"),
+        Index("idx_booking_property_checkin", "property_id", "check_in"),
         Index("idx_booking_vendor", "vendor_id"),
         Index("idx_booking_property", "property_id"),
         Index("idx_booking_tour", "tour_id"),

@@ -428,7 +428,7 @@ async def get_recent_activity(
                 "id": str(booking.id),
                 "action": "booking_created",
                 "entity_type": "booking",
-                "entity_name": f"Reserva #{booking.id[:8]}",
+                "entity_name": f"Reserva #{str(booking.id)[:8]}",
                 "user_name": user.full_name,
                 "user_email": user.email,
                 "timestamp": booking.created_at,

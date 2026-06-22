@@ -1,26 +1,23 @@
 <template>
   <div class="min-h-screen bg-gray-50 py-12">
     <div class="container">
-      <!-- Header -->
       <div class="text-center mb-12">
         <h1 class="text-4xl font-bold text-gray-900 mb-4">Destinos en Costa Rica</h1>
         <p class="text-xl text-gray-600 max-w-2xl mx-auto">Explora las regiones más impresionantes del país, desde playas paradisíacas hasta volcanes activos</p>
       </div>
 
-      <!-- Filter -->
       <div class="flex flex-wrap justify-center gap-3 mb-12">
         <button
-          v-for="region in regions"
-          :key="region"
-          @click="selectedRegion = selectedRegion === region ? '' : region"
+          v-for="r in regionList"
+          :key="r"
+          @click="selectedRegion = selectedRegion === r ? '' : r"
           class="px-5 py-2.5 rounded-full transition-all font-medium text-sm"
-          :class="selectedRegion === region ? 'bg-primary-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-primary-50 border border-gray-200'"
+          :class="selectedRegion === r ? 'bg-primary-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-primary-50 border border-gray-200'"
         >
-          {{ region }}
+          {{ r }}
         </button>
       </div>
 
-      <!-- Loading -->
       <div v-if="pending" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         <div v-for="i in 6" :key="i" class="rounded-2xl overflow-hidden">
           <div class="h-64 bg-gray-200 animate-pulse"></div>
@@ -31,16 +28,22 @@
         </div>
       </div>
 
-      <!-- Destinations Grid -->
       <div v-else class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         <NuxtLink
-          v-for="dest in filteredDestinations"
+          v-for="dest in filtered"
           :key="dest.id"
-          :to="`/destinos/${dest.slug || dest.name.toLowerCase().replace(/\s+/g, '-')}`"
+          :to="`/destinos/${dest.slug}`"
           class="group"
         >
           <div class="relative rounded-2xl overflow-hidden shadow-lg h-72">
+            <img
+              v-if="dest.image"
+              :src="dest.image"
+              :alt="dest.name"
+              class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
             <div
+              v-else
               class="absolute inset-0 flex items-center justify-center text-8xl"
               :class="dest.gradient"
             >
@@ -51,18 +54,18 @@
             <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
               <span class="inline-flex items-center gap-1 text-white/80 text-sm mb-2">
                 <MapPin class="w-4 h-4" />
-                {{ dest.region }}
+                {{ dest.location }}
               </span>
               <h3 class="text-2xl font-bold group-hover:text-primary-300 transition-colors">
                 {{ dest.name }}
               </h3>
               <p class="mt-2 text-white/90 text-sm line-clamp-2">{{ dest.shortDesc }}</p>
-              <div class="mt-4 flex items-center justify-between">
-                <span class="text-sm flex items-center gap-1">
+              <div class="mt-4 flex items-center gap-4 text-sm text-white/80">
+                <span v-if="dest.highlightCount" class="flex items-center gap-1">
                   <Star class="w-4 h-4 text-amber-400 fill-amber-400" />
-                  {{ dest.rating }}
+                  {{ dest.highlightCount }} atractivos
                 </span>
-                <span class="text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
+                <span class="flex items-center gap-1 group-hover:gap-2 transition-all ml-auto">
                   Ver más <ArrowRight class="w-4 h-4" />
                 </span>
               </div>
@@ -71,8 +74,18 @@
         </NuxtLink>
       </div>
 
-      <!-- Empty State -->
-      <div v-if="!pending && filteredDestinations.length === 0" class="text-center py-16">
+      <div v-if="fetchError && !pending" class="text-center py-16">
+        <div class="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+          <AlertCircle class="w-12 h-12 text-red-400" />
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Error al cargar destinos</h2>
+        <p class="text-gray-500 mb-2">No pudimos conectar con el servidor. Intenta de nuevo.</p>
+        <button @click="refresh()" class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 mt-4">
+          Reintentar
+        </button>
+      </div>
+
+      <div v-if="!pending && !fetchError && filtered.length === 0" class="text-center py-16">
         <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <MapPin class="w-12 h-12 text-gray-400" />
         </div>
@@ -82,7 +95,6 @@
         </button>
       </div>
 
-      <!-- Info Section -->
       <div class="mt-16 bg-white rounded-2xl shadow-sm p-8">
         <h2 class="text-2xl font-bold mb-6 text-gray-900">¿Por qué visitar Costa Rica?</h2>
         <div class="grid md:grid-cols-3 gap-8">
@@ -114,60 +126,62 @@
 </template>
 
 <script setup lang="ts">
-import { MapPin, Star, ArrowRight } from 'lucide-vue-next'
+import { MapPin, Star, ArrowRight, AlertCircle } from 'lucide-vue-next'
+import type { Destination } from '~/types'
 
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
 
 const selectedRegion = ref('')
 
-const { data: apiData, pending } = useFetch(
+const { data: apiData, pending, error: fetchError, refresh } = useFetch<Destination[]>(
   () => `${apiBase}/destinations`,
-  {
-    default: () => []
-  }
+  { default: () => [], key: 'destinos-list' }
 )
 
-const destinations = computed(() => {
-  const icons: Record<string, string> = {
-    'Pacífico Norte': '🏖️',
-    'Norte': '🌋',
-    'Pacífico Central': '🦝',
-    'Valle Central': '🏛️',
-    'Caribe': '🌴',
-    'Pacífico Sur': '🌿'
-  }
-  const gradients: Record<string, string> = {
-    'Pacífico Norte': 'bg-gradient-to-br from-yellow-400 to-orange-500',
-    'Norte': 'bg-gradient-to-br from-green-500 to-primary-600',
-    'Pacífico Central': 'bg-gradient-to-br from-emerald-500 to-cyan-600',
-    'Valle Central': 'bg-gradient-to-br from-amber-400 to-yellow-500',
-    'Caribe': 'bg-gradient-to-br from-primary-400 to-emerald-500',
-    'Pacífico Sur': 'bg-gradient-to-br from-green-600 to-primary-700'
-  }
+const icons: Record<string, string> = {
+  'Pacífico Norte': '🏖️',
+  'Norte': '🌋',
+  'Pacífico Central': '🦝',
+  'Valle Central': '🏛️',
+  'Caribe': '🌴',
+  'Pacífico Sur': '🌿'
+}
 
-  return (apiData.value || []).map((d: any) => ({
+const gradients: Record<string, string> = {
+  'Pacífico Norte': 'bg-gradient-to-br from-yellow-400 to-orange-500',
+  'Norte': 'bg-gradient-to-br from-green-500 to-primary-600',
+  'Pacífico Central': 'bg-gradient-to-br from-emerald-500 to-cyan-600',
+  'Valle Central': 'bg-gradient-to-br from-amber-400 to-yellow-500',
+  'Caribe': 'bg-gradient-to-br from-primary-400 to-emerald-500',
+  'Pacífico Sur': 'bg-gradient-to-br from-green-600 to-primary-700'
+}
+
+const destinations = computed(() =>
+  (apiData.value || []).map((d: Destination) => ({
     id: d.id,
     name: d.name,
-    slug: d.slug || d.name.toLowerCase().replace(/\s+/g, '-'),
+    slug: d.slug,
+    image: d.image,
     region: d.region,
+    province: d.province,
+    location: [d.province, d.region].filter(Boolean).join(', '),
     description: d.description,
-    shortDesc: d.description?.substring(0, 80) + '...',
-    icon: icons[d.region] || '🌎',
-    gradient: gradients[d.region] || 'bg-gradient-to-br from-gray-500 to-gray-700',
-    rating: '4.8',
+    shortDesc: d.description?.substring(0, 80) + (d.description && d.description.length > 80 ? '...' : ''),
+    highlightCount: d.highlights?.length || 0,
+    icon: icons[d.region || ''] || '🌎',
+    gradient: gradients[d.region || ''] || 'bg-gradient-to-br from-gray-500 to-gray-700',
     is_featured: d.is_featured
   }))
-})
+)
 
-const regions = computed(() => {
-  const unique = new Set(destinations.value.map((d: any) => d.region).filter(Boolean))
-  return Array.from(unique).sort()
-})
+const regionList = computed(() =>
+  [...new Set(destinations.value.map((d) => d.region).filter(Boolean))].sort()
+)
 
-const filteredDestinations = computed(() => {
+const filtered = computed(() => {
   if (!selectedRegion.value) return destinations.value
-  return destinations.value.filter((d: any) => d.region === selectedRegion.value)
+  return destinations.value.filter((d) => d.region === selectedRegion.value)
 })
 
 useSeo({

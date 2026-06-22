@@ -27,7 +27,7 @@ from sqlalchemy.orm import relationship
 from app.models.base import Base
 
 
-class BoatType(enum.Enum):
+class BoatType(str, enum.Enum):
     """Boat equipment type enumeration."""
 
     BOAT = "boat"
@@ -122,6 +122,9 @@ class Boat(Base):
     # Indexes for performance
     __table_args__ = (
         Index("idx_boat_vendor", "vendor_id"),
+        Index("idx_boat_is_active", "is_active"),
+        Index("idx_boat_is_available", "is_available"),
+        Index("idx_boat_created_at", "created_at"),
         Index("idx_boat_type", "equipment_type"),
         Index("idx_boat_available", "is_available", "is_active", "deleted_at"),
         Index("idx_boat_price", "price_per_hour"),

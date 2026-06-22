@@ -4,12 +4,13 @@ Chat/Conversation API - WebSocket Ready
 
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy import select, desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import get_current_user
 from app.models import User, UserRole, Vendor, Conversation, Message, ChatServiceType
 from app.schemas import chat as chat_schema
@@ -128,8 +129,10 @@ async def list_conversations(
 
 
 @router.post("", response_model=chat_schema.ConversationResponse)
+@limiter.limit("30/minute")
 async def create_conversation(
     conv_data: chat_schema.ConversationCreate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -225,9 +228,11 @@ async def get_messages(
 
 
 @router.post("/{conversation_id}/messages", response_model=chat_schema.MessageResponse)
+@limiter.limit("30/minute")
 async def send_message(
     conversation_id: uuid.UUID,
     message_data: chat_schema.MessageCreate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -276,8 +281,10 @@ async def send_message(
 
 
 @router.post("/{conversation_id}/read", response_model=MarkReadResponse)
+@limiter.limit("30/minute")
 async def mark_read(
     conversation_id: uuid.UUID,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

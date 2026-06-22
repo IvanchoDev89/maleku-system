@@ -48,6 +48,9 @@ from app.models.transportation import (
 )
 from app.models.pricing import PricingRule
 from app.models.newsletter import NewsletterSubscriber
+from app.models.planner import PlannerLead
+from app.models.trip_planner import TripPlan, TripItem
+
 from app.models.marketing import (
     CampaignStatus,
     CampaignType,
@@ -110,6 +113,10 @@ __all__ = [
     "Transportation",
     "PricingRule",
     "NewsletterSubscriber",
+    "PlannerLead",
+    # Trip Planner Models
+    "TripPlan",
+    "TripItem",
     # Marketing Models
     "CampaignStatus",
     "CampaignType",

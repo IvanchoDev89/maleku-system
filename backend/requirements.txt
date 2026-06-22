@@ -26,9 +26,6 @@ cloudinary>=1.41.0,<2.0.0
 # Monitoring
 sentry-sdk>=2.20.0,<3.0.0
 psutil>=6.1.0,<7.0.0
-prometheus-client>=0.21.0,<1.0.0
-
-# Monitoring
 prometheus-client>=0.25.0,<1.0.0
 
 # Testing

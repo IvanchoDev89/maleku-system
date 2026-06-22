@@ -4,11 +4,12 @@ Flights API - Vuelos
 
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import require_role
 from app.core.utils import escape_like_pattern
 from app.models import UserRole, Flight, RouteType
@@ -17,24 +18,28 @@ from app.schemas import flight as flight_schema
 router = APIRouter()
 
 
-@router.get("", response_model=list[flight_schema.FlightResponse])
+@router.get("", response_model=dict)
 async def list_flights(
     origin_airport: str | None = None,
     destination_airport: str | None = None,
     route_type: RouteType | None = None,
+    skip: int = 0,
+    limit: int = 20,
     db: AsyncSession = Depends(get_db),
-) -> list[flight_schema.FlightResponse]:
+) -> dict:
     """
-    List all available flights with optional filters.
+    List available flights with optional filters and pagination.
 
     Args:
         origin_airport: Filter by origin airport (IATA code or partial)
         destination_airport: Filter by destination airport (IATA code or partial)
         route_type: Filter by route type (international/domestic)
+        skip: Number of records to skip (pagination offset)
+        limit: Maximum number of records to return (pagination limit)
         db: Database session
 
     Returns:
-        List of flights matching the filters
+        Paginated list of flights matching the filters
     """
     query = select(Flight).where(Flight.is_active, Flight.deleted_at.is_(None))
 
@@ -47,10 +52,38 @@ async def list_flights(
     if route_type:
         query = query.where(Flight.route_type == route_type)
 
-    result = await db.execute(query.order_by(Flight.departure_time))
+    count_query = select(
+        select(Flight)
+        .where(Flight.is_active, Flight.deleted_at.is_(None))
+        .subquery()
+        .c.id
+    )
+    if origin_airport:
+        safe_origin = escape_like_pattern(origin_airport)
+        count_query = count_query.where(Flight.origin_airport.ilike(f"%{safe_origin}%"))
+    if destination_airport:
+        safe_destination = escape_like_pattern(destination_airport)
+        count_query = count_query.where(
+            Flight.destination_airport.ilike(f"%{safe_destination}%")
+        )
+    if route_type:
+        count_query = count_query.where(Flight.route_type == route_type)
+
+    limit = min(limit, 100)
+    result = await db.execute(
+        query.order_by(Flight.departure_time).offset(skip).limit(limit)
+    )
     flights = result.scalars().all()
 
-    return flights
+    total_result = await db.execute(count_query)
+    total = len(total_result.scalars().all())
+
+    return {
+        "items": flights,
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+    }
 
 
 @router.get("/search", response_model=dict)
@@ -108,7 +141,9 @@ async def get_flight(flight_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("", response_model=flight_schema.FlightResponse)
+@limiter.limit("10/minute")
 async def create_flight(
+    request: Request,
     flight_data: flight_schema.FlightCreate,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_role(UserRole.ADMIN)),
@@ -147,7 +182,9 @@ async def create_flight(
 
 
 @router.put("/{flight_id}", response_model=flight_schema.FlightResponse)
+@limiter.limit("10/minute")
 async def update_flight(
+    request: Request,
     flight_id: uuid.UUID,
     flight_data: flight_schema.FlightUpdate,
     db: AsyncSession = Depends(get_db),

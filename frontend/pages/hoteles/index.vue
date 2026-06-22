@@ -94,7 +94,7 @@
         >
           <div class="relative h-52 overflow-hidden">
             <NuxtImg
-              :src="property.cover_image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80'"
+              :src="property.cover_image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945'"
               :alt="property.name"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               width="800"
@@ -193,6 +193,7 @@ const getQueryParams = () => {
 const { data: apiData, pending, error, refresh } = useFetch(
   () => `${apiBase}/properties?${getQueryParams()}`,
   {
+    key: 'hoteles-list',
     default: () => ({ items: [], total: 0, page: 1, total_pages: 1 })
   }
 )

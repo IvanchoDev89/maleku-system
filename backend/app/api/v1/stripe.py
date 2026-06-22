@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 
 from app.core.database import get_db
 from app.core.config import settings
+from app.core.rate_limiter import limiter
 from app.core.security import get_current_user
 from app.models import User, Vendor, Booking, BookingStatus, ProcessedWebhook, Property
 from app.services.stripe_service import (
@@ -160,9 +161,11 @@ async def update_booking_payment_status(
 
 
 @router.post("/checkout", response_model=CheckoutResponse)
+@limiter.limit("10/minute")
 async def create_checkout(
     data: CheckoutRequest,
     current_user: User = Depends(get_current_user),
+    request: Request = None,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -228,7 +231,7 @@ async def get_vendor_connect_link(
     Get or create Stripe Connect account for vendor.
     Returns onboarding URL for vendor to complete setup.
     """
-    if current_user.role.value != "vendor":
+    if current_user.role != "vendor":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only vendors can connect Stripe accounts",
@@ -464,7 +467,9 @@ async def _update_booking_refund_status(db: AsyncSession, payment_intent_id: str
 
 
 @router.post("/bookings/{booking_id}/refund", response_model=RefundResponse)
+@limiter.limit("5/minute")
 async def refund_booking(
+    request: Request,
     booking_id: UUID,
     data: RefundRequest,
     current_user: User = Depends(get_current_user),
@@ -475,7 +480,7 @@ async def refund_booking(
     Only vendors and admins can process refunds.
     """
     # Check permissions
-    if current_user.role.value not in ["vendor", "admin", "super_admin"]:
+    if current_user.role not in ["vendor", "admin", "super_admin"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to process refunds",
@@ -491,7 +496,7 @@ async def refund_booking(
         )
 
     # Verify vendor owns this booking (if vendor)
-    if current_user.role.value == "vendor":
+    if current_user.role == "vendor":
         vendor_result = await db.execute(
             select(Vendor).where(Vendor.user_id == current_user.id)
         )
@@ -577,12 +582,12 @@ async def check_payment_status(
         )
 
     # Verify user owns this booking or is vendor/admin
-    if current_user.role.value == "client" and booking.user_id != current_user.id:
+    if current_user.role == "client" and booking.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
         )
 
-    if current_user.role.value == "vendor":
+    if current_user.role == "vendor":
         vendor_result = await db.execute(
             select(Vendor).where(Vendor.user_id == current_user.id)
         )

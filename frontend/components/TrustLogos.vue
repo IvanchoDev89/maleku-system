@@ -1,64 +1,49 @@
 <script setup lang="ts">
-/**
- * Trust Logos Section
- * Logo cloud de partners y certificaciones
- */
 const partners = [
-  { name: 'Booking.com', logo: '/images/partners/booking.svg' },
-  { name: 'TripAdvisor', logo: '/images/partners/tripadvisor.svg' },
-  { name: 'Expedia', logo: '/images/partners/expedia.svg' },
-  { name: 'Airbnb', logo: '/images/partners/airbnb.svg' },
-  { name: 'ICT Costa Rica', logo: '/images/partners/ict.svg' },
-  { name: 'Canatur', logo: '/images/partners/canatur.svg' }
+  { name: 'Booking.com', emoji: '🏨' },
+  { name: 'TripAdvisor', emoji: '📋' },
+  { name: 'Expedia', emoji: '✈️' },
+  { name: 'Airbnb', emoji: '🏡' },
+  { name: 'ICT Costa Rica', emoji: '🌴' },
+  { name: 'Canatur', emoji: '🤝' }
 ]
 
 const certifications = [
-  { name: 'Certificación CST', badge: 'Level 5' },
-  { name: 'Carbon Neutral', badge: '2024' },
-  { name: 'Blue Flag', badge: 'Beaches' }
+  { name: 'Certificación CST', badge: 'Sostenibilidad', icon: '♻️' },
+  { name: 'Carbono Neutral', badge: '2030', icon: '🌱' },
+  { name: 'Bandera Azul', badge: 'Playas', icon: '🏖️' }
 ]
 </script>
 
 <template>
-  <section class="py-12 bg-white border-b border-gray-100">
+  <section class="relative py-16 overflow-hidden bg-gray-50 dark:bg-gray-900/50 border-y border-gray-100 dark:border-gray-800">
     <div class="container mx-auto px-4">
-      <!-- Partners Logos -->
-      <div class="text-center mb-8">
-        <p class="text-sm text-gray-600 uppercase tracking-wider font-medium">
-          Confiado por viajeros y respaldado por los mejores
+      <div class="text-center mb-10">
+        <p class="text-xs uppercase tracking-[0.2em] font-semibold text-gray-400 dark:text-gray-500">
+          Confiado por viajeros de todo el mundo
         </p>
       </div>
 
-      <!-- Logos Grid -->
-      <div class="flex flex-wrap items-center justify-center gap-6 md:gap-10">
+      <div class="flex flex-wrap items-center justify-center gap-4 md:gap-8">
         <div
           v-for="partner in partners"
           :key="partner.name"
-          class="flex items-center justify-center px-6 py-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50/30 transition-all duration-300"
+          class="group flex items-center gap-3 px-6 py-4 bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700/50"
         >
-          <img
-            :src="partner.logo"
-            :alt="partner.name"
-            class="h-8 md:h-10 w-auto object-contain grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
-          />
-          <span class="sr-only">{{ partner.name }}</span>
+          <span class="text-2xl group-hover:scale-110 transition-transform duration-300">{{ partner.emoji }}</span>
+          <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ partner.name }}</span>
         </div>
       </div>
 
-      <!-- Certifications -->
-      <div class="flex flex-wrap items-center justify-center gap-4 mt-8 pt-8 border-t border-gray-100">
+      <div class="flex flex-wrap items-center justify-center gap-3 mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
         <div
           v-for="cert in certifications"
           :key="cert.name"
-          class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full"
+          class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-100 dark:border-gray-700"
         >
-          <span class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-            </svg>
-          </span>
-          <span class="text-sm font-medium text-gray-700">{{ cert.name }}</span>
-          <span class="text-xs text-gray-700 bg-white px-2 py-0.5 rounded">{{ cert.badge }}</span>
+          <span class="text-lg">{{ cert.icon }}</span>
+          <span class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ cert.name }}</span>
+          <span class="text-xs font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-2 py-0.5 rounded-full">{{ cert.badge }}</span>
         </div>
       </div>
     </div>

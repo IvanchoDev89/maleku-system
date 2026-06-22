@@ -9,17 +9,15 @@ import sqlalchemy as sa
 from sqlalchemy import (
     Column,
     String,
-    Boolean,
-    DateTime,
-    ForeignKey,
-    Text,
-    Float,
     Integer,
+    Boolean,
+    Float,
+    DateTime,
+    Text,
     JSON,
-    Enum,
-    Index,
+    ForeignKey,
     Numeric,
-    text,
+    Index,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
@@ -27,7 +25,7 @@ from sqlalchemy.orm import relationship
 from app.models.base import Base
 
 
-class PropertyType(enum.Enum):
+class PropertyType(str, enum.Enum):
     """Property accommodation type."""
 
     HOTEL = "hotel"
@@ -42,7 +40,7 @@ class PropertyType(enum.Enum):
     APARTHOTEL = "aparthotel"
 
 
-class PropertyCategory(enum.Enum):
+class PropertyCategory(str, enum.Enum):
     """Property location category."""
 
     BEACH = "beach"
@@ -88,10 +86,8 @@ class Property(Base):
     slug = Column(String(255), unique=True, index=True, nullable=False)
     short_description = Column(String(500), nullable=True)
     description = Column(Text, nullable=True)
-    property_type = Column(
-        Enum(PropertyType), default=PropertyType.HOTEL, nullable=False
-    )
-    category = Column(Enum(PropertyCategory), nullable=True)
+    property_type = Column(String(20), default=PropertyType.HOTEL.value, nullable=False)
+    category = Column(String(20), nullable=True)
 
     # Location
     country = Column(String(100), default="Costa Rica", nullable=False)
@@ -172,6 +168,12 @@ class Property(Base):
 
     # Indexes
     __table_args__ = (
+        Index("idx_property_vendor", "vendor_id"),
+        Index("idx_property_is_active", "is_active"),
+        Index("idx_property_is_featured", "is_featured"),
+        Index("idx_property_created_at", "created_at"),
+        Index("idx_property_active_created", "is_active", "created_at"),
+        Index("idx_property_vendor_active", "vendor_id", "is_active"),
         Index("idx_property_type", "property_type"),
         Index("idx_property_category", "category"),
         Index("idx_property_location", "region", "city"),
@@ -187,7 +189,7 @@ class Property(Base):
         # See app/models/tour.py for the rationale behind using raw text().
         Index(
             "idx_property_fts",
-            text(
+            sa.text(
                 "to_tsvector('spanish', COALESCE(name, '') || ' ' || "
                 "COALESCE(short_description, '') || ' ' || "
                 "COALESCE(description, '') || ' ' || "

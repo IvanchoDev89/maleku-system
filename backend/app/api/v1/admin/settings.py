@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 from typing import Optional, Any
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
-from app.core.security import get_current_user
-from app.models import User, UserRole
+from app.core.security import require_permission
+from app.core.rate_limiter import limiter
+from app.models import User
 
 router = APIRouter()
 
@@ -484,10 +485,9 @@ for key, config in DEFAULT_SETTINGS.items():
 
 
 @router.get("", response_model=dict)
-async def get_all_settings(current_user: User = Depends(get_current_user)):
-    if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
-        raise HTTPException(status_code=403, detail="Access denied")
-
+async def get_all_settings(
+    current_user: User = Depends(require_permission("system", "settings")),
+):
     # Group by category
     result = {}
     for key, data in settings_cache.items():
@@ -510,10 +510,9 @@ async def get_public_settings():
 
 
 @router.get("/{key}", response_model=SettingDetailResponse)
-async def get_setting_by_key(key: str, current_user: User = Depends(get_current_user)):
-    if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
-        raise HTTPException(status_code=403, detail="Access denied")
-
+async def get_setting_by_key(
+    key: str, current_user: User = Depends(require_permission("system", "settings"))
+):
     if key not in settings_cache:
         raise HTTPException(status_code=404, detail="Setting not found")
 
@@ -521,14 +520,13 @@ async def get_setting_by_key(key: str, current_user: User = Depends(get_current_
 
 
 @router.put("/{key}", response_model=UpdateSettingResponse)
+@limiter.limit("10/minute")
 async def update_setting(
-    key: str, value: Any, current_user: User = Depends(get_current_user)
+    request: Request,
+    key: str,
+    value: Any,
+    current_user: User = Depends(require_permission("system", "settings")),
 ):
-    if current_user.role != UserRole.SUPER_ADMIN:
-        raise HTTPException(
-            status_code=403, detail="Only super admin can update settings"
-        )
-
     if key not in DEFAULT_SETTINGS:
         raise HTTPException(status_code=404, detail="Setting key not found")
 
@@ -549,14 +547,12 @@ async def update_setting(
 
 
 @router.post("/bulk", response_model=BulkUpdateResponse)
+@limiter.limit("5/minute")
 async def bulk_update_settings(
-    settings: dict, current_user: User = Depends(get_current_user)
+    request: Request,
+    settings: dict,
+    current_user: User = Depends(require_permission("system", "settings")),
 ):
-    if current_user.role != UserRole.SUPER_ADMIN:
-        raise HTTPException(
-            status_code=403, detail="Only super admin can update settings"
-        )
-
     # Validate all settings first
     errors = {}
     for key, value in settings.items():
@@ -585,9 +581,8 @@ async def bulk_update_settings(
 
 
 @router.get("/categories/list", response_model=CategoriesResponse)
-async def get_categories(current_user: User = Depends(get_current_user)):
-    if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
-        raise HTTPException(status_code=403, detail="Access denied")
-
+async def get_categories(
+    current_user: User = Depends(require_permission("system", "settings")),
+):
     categories = list(set(config["category"] for config in DEFAULT_SETTINGS.values()))
     return {"categories": categories}

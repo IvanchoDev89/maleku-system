@@ -14,11 +14,8 @@ IS_DEV = settings.ENVIRONMENT == "development"
 
 
 def _error_content(exc: Exception, generic_msg: str) -> dict:
-    """Return error detail; include traceback in development."""
+    """Return error detail; never include traceback in response body."""
     content: dict = {"detail": generic_msg}
-    if IS_DEV:
-        content["detail"] = str(exc)
-        content["traceback"] = traceback.format_exc()
     return content
 
 

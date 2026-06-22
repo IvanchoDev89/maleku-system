@@ -26,9 +26,11 @@ const api = useApi()
 const toast = useToast()
 
 const loading = ref(true)
+const uploading = ref(false)
 const error = ref('')
 const files = ref<MediaFile[]>([])
 const currentFolder = ref('all')
+const fileInput = ref<HTMLInputElement | null>(null)
 
 const folders = computed(() => {
   const folderSet = new Set(files.value.map(f => f.folder))
@@ -50,6 +52,28 @@ const totalSize = computed(() => {
   return `${size.toFixed(1)} ${units[i]}`
 })
 
+const triggerUpload = () => {
+  fileInput.value?.click()
+}
+
+const handleFileSelected = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  uploading.value = true
+  try {
+    await api.upload('/upload/image', file, 'file', currentFolder.value === 'all' ? 'general' : currentFolder.value)
+    toast.success('Archivo subido exitosamente')
+    loadFiles()
+  } catch (e: any) {
+    toast.error(e?.data?.detail || 'Error al subir archivo')
+  } finally {
+    uploading.value = false
+    input.value = ''
+  }
+}
+
 const deleteFile = async (file: MediaFile) => {
   try {
     await api.delete(`/superadmin/content/media/${file.id}`)
@@ -60,7 +84,7 @@ const deleteFile = async (file: MediaFile) => {
   }
 }
 
-onMounted(async () => {
+const loadFiles = async () => {
   loading.value = true
   try {
     const data = await api.get<MediaFile[]>('/superadmin/content/media')
@@ -70,7 +94,9 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(loadFiles)
 </script>
 
 <template>
@@ -87,6 +113,23 @@ onMounted(async () => {
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Media Library</h1>
         <p class="text-gray-500">{{ files.length }} archivos • {{ totalSize }} total</p>
+      </div>
+      <div>
+        <input
+          ref="fileInput"
+          type="file"
+          class="hidden"
+          accept="image/*,.pdf,.doc,.docx"
+          @change="handleFileSelected"
+        />
+        <button
+          @click="triggerUpload"
+          :disabled="uploading"
+          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+        >
+          <UiSpinner v-if="uploading" size="sm" color="white" />
+          {{ uploading ? 'Subiendo...' : 'Subir Archivo' }}
+        </button>
       </div>
     </div>
 

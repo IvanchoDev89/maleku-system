@@ -4,11 +4,12 @@ Boat Equipment API - Náutico
 
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import get_current_user, require_role
 from app.core.utils import escape_like_pattern
 from app.models import User, UserRole, Vendor, BoatEquipment, BoatType
@@ -68,21 +69,25 @@ async def list_boats(
     location: str | None = None,
     equipment_type: BoatType | None = None,
     capacity: int | None = None,
+    skip: int = 0,
+    limit: int = 20,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> list[boat_schema.BoatEquipmentResponse]:
+) -> dict:
     """
-    List all available boat and nautical equipment with filters.
+    List all available boat and nautical equipment with filters and pagination.
 
     Args:
         location: Filter by location (partial match)
         equipment_type: Type of equipment (boat, jet ski, kayak, etc.)
         capacity: Minimum passenger capacity
+        skip: Number of records to skip (pagination offset)
+        limit: Maximum number of records to return
         db: Database session
         current_user: Authenticated user
 
     Returns:
-        List of boat equipment matching the filters
+        Paginated list of boat equipment matching the filters
     """
     query = select(BoatEquipment).where(
         BoatEquipment.is_active, BoatEquipment.is_available
@@ -97,10 +102,36 @@ async def list_boats(
     if capacity:
         query = query.where(BoatEquipment.capacity >= capacity)
 
-    result = await db.execute(query.order_by(BoatEquipment.price_per_day))
+    count_query = select(
+        select(BoatEquipment.id)
+        .where(BoatEquipment.is_active, BoatEquipment.is_available)
+        .subquery()
+        .c.id
+    )
+    if location:
+        count_query = count_query.where(
+            BoatEquipment.location.ilike(f"%{escape_like_pattern(location)}%")
+        )
+    if equipment_type:
+        count_query = count_query.where(BoatEquipment.equipment_type == equipment_type)
+    if capacity:
+        count_query = count_query.where(BoatEquipment.capacity >= capacity)
+
+    limit = min(limit, 100)
+    result = await db.execute(
+        query.order_by(BoatEquipment.price_per_day).offset(skip).limit(limit)
+    )
     boats = result.scalars().all()
 
-    return boats
+    total_result = await db.execute(count_query)
+    total = len(total_result.scalars().all())
+
+    return {
+        "items": boats,
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+    }
 
 
 @router.get("/{boat_id}", response_model=boat_schema.BoatEquipmentDetailResponse)
@@ -130,7 +161,9 @@ async def get_boat(
 
 
 @router.post("", response_model=boat_schema.BoatEquipmentResponse)
+@limiter.limit("10/minute")
 async def create_boat(
+    request: Request,
     boat_data: boat_schema.BoatEquipmentCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.VENDOR)),
@@ -182,7 +215,9 @@ async def create_boat(
 
 
 @router.put("/{boat_id}", response_model=boat_schema.BoatEquipmentResponse)
+@limiter.limit("10/minute")
 async def update_boat(
+    request: Request,
     boat_id: uuid.UUID,
     boat_data: boat_schema.BoatEquipmentUpdate,
     db: AsyncSession = Depends(get_db),

@@ -5,11 +5,6 @@ from uuid import UUID
 import re
 
 
-def sanitize_slug(value: str) -> str:
-    """Remove dangerous characters from slug"""
-    return re.sub(r"[^a-z0-9\-]", "", value.lower().replace(" ", "-"))
-
-
 def sanitize_html(value: str) -> str:
     """Remove HTML tags"""
     return re.sub(r"<[^>]+>", "", value)
@@ -38,8 +33,31 @@ def is_dangerous_sql(value: str) -> bool:
     return any(d in upper for d in dangerous)
 
 
+COMMON_PASSWORDS = {
+    "password",
+    "12345678",
+    "123456789",
+    "qwerty123",
+    "abc123",
+    "letmein",
+    "welcome",
+    "monkey",
+    "dragon",
+    "master",
+    "password1",
+    "Password1",
+    "Password123",
+    "admin123",
+    "costa rica",
+    "costarica",
+    "travel",
+    "CostaRica",
+}
+
+
 def is_weak_password(value: str) -> bool:
     """Check password strength"""
+    value = value.strip()
     if len(value) < 8:
         return True
     if not re.search(r"[A-Z]", value):
@@ -48,11 +66,16 @@ def is_weak_password(value: str) -> bool:
         return True
     if not re.search(r"[0-9]", value):
         return True
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
+        return True
+    if value.lower() in COMMON_PASSWORDS:
+        return True
     return False
 
 
 # ============== USER SCHEMAS ==============
 class UserBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     email: EmailStr
     full_name: str = Field(..., min_length=2, max_length=255)
     phone: Optional[str] = Field(None, min_length=8, max_length=20)
@@ -73,14 +96,16 @@ class UserCreate(UserBase):
     @field_validator("password")
     @classmethod
     def validate_password(cls, v: str) -> str:
+        v = v.strip()
         if is_weak_password(v):
             raise ValueError(
-                "Password must be 8+ chars with uppercase, lowercase, and numbers"
+                "Password must be 8+ chars with uppercase, lowercase, number, and special character"
             )
         return v
 
 
 class UserUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     full_name: Optional[str] = Field(None, min_length=2, max_length=255)
     phone: Optional[str] = Field(None, min_length=8, max_length=20)
     avatar_url: Optional[str] = None
@@ -120,11 +145,12 @@ class UserResponse(UserBase):
     avatar_url: Optional[str]
     created_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
 
 # ============== AUTH SCHEMAS ==============
 class LoginRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     email: EmailStr
     password: str
 
@@ -134,6 +160,7 @@ class RegisterRequest(UserCreate):
 
 
 class TokenResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -141,10 +168,12 @@ class TokenResponse(BaseModel):
 
 
 class RefreshTokenRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     refresh_token: str
 
 
 class PasswordChangeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     current_password: str
     new_password: str = Field(..., min_length=8)
 
@@ -153,13 +182,14 @@ class PasswordChangeRequest(BaseModel):
     def validate_new_password(cls, v: str) -> str:
         if is_weak_password(v):
             raise ValueError(
-                "Password must be 8+ chars with uppercase, lowercase, and numbers"
+                "Password must be 8+ chars with uppercase, lowercase, number, and special character"
             )
         return v
 
 
 # ============== PAGINATION ==============
 class PaginationParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     page: int = Field(1, ge=1)
     page_size: int = Field(20, ge=1, le=100)
 
@@ -169,6 +199,7 @@ class PaginationParams(BaseModel):
 
 
 class PaginatedResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     items: List[Any]
     total: int
     page: int
@@ -180,6 +211,7 @@ class PaginatedResponse(BaseModel):
 
 # ============== VENDOR SCHEMAS ==============
 class VendorBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     business_name: str = Field(..., min_length=2, max_length=255)
     business_type: str
     description: Optional[str] = None
@@ -198,6 +230,7 @@ class VendorCreate(VendorBase):
 
 
 class VendorUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     business_name: Optional[str] = None
     description: Optional[str] = None
     phone: Optional[str] = None
@@ -222,7 +255,7 @@ class VendorResponse(VendorBase):
     is_active: bool
     created_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
 
 class VendorPublicResponse(BaseModel):
@@ -234,13 +267,14 @@ class VendorPublicResponse(BaseModel):
     rating: Optional[float]
     total_reviews: Optional[int]
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
 
 # ============== PROPERTY SCHEMAS ==============
 class PropertyBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name: str = Field(..., min_length=2, max_length=255)
-    slug: str
+    slug: Optional[str] = None
     short_description: Optional[str] = None
     description: Optional[str] = None
     property_type: str = "hotel"
@@ -284,7 +318,6 @@ class PropertyBase(BaseModel):
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
     seo_keywords: Optional[List[str]] = []
-    seo_slug: Optional[str] = None
 
     @field_validator("name", "address", "slug")
     @classmethod
@@ -302,6 +335,7 @@ class PropertyCreate(PropertyBase):
 
 
 class PropertyUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name: Optional[str] = None
     slug: Optional[str] = None
     short_description: Optional[str] = None
@@ -339,7 +373,6 @@ class PropertyUpdate(BaseModel):
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
     seo_keywords: Optional[List[str]] = None
-    seo_slug: Optional[str] = None
 
     @field_validator("name", "description", "address")
     @classmethod
@@ -351,6 +384,23 @@ class PropertyUpdate(BaseModel):
         return v
 
 
+class RoomSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+    id: UUID
+    property_id: UUID
+    name: str
+    description: Optional[str] = None
+    max_guests: int = 2
+    beds: int = 1
+    bed_type: Optional[str] = None
+    price_per_night: float = 0
+    weekend_price: float = 0
+    extra_guest_price: float = 0
+    cleaning_fee: float = 0
+    images: List[str] = []
+    is_available: bool = True
+
+
 class PropertyResponse(PropertyBase):
     id: UUID
     vendor_id: UUID
@@ -360,12 +410,15 @@ class PropertyResponse(PropertyBase):
     is_featured: bool = False
     is_active: bool = True
     is_verified: bool = False
+    rooms: List[RoomSchema] = []
+    vendor: Optional[VendorPublicResponse] = None
     created_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
 
 class PropertyListResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
     id: UUID
     name: str
     slug: str
@@ -381,11 +434,10 @@ class PropertyListResponse(BaseModel):
     base_price: float = 0
     is_active: bool = True
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 # ============== TOUR SCHEMAS ==============
 class TourBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name: str = Field(..., min_length=2, max_length=255)
     description: Optional[str] = None
     category: str
@@ -409,6 +461,7 @@ class TourCreate(TourBase):
 
 
 class TourUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name: Optional[str] = None
     description: Optional[str] = None
     location: Optional[str] = None
@@ -433,10 +486,11 @@ class TourResponse(TourBase):
     total_reviews: Optional[int]
     is_active: bool
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
 
 class TourListResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
     id: UUID
     name: str
     category: str
@@ -446,11 +500,10 @@ class TourListResponse(BaseModel):
     price: float
     rating: Optional[float]
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 # ============== BOOKING SCHEMAS ==============
 class BookingBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     guest_name: str = Field(..., min_length=2, max_length=255)
     guest_email: EmailStr
     guest_phone: Optional[str] = None
@@ -480,12 +533,12 @@ class BookingTourRequest(BookingBase):
 
 
 class BookingUpdateStatus(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     status: str
 
 
 class PricePreviewRequest(BaseModel):
-    """Request to preview pricing before booking"""
-
+    model_config = ConfigDict(extra="forbid")
     room_id: UUID
     check_in: datetime
     check_out: datetime
@@ -493,8 +546,7 @@ class PricePreviewRequest(BaseModel):
 
 
 class PricePreviewResponse(BaseModel):
-    """Detailed price breakdown for preview"""
-
+    model_config = ConfigDict(extra="forbid")
     nights: int
     weekday_nights: int
     weekend_nights: int
@@ -528,11 +580,12 @@ class BookingResponse(BookingBase):
     total_amount: float
     created_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
 
 # ============== BLOG SCHEMAS ==============
 class BlogPostBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     title: str = Field(..., min_length=5, max_length=255)
     excerpt: Optional[str] = None
     content: str = Field(..., min_length=50)
@@ -553,6 +606,7 @@ class BlogPostCreate(BlogPostBase):
 
 
 class BlogPostUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     title: Optional[str] = None
     excerpt: Optional[str] = None
     content: Optional[str] = None
@@ -569,18 +623,26 @@ class BlogPostUpdate(BaseModel):
 
 class BlogPostResponse(BlogPostBase):
     id: UUID
+    slug: str
     author_id: Optional[UUID]
     status: str
     views_count: int
     is_featured: bool
+    featured_image: Optional[str] = None
+    tags: Optional[List[str]] = None
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
     published_at: Optional[datetime]
     created_at: datetime
+    author_name: Optional[str] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
 
 class BlogPostListResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
     id: UUID
+    slug: str
     title: str
     excerpt: Optional[str]
     category: Optional[str]
@@ -588,66 +650,261 @@ class BlogPostListResponse(BaseModel):
     views_count: int
     is_featured: bool
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 # ============== DESTINATION SCHEMAS ==============
 class DestinationBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name: str = Field(..., min_length=2, max_length=255)
+    slug: Optional[str] = None
     description: Optional[str] = None
+    country: str = "Costa Rica"
+    region: Optional[str] = None
+    province: Optional[str] = None
+    canton: Optional[str] = None
+    district: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    zoom: int = 10
+    highlights: List[str] = []
+    things_to_do: List[str] = []
+    culture: Optional[str] = None
+    gastronomy: Optional[str] = None
+    history: Optional[str] = None
+    best_time: Optional[str] = None
+    weather_info: Optional[str] = None
+    getting_there: Optional[str] = None
+    local_tips: Optional[str] = None
+    safety_info: Optional[str] = None
+    language: Optional[str] = None
+    currency: Optional[str] = None
+    timezone: Optional[str] = None
+    phone_code: Optional[str] = None
+    visa_info: Optional[str] = None
+    emergency_numbers: List[str] = []
+    image: Optional[str] = None
+    gallery: List[str] = []
+    videos: List[str] = []
+    featured_photo: Optional[str] = None
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
+    seo_keywords: List[str] = []
+    is_featured: bool = False
+    is_active: bool = True
+    order: int = 0
 
     @field_validator("name")
     @classmethod
-    def sanitize_input(cls, v: str) -> str:
+    def sanitize_name(cls, v: str) -> str:
         v = v.strip()
         if is_dangerous_sql(v):
             raise ValueError("Invalid name")
         return v
 
+    @field_validator(
+        "description",
+        "culture",
+        "gastronomy",
+        "history",
+        "best_time",
+        "weather_info",
+        "getting_there",
+        "local_tips",
+        "safety_info",
+        "visa_info",
+    )
+    @classmethod
+    def sanitize_text(cls, v: Optional[str]) -> Optional[str]:
+        if v:
+            v = sanitize_html(v).strip()
+            if is_dangerous_sql(v):
+                raise ValueError("Invalid input")
+        return v
+
+    @field_validator("latitude")
+    @classmethod
+    def validate_latitude(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and (v < -90 or v > 90):
+            raise ValueError("Latitude must be between -90 and 90")
+        return v
+
+    @field_validator("longitude")
+    @classmethod
+    def validate_longitude(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and (v < -180 or v > 180):
+            raise ValueError("Longitude must be between -180 and 180")
+        return v
+
+    @field_validator("zoom")
+    @classmethod
+    def validate_zoom(cls, v: int) -> int:
+        if v < 1 or v > 20:
+            raise ValueError("Zoom must be between 1 and 20")
+        return v
+
+    @field_validator("image", "featured_photo")
+    @classmethod
+    def validate_url(cls, v: Optional[str]) -> Optional[str]:
+        if v:
+            v = v.strip()
+            if not (
+                v.startswith("http://") or v.startswith("https://") or v.startswith("/")
+            ):
+                raise ValueError("Must be a valid URL (http://, https://, or relative)")
+        return v
+
+    @field_validator("phone_code")
+    @classmethod
+    def validate_phone_code(cls, v: Optional[str]) -> Optional[str]:
+        if v and not re.match(r"^\+?\d{1,6}$", v):
+            raise ValueError("Invalid phone code format (e.g., +506)")
+        return v
+
 
 class DestinationCreate(DestinationBase):
-    region: str
-    province: Optional[str] = None
+    pass
 
 
 class DestinationUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name: Optional[str] = None
+    slug: Optional[str] = None
     description: Optional[str] = None
-    is_active: Optional[bool] = None
+    country: Optional[str] = None
+    region: Optional[str] = None
+    province: Optional[str] = None
+    canton: Optional[str] = None
+    district: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    zoom: Optional[int] = None
+    highlights: Optional[List[str]] = None
+    things_to_do: Optional[List[str]] = None
+    culture: Optional[str] = None
+    gastronomy: Optional[str] = None
+    history: Optional[str] = None
+    best_time: Optional[str] = None
+    weather_info: Optional[str] = None
+    getting_there: Optional[str] = None
+    local_tips: Optional[str] = None
+    safety_info: Optional[str] = None
+    language: Optional[str] = None
+    currency: Optional[str] = None
+    timezone: Optional[str] = None
+    phone_code: Optional[str] = None
+    visa_info: Optional[str] = None
+    emergency_numbers: Optional[List[str]] = None
+    image: Optional[str] = None
+    gallery: Optional[List[str]] = None
+    videos: Optional[List[str]] = None
+    featured_photo: Optional[str] = None
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
+    seo_keywords: Optional[List[str]] = None
     is_featured: Optional[bool] = None
+    is_active: Optional[bool] = None
+    order: Optional[int] = None
 
-    @field_validator("name", "description")
+    @field_validator("name", "description", "culture", "gastronomy", "history")
     @classmethod
-    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+    def sanitize_update_input(cls, v: Optional[str]) -> Optional[str]:
         if v:
-            v = v.strip()
+            v = sanitize_html(v).strip()
             if is_dangerous_sql(v):
                 raise ValueError("Invalid input")
+        return v
+
+    @field_validator("latitude")
+    @classmethod
+    def validate_update_latitude(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and (v < -90 or v > 90):
+            raise ValueError("Latitude must be between -90 and 90")
+        return v
+
+    @field_validator("longitude")
+    @classmethod
+    def validate_update_longitude(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and (v < -180 or v > 180):
+            raise ValueError("Longitude must be between -180 and 180")
+        return v
+
+    @field_validator("zoom")
+    @classmethod
+    def validate_update_zoom(cls, v: Optional[int]) -> Optional[int]:
+        if v is not None and (v < 1 or v > 20):
+            raise ValueError("Zoom must be between 1 and 20")
+        return v
+
+    @field_validator("image", "featured_photo")
+    @classmethod
+    def validate_update_url(cls, v: Optional[str]) -> Optional[str]:
+        if v:
+            v = v.strip()
+            if not (
+                v.startswith("http://") or v.startswith("https://") or v.startswith("/")
+            ):
+                raise ValueError("Must be a valid URL (http://, https://, or relative)")
+        return v
+
+    @field_validator("phone_code")
+    @classmethod
+    def validate_update_phone_code(cls, v: Optional[str]) -> Optional[str]:
+        if v and not re.match(r"^\+?\d{1,6}$", v):
+            raise ValueError("Invalid phone code format (e.g., +506)")
         return v
 
 
 class DestinationResponse(DestinationBase):
     id: UUID
-    region: str
-    province: Optional[str]
-    is_featured: bool
-    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: Optional[datetime] = None
+    highlights: Optional[List[str]] = None
+    things_to_do: Optional[List[str]] = None
+    emergency_numbers: Optional[List[str]] = None
+    gallery: Optional[List[str]] = None
+    videos: Optional[List[str]] = None
+    seo_keywords: Optional[List[str]] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    @field_validator(
+        "highlights",
+        "things_to_do",
+        "emergency_numbers",
+        "gallery",
+        "videos",
+        "seo_keywords",
+        mode="before",
+    )
+    @classmethod
+    def list_default(cls, v):
+        return v if v is not None else []
 
 
 # ============== NEWSLETTER SCHEMAS ==============
 class NewsletterSubscribe(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     email: EmailStr
     first_name: Optional[str] = Field(None, max_length=100)
 
+    @field_validator("first_name")
+    @classmethod
+    def sanitize_name(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            if is_dangerous_sql(v):
+                raise ValueError("Invalid input")
+            return sanitize_html(v)
+        return v
+
 
 class NewsletterSubscribeResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     success: bool
     message: str
 
 
 class NewsletterSubscriberResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
     id: UUID
     email: str
     first_name: Optional[str]
@@ -655,5 +912,3 @@ class NewsletterSubscriberResponse(BaseModel):
     is_confirmed: bool
     source: str
     created_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)

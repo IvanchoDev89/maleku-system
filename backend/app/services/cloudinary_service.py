@@ -2,12 +2,13 @@
 Cloudinary Service - Gestiona subida y optimización de imágenes
 """
 
+import asyncio
+from functools import partial
 from typing import Optional, Dict, Any, List
 
 try:
     import cloudinary
     import cloudinary.uploader
-    import cloudinary.api
 
     CLOUDINARY_AVAILABLE = True
 except ImportError:
@@ -87,8 +88,9 @@ class CloudinaryService:
             if transformation:
                 upload_options["transformation"] = transformation
 
-            # Upload to Cloudinary
-            result = cloudinary.uploader.upload(file_content, **upload_options)
+            # Upload to Cloudinary (run in thread to avoid blocking event loop)
+            fn = partial(cloudinary.uploader.upload, file_content, **upload_options)
+            result = await asyncio.to_thread(fn)
 
             logger.info(f"Image uploaded to Cloudinary: {result['public_id']}")
 
@@ -192,7 +194,8 @@ class CloudinaryService:
             raise CloudinaryError("Cloudinary not configured")
 
         try:
-            result = cloudinary.uploader.destroy(public_id)
+            fn = partial(cloudinary.uploader.destroy, public_id)
+            result = await asyncio.to_thread(fn)
 
             if result.get("result") == "ok":
                 logger.info(f"Image deleted from Cloudinary: {public_id}")

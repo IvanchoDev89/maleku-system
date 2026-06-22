@@ -16,8 +16,9 @@ from uuid import UUID
 from datetime import datetime, timezone, timedelta
 from enum import Enum
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Body, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.rate_limiter import limiter
 from sqlalchemy import case, select, or_, func, desc
 from sqlalchemy.orm import selectinload
 from pydantic import BaseModel, Field, ConfigDict
@@ -27,6 +28,7 @@ from app.core.security import require_superadmin
 from app.core.utils import escape_like_pattern
 from app.models import User, Vendor, Booking, Review, Property, VendorStatus
 from app.services.audit_service import AuditService
+from app.services.vendor_service import VendorService
 from app.models.audit import AuditAction
 
 router = APIRouter(prefix="/vendors", tags=["Super Admin - Vendors"])
@@ -58,6 +60,7 @@ class VendorApprovalAction(str, Enum):
     REJECT = "reject"
     SUSPEND = "suspend"
     REACTIVATE = "reactivate"
+    REQUEST_DOCUMENTS = "request_documents"
 
 
 class VendorApprovalRequest(BaseModel):
@@ -77,6 +80,7 @@ class VendorStats(BaseModel):
     cancelled_bookings: int = 0
     average_rating: float = 0.0
     total_reviews: int = 0
+    total_properties: int = 0
     response_rate: float = 0.0
     avg_response_time_minutes: Optional[int] = None
 
@@ -99,9 +103,9 @@ class VendorDetailResponse(BaseModel):
 
     # Owner info
     owner_id: UUID
-    owner_email: str
-    owner_name: str
-    owner_phone: Optional[str]
+    owner_email: Optional[str] = None
+    owner_name: Optional[str] = None
+    owner_phone: Optional[str] = None
 
     # Statistics
     stats: VendorStats
@@ -123,8 +127,8 @@ class VendorListResponse(BaseModel):
     total_bookings: int
     is_featured: bool
     created_at: datetime
-    owner_email: str
-    owner_name: str
+    owner_email: Optional[str] = None
+    owner_name: Optional[str] = None
 
 
 class VendorAnalytics(BaseModel):
@@ -145,85 +149,6 @@ class ComplianceCheckRequest(BaseModel):
     check_documents: bool = True
     check_bookings: bool = True
     check_reviews: bool = True
-
-
-# ============================================================================
-# Helper Functions
-# ============================================================================
-
-
-async def calculate_vendor_stats(db: AsyncSession, vendor_id: UUID) -> VendorStats:
-    """Calculate comprehensive vendor statistics."""
-    # Bookings stats
-    result = await db.execute(
-        select(
-            func.count(Booking.id).label("total"),
-            func.sum(Booking.total_amount).label("revenue"),
-            func.sum(case((Booking.status == "completed", 1), else_=0)).label(
-                "completed"
-            ),
-            func.sum(case((Booking.status == "cancelled", 1), else_=0)).label(
-                "cancelled"
-            ),
-        ).where(Booking.vendor_id == vendor_id)
-    )
-    row = result.one()
-
-    # Reviews stats
-    result = await db.execute(
-        select(
-            func.avg(Review.rating).label("avg_rating"),
-            func.count(Review.id).label("total_reviews"),
-        ).where(Review.vendor_id == vendor_id)
-    )
-    review_row = result.one()
-
-    return VendorStats(
-        vendor_id=vendor_id,
-        total_bookings=row.total or 0,
-        total_revenue=float(row.revenue or 0),
-        completed_bookings=row.completed or 0,
-        cancelled_bookings=row.cancelled or 0,
-        average_rating=float(review_row.avg_rating or 0),
-        total_reviews=review_row.total_reviews or 0,
-        response_rate=0.0,  # Calculate based on message responses
-        avg_response_time_minutes=None,
-    )
-
-
-async def run_compliance_check(db: AsyncSession, vendor: Vendor) -> List[str]:
-    """Run compliance checks and return flags."""
-    flags = []
-
-    # Check if vendor has properties/tours
-    result = await db.execute(
-        select(func.count(Property.id)).where(Property.vendor_id == vendor.id)
-    )
-    property_count = result.scalar()
-
-    if property_count == 0:
-        flags.append("no_properties")
-
-    # Check booking completion rate
-    result = await db.execute(
-        select(
-            func.count().label("total"),
-            func.sum(case((Booking.status == "completed", 1), else_=0)).label(
-                "completed"
-            ),
-        ).where(Booking.vendor_id == vendor.id)
-    )
-    row = result.one()
-    if row.total and row.total > 0:
-        completion_rate = (row.completed or 0) / row.total
-        if completion_rate < 0.5:
-            flags.append("low_completion_rate")
-
-    # Check rating
-    if vendor.rating and vendor.rating < 2.0:
-        flags.append("low_rating")
-
-    return flags
 
 
 # ============================================================================
@@ -253,7 +178,7 @@ async def list_vendors(
     - search: Search by business name or owner email
     - featured_only: Show only featured vendors
     """
-    query = select(Vendor).options(selectinload(Vendor.owner))
+    query = select(Vendor).options(selectinload(Vendor.user))
 
     # Apply status filter
     if status != VendorFilterStatus.ALL:
@@ -266,7 +191,7 @@ async def list_vendors(
         query = query.where(
             or_(
                 Vendor.business_name.ilike(search_pattern),
-                Vendor.owner.has(User.email.ilike(search_pattern)),
+                Vendor.user.has(User.email.ilike(search_pattern)),
             )
         )
 
@@ -303,8 +228,8 @@ async def list_vendors(
             total_bookings=v.total_bookings or 0,
             is_featured=v.is_featured or False,
             created_at=v.created_at,
-            owner_email=v.owner.email,
-            owner_name=v.owner.full_name,
+            owner_email=v.user.email if v.user else None,
+            owner_name=v.user.full_name if v.user else None,
         )
         for v in vendors
     ]
@@ -320,20 +245,96 @@ async def list_pending_vendors(
     List vendors pending approval with detailed information.
 
     Sorted by registration date (oldest first for priority).
+    Uses batch queries to avoid N+1.
     """
     result = await db.execute(
         select(Vendor)
-        .options(selectinload(Vendor.owner))
+        .options(selectinload(Vendor.user))
         .where(Vendor.status == VendorStatus.PENDING)
         .order_by(Vendor.created_at)
         .limit(limit)
     )
     vendors = result.scalars().all()
+    if not vendors:
+        return []
+
+    vendor_ids = [v.id for v in vendors]
+
+    # Batch: booking stats for all vendors
+    booking_stats = {}
+    if vendor_ids:
+        b_result = await db.execute(
+            select(
+                Booking.vendor_id,
+                func.count(Booking.id).label("total"),
+                func.sum(Booking.total_amount).label("revenue"),
+                func.sum(case((Booking.status == "completed", 1), else_=0)).label(
+                    "completed"
+                ),
+                func.sum(case((Booking.status == "cancelled", 1), else_=0)).label(
+                    "cancelled"
+                ),
+            )
+            .where(Booking.vendor_id.in_(vendor_ids))
+            .group_by(Booking.vendor_id)
+        )
+        for row in b_result.all():
+            booking_stats[row.vendor_id] = row
+
+    # Batch: review stats for all vendors
+    review_stats = {}
+    if vendor_ids:
+        r_result = await db.execute(
+            select(
+                Review.vendor_id,
+                func.avg(Review.rating).label("avg_rating"),
+                func.count(Review.id).label("total_reviews"),
+            )
+            .where(Review.vendor_id.in_(vendor_ids))
+            .group_by(Review.vendor_id)
+        )
+        for row in r_result.all():
+            review_stats[row.vendor_id] = row
+
+    # Batch: property counts for all vendors
+    prop_counts = {}
+    if vendor_ids:
+        p_result = await db.execute(
+            select(
+                Property.vendor_id,
+                func.count(Property.id).label("count"),
+            )
+            .where(Property.vendor_id.in_(vendor_ids))
+            .group_by(Property.vendor_id)
+        )
+        for row in p_result.all():
+            prop_counts[row.vendor_id] = row.count
+
+    # Batch: compliance checks
+    compliance_flags = {}
+    if vendor_ids:
+        for v in vendors:
+            flags = await VendorService.run_compliance_check(db, v)
+            compliance_flags[v.id] = flags
 
     response_list = []
     for v in vendors:
-        stats = await calculate_vendor_stats(db, v.id)
-        flags = await run_compliance_check(db, v)
+        b = booking_stats.get(v.id)
+        r = review_stats.get(v.id)
+        total_properties = prop_counts.get(v.id, 0)
+
+        stats = VendorStats(
+            vendor_id=v.id,
+            total_bookings=b.total if b else 0,
+            total_revenue=float(b.revenue or 0) if b else 0.0,
+            completed_bookings=b.completed if b else 0,
+            cancelled_bookings=b.cancelled if b else 0,
+            average_rating=float(r.avg_rating or 0) if r else 0.0,
+            total_reviews=r.total_reviews if r else 0,
+            total_properties=total_properties,
+            response_rate=0.0,
+            avg_response_time_minutes=None,
+        )
 
         response_list.append(
             VendorDetailResponse(
@@ -351,14 +352,14 @@ async def list_pending_vendors(
                 total_bookings=v.total_bookings or 0,
                 created_at=v.created_at,
                 updated_at=v.updated_at,
-                owner_id=v.owner_id,
-                owner_email=v.owner.email,
-                owner_name=v.owner.full_name,
-                owner_phone=v.owner.phone,
+                owner_id=v.user_id,
+                owner_email=v.user.email if v.user else None,
+                owner_name=v.user.full_name if v.user else None,
+                owner_phone=v.user.phone if v.user else None,
                 stats=stats,
-                documents_verified=False,  # Set based on document verification
+                documents_verified=False,
                 last_compliance_check=None,
-                compliance_flags=flags,
+                compliance_flags=compliance_flags.get(v.id, []),
             )
         )
 
@@ -376,18 +377,10 @@ async def get_vendor_details(
 
     Includes statistics, compliance flags, and owner information.
     """
-    result = await db.execute(
-        select(Vendor).options(selectinload(Vendor.owner)).where(Vendor.id == vendor_id)
-    )
-    vendor = result.scalar_one_or_none()
+    vendor = await VendorService.get_with_user_or_404(db, vendor_id)
 
-    if not vendor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
-
-    stats = await calculate_vendor_stats(db, vendor.id)
-    flags = await run_compliance_check(db, vendor)
+    stats = VendorStats(**await VendorService.calculate_stats(db, vendor.id))
+    flags = await VendorService.run_compliance_check(db, vendor)
 
     return VendorDetailResponse(
         id=vendor.id,
@@ -404,10 +397,10 @@ async def get_vendor_details(
         total_bookings=vendor.total_bookings or 0,
         created_at=vendor.created_at,
         updated_at=vendor.updated_at,
-        owner_id=vendor.owner_id,
-        owner_email=vendor.owner.email,
-        owner_name=vendor.owner.full_name,
-        owner_phone=vendor.owner.phone,
+        owner_id=vendor.user_id,
+        owner_email=vendor.user.email if vendor.user else None,
+        owner_name=vendor.user.full_name if vendor.user else None,
+        owner_phone=vendor.user.phone if vendor.user else None,
         stats=stats,
         documents_verified=False,
         last_compliance_check=None,
@@ -416,7 +409,9 @@ async def get_vendor_details(
 
 
 @router.post("/{vendor_id}/approval", response_model=VendorDetailResponse)
+@limiter.limit("10/minute")
 async def process_vendor_approval(
+    request: Request,
     vendor_id: UUID,
     data: VendorApprovalRequest,
     db: AsyncSession = Depends(get_db),
@@ -433,15 +428,7 @@ async def process_vendor_approval(
 
     All actions are audited and require a reason.
     """
-    result = await db.execute(
-        select(Vendor).options(selectinload(Vendor.owner)).where(Vendor.id == vendor_id)
-    )
-    vendor = result.scalar_one_or_none()
-
-    if not vendor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+    vendor = await VendorService.get_with_user_or_404(db, vendor_id)
 
     # Validate state transitions
     current_status = (
@@ -506,9 +493,11 @@ async def process_vendor_approval(
 
     await db.commit()
 
+    await VendorService.invalidate_cache(vendor.id, vendor.business_slug)
+
     # Return updated vendor
-    stats = await calculate_vendor_stats(db, vendor.id)
-    flags = await run_compliance_check(db, vendor)
+    stats = VendorStats(**await VendorService.calculate_stats(db, vendor.id))
+    flags = await VendorService.run_compliance_check(db, vendor)
 
     return VendorDetailResponse(
         id=vendor.id,
@@ -525,10 +514,10 @@ async def process_vendor_approval(
         total_bookings=vendor.total_bookings or 0,
         created_at=vendor.created_at,
         updated_at=vendor.updated_at,
-        owner_id=vendor.owner_id,
-        owner_email=vendor.owner.email,
-        owner_name=vendor.owner.full_name,
-        owner_phone=vendor.owner.phone,
+        owner_id=vendor.user_id,
+        owner_email=vendor.user.email if vendor.user else None,
+        owner_name=vendor.user.full_name if vendor.user else None,
+        owner_phone=vendor.user.phone if vendor.user else None,
         stats=stats,
         documents_verified=False,
         last_compliance_check=None,
@@ -537,7 +526,9 @@ async def process_vendor_approval(
 
 
 @router.post("/{vendor_id}/feature", response_model=dict)
+@limiter.limit("10/minute")
 async def toggle_vendor_featured(
+    request: Request,
     vendor_id: UUID,
     featured: bool = Body(..., embed=True),
     db: AsyncSession = Depends(get_db),
@@ -548,15 +539,7 @@ async def toggle_vendor_featured(
 
     Only active vendors can be featured.
     """
-    result = await db.execute(
-        select(Vendor).options(selectinload(Vendor.owner)).where(Vendor.id == vendor_id)
-    )
-    vendor = result.scalar_one_or_none()
-
-    if not vendor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+    vendor = await VendorService.get_with_user_or_404(db, vendor_id)
 
     # Only active vendors can be featured
     current_status = (
@@ -588,6 +571,8 @@ async def toggle_vendor_featured(
     )
 
     await db.commit()
+
+    await VendorService.invalidate_cache(vendor.id, vendor.business_slug)
 
     return {
         "message": f"Vendor {vendor.business_name} is now {'featured' if featured else 'unfeatured'}",
@@ -628,13 +613,13 @@ async def get_vendor_analytics(
 
     top_stats = []
     for vendor, revenue in top_vendors:
-        stats = await calculate_vendor_stats(db, vendor.id)
+        stats = VendorStats(**await VendorService.calculate_stats(db, vendor.id))
         top_stats.append(stats)
 
     # Recent registrations
     result = await db.execute(
         select(Vendor)
-        .options(selectinload(Vendor.owner))
+        .options(selectinload(Vendor.user))
         .order_by(desc(Vendor.created_at))
         .limit(10)
     )
@@ -650,8 +635,8 @@ async def get_vendor_analytics(
             total_bookings=v.total_bookings or 0,
             is_featured=v.is_featured or False,
             created_at=v.created_at,
-            owner_email=v.owner.email,
-            owner_name=v.owner.full_name,
+            owner_email=v.user.email if v.user else None,
+            owner_name=v.user.full_name if v.user else None,
         )
         for v in recent
     ]
@@ -700,7 +685,9 @@ async def get_vendor_analytics(
 
 
 @router.post("/{vendor_id}/compliance-check", response_model=dict)
+@limiter.limit("10/minute")
 async def run_vendor_compliance_check(
+    request: Request,
     vendor_id: UUID,
     data: ComplianceCheckRequest = Body(default=None),
     db: AsyncSession = Depends(get_db),
@@ -711,15 +698,9 @@ async def run_vendor_compliance_check(
 
     Checks documents, bookings, and reviews for compliance issues.
     """
-    result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
-    vendor = result.scalar_one_or_none()
+    vendor = await VendorService.get_or_404(db, vendor_id)
 
-    if not vendor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
-
-    flags = await run_compliance_check(db, vendor)
+    flags = await VendorService.run_compliance_check(db, vendor)
 
     # Update vendor
     vendor.last_compliance_check = datetime.now(timezone.utc)

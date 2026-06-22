@@ -26,7 +26,7 @@
 
     <!-- Stats Overview -->
     <div v-if="overview" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-600">Total Campañas</p>
@@ -43,9 +43,9 @@
           <span class="text-orange-600 font-medium">{{ overview.campaigns.draft }}</span>
           <span class="text-gray-500 ml-1">borradores</span>
         </div>
-      </div>
+      </UiCard>
 
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-600">Total Enviados</p>
@@ -58,9 +58,9 @@
         <div class="mt-4 text-sm text-gray-500">
           Destinatarios alcanzados
         </div>
-      </div>
+      </UiCard>
 
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-600">Tasa de Apertura</p>
@@ -73,9 +73,9 @@
         <div class="mt-4 text-sm text-gray-500">
           {{ formatNumber(overview.engagement.total_opens) }} aperturas totales
         </div>
-      </div>
+      </UiCard>
 
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-600">Tasa de Clics</p>
@@ -88,11 +88,11 @@
         <div class="mt-4 text-sm text-gray-500">
           {{ formatNumber(overview.engagement.total_clicks) }} clics totales
         </div>
-      </div>
+      </UiCard>
     </div>
 
     <!-- Campaigns List -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <UiCard padding="none" class="overflow-hidden">
       <div class="p-6 border-b border-gray-100">
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold text-gray-900">Campañas</h2>
@@ -104,7 +104,7 @@
       </div>
 
       <div v-if="loading" class="p-12 text-center">
-        <Icon name="lucide:loader" class="w-8 h-8 animate-spin text-primary-600 mx-auto" />
+        <UiSpinner size="lg" color="primary" class="mx-auto" />
         <p class="mt-4 text-gray-600">Cargando campañas...</p>
       </div>
 
@@ -174,7 +174,7 @@
                   class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
                   title="Enviar"
                 >
-                  <Icon v-if="sendingId === campaign.id" name="lucide:loader" class="w-4 h-4 animate-spin" />
+                  <UiSpinner v-if="sendingId === campaign.id" size="sm" color="primary" />
                   <Icon v-else name="lucide:send" class="w-4 h-4" />
                 </button>
                 <button
@@ -189,7 +189,7 @@
           </tr>
         </tbody>
       </table>
-    </div>
+    </UiCard>
 
     <!-- Analytics Modal -->
     <UiModal
@@ -252,8 +252,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-
 definePageMeta({
   layout: 'admin',
   middleware: ['auth', 'superadmin']
@@ -300,39 +298,6 @@ onMounted(async () => {
     $toast.error('Error cargando datos de marketing')
   }
 })
-
-// Methods
-const statusClass = (status: string) => {
-  const classes: Record<string, string> = {
-    draft: 'px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800',
-    scheduled: 'px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800',
-    sending: 'px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800',
-    sent: 'px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800'
-  }
-  return classes[status] || classes.draft
-}
-
-const statusLabel = (status: string) => {
-  const labels: Record<string, string> = {
-    draft: 'Borrador',
-    scheduled: 'Programado',
-    sending: 'Enviando',
-    sent: 'Enviado'
-  }
-  return labels[status] || status
-}
-
-const formatNumber = (num: number) => {
-  return new Intl.NumberFormat('es-CR').format(num || 0)
-}
-
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('es-CR', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
 
 const sendCampaign = async (id: string) => {
   sendingId.value = id

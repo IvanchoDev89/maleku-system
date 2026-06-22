@@ -25,7 +25,9 @@ from app.models import (
     TourCategory,
     TourDifficulty,
     BlogPostStatus,
+    RolePermission,
 )
+from app.core.security import DEFAULT_ROLE_PERMISSIONS
 
 engine = create_async_engine(settings.DATABASE_URL, echo=False)
 AsyncSessionLocal = async_sessionmaker(
@@ -93,10 +95,10 @@ async def seed_destinations(db: AsyncSession):
                 "Pesca deportiva en Flamingo",
             ],
             "best_time": "Diciembre a Abril (temporada seca)",
-            "image": "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=1200&q=80",
+            "image": "https://images.unsplash.com/photo-1538108149393-fbbd81895907",
             "gallery": [
-                "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800&q=80",
-                "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80",
+                "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57",
+                "https://images.unsplash.com/photo-1544551763-46a013bb70d5",
             ],
             "order": 1,
             "is_featured": True,
@@ -121,10 +123,10 @@ async def seed_destinations(db: AsyncSession):
                 "Avistamiento de fauna",
             ],
             "best_time": "Diciembre a Marzo (mejor visibilidad del volcán)",
-            "image": "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=1200&q=80",
+            "image": "https://images.unsplash.com/photo-1598971639058-fab3c3109a00",
             "gallery": [
-                "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80",
-                "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&q=80",
+                "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa",
+                "https://images.unsplash.com/photo-1506929562872-bb421503ef21",
             ],
             "order": 2,
             "is_featured": True,
@@ -149,10 +151,10 @@ async def seed_destinations(db: AsyncSession):
                 "Conservatorio de colibríes",
             ],
             "best_time": "Enero a Marzo (mejor para avistamiento de quetzales)",
-            "image": "https://images.unsplash.com/photo-1518623380242-4a8806cef5b8?w=1200&q=80",
+            "image": "https://images.unsplash.com/photo-1518623380242-4a8806cef5b8",
             "gallery": [
-                "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80",
-                "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&q=80",
+                "https://images.unsplash.com/photo-1551632811-561732d1e306",
+                "https://images.unsplash.com/photo-1547036967-23d11aacaee0",
             ],
             "order": 3,
             "is_featured": True,
@@ -177,10 +179,10 @@ async def seed_destinations(db: AsyncSession):
                 "Kayak en manglares",
             ],
             "best_time": "Diciembre a Abril (temporada seca)",
-            "image": "https://images.unsplash.com/photo-1589802829985-817e51171b92?w=1200&q=80",
+            "image": "https://images.unsplash.com/photo-1589802829985-817e51171b92",
             "gallery": [
-                "https://images.unsplash.com/photo-1596577932257-3c7ab64b3f8f?w=800&q=80",
-                "https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=800&q=80",
+                "https://images.unsplash.com/photo-1596577932257-3c7ab64b3f8f",
+                "https://images.unsplash.com/photo-1590534247854-e97d5e3feef6",
             ],
             "order": 4,
             "is_featured": True,
@@ -205,10 +207,10 @@ async def seed_destinations(db: AsyncSession):
                 "Tour de café",
             ],
             "best_time": "Todo el año (clima templado)",
-            "image": "https://images.unsplash.com/photo-1611121976909-8c4de5273880?w=1200&q=80",
+            "image": "https://images.unsplash.com/photo-1611121976909-8c4de5273880",
             "gallery": [
-                "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
-                "https://images.unsplash.com/photo-1591123120675-6f7f1aae0e5b?w=800&q=80",
+                "https://images.unsplash.com/photo-1558618666-fcd25c85cd64",
+                "https://images.unsplash.com/photo-1591123120675-6f7f1aae0e5b",
             ],
             "order": 5,
             "is_featured": False,
@@ -233,10 +235,10 @@ async def seed_destinations(db: AsyncSession):
                 "Observación de aves",
             ],
             "best_time": "Julio a Septiembre (temporada de tortugas)",
-            "image": "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0?w=1200&q=80",
+            "image": "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0",
             "gallery": [
-                "https://images.unsplash.com/photo-1544979590-37e9b7c5c72e?w=800&q=80",
-                "https://images.unsplash.com/photo-1564429238979-f6d3de5643e1?w=800&q=80",
+                "https://images.unsplash.com/photo-1544979590-37e9b7c5c72e",
+                "https://images.unsplash.com/photo-1564429238979-f6d3de5643e1",
             ],
             "order": 6,
             "is_featured": False,
@@ -261,10 +263,10 @@ async def seed_destinations(db: AsyncSession):
                 "Tour de cacao",
             ],
             "best_time": "Febrero a Abril, Septiembre a Octubre",
-            "image": "https://images.unsplash.com/photo-1518623489668-2799b5809c43?w=1200&q=80",
+            "image": "https://images.unsplash.com/photo-1518623489668-2799b5809c43",
             "gallery": [
-                "https://images.unsplash.com/photo-1596838132731-1fa1e57b8b26?w=800&q=80",
-                "https://images.unsplash.com/photo-1601933513796-5de9b6a7c9e8?w=800&q=80",
+                "https://images.unsplash.com/photo-1596838132731-1fa1e57b8b26",
+                "https://images.unsplash.com/photo-1601933513796-5de9b6a7c9e8",
             ],
             "order": 7,
             "is_featured": False,
@@ -289,10 +291,10 @@ async def seed_destinations(db: AsyncSession):
                 "Tour de vida silvestre",
             ],
             "best_time": "Diciembre a Abril (temporada seca)",
-            "image": "https://images.unsplash.com/photo-1597074866923-dc0589151855?w=1200&q=80",
+            "image": "https://images.unsplash.com/photo-1597074866923-dc0589151855",
             "gallery": [
-                "https://images.unsplash.com/photo-1547471080-7ac2f5514419?w=800&q=80",
-                "https://images.unsplash.com/photo-1587974869209-9b86d5c0a8c6?w=800&q=80",
+                "https://images.unsplash.com/photo-1547471080-7ac2f5514419",
+                "https://images.unsplash.com/photo-1587974869209-9b86d5c0a8c6",
             ],
             "order": 8,
             "is_featured": False,
@@ -373,18 +375,18 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "slug": "tabacon-thermal-resort-spa",
             "short_description": "Resort de lujo con aguas termales naturales y vistas al Volcán Arenal.",
             "description": "Tabacon Thermal Resort es un oasis de relax enclavado en la falda del Volcán Arenal. Sus aguas termales naturales ofrecen una experiencia de spa única.",
-            "property_type": "RESORT",
-            "category": "JUNGLE",
+            "property_type": PropertyType.RESORT,
+            "category": PropertyCategory.JUNGLE,
             "province": "Alajuela",
             "region": "La Fortuna",
             "city": "La Fortuna",
             "latitude": 10.4738,
             "longitude": -84.2315,
-            "cover_image": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1566073771259-6a8506099945",
             "images": [
-                "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80",
-                "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
-                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+                "https://images.unsplash.com/photo-1582719508461-905c673771fd",
+                "https://images.unsplash.com/photo-1571896349842-33c89424de2d",
+                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4",
             ],
             "amenities": [
                 "Aguas termales",
@@ -426,18 +428,18 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "slug": "flamingo-beach-resort",
             "short_description": "Resort frente al mar en Guanacaste con paquetes todo incluido.",
             "description": "Flamingo Beach Resort ofrece una experiencia de lujo frente a las aguas cristalinas del Pacífico.",
-            "property_type": "RESORT",
-            "category": "BEACH",
+            "property_type": PropertyType.RESORT,
+            "category": PropertyCategory.BEACH,
             "province": "Guanacaste",
             "region": "Guanacaste",
             "city": "Flamingo",
             "latitude": 10.4217,
             "longitude": -85.7706,
-            "cover_image": "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4",
             "images": [
-                "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&q=80",
-                "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&q=80",
-                "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&q=80",
+                "https://images.unsplash.com/photo-1564501049412-61c2a3083791",
+                "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9",
+                "https://images.unsplash.com/photo-1584132967334-10e028bd69f7",
             ],
             "amenities": [
                 "Todo incluido",
@@ -478,18 +480,18 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "slug": "nayara-springs",
             "short_description": "Resort exclusivo para adultos con plunge pools privados y spa.",
             "description": "Nayara Springs es un refugio de lujo exclusivo para adultos, enclavado en las montañas con vistas panorámicas al Volcán Arenal.",
-            "property_type": "RESORT",
-            "category": "MOUNTAIN",
+            "property_type": PropertyType.RESORT,
+            "category": PropertyCategory.MOUNTAIN,
             "province": "Alajuela",
             "region": "La Fortuna",
             "city": "El Castillo",
             "latitude": 10.4523,
             "longitude": -84.2654,
-            "cover_image": "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1582719508461-905c673771fd",
             "images": [
-                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
-                "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
-                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945",
+                "https://images.unsplash.com/photo-1571896349842-33c89424de2d",
+                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4",
             ],
             "amenities": [
                 "Plunge pool privado",
@@ -534,18 +536,18 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "slug": "hotel-balmoral-san-jose",
             "short_description": "Mejor hotel en el centro de San José, ubicado en la Avenida Central.",
             "description": "El Hotel Balmoral es un icono de San José, ubicado en la famosa Avenida Central.",
-            "property_type": "HOTEL",
+            "property_type": PropertyType.HOTEL,
             "category": PropertyCategory.CITY,
             "province": "San José",
             "region": "Valle Central",
             "city": "San José",
             "latitude": 9.9323,
             "longitude": -84.0745,
-            "cover_image": "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa",
             "images": [
-                "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80",
-                "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&q=80",
-                "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&q=80",
+                "https://images.unsplash.com/photo-1611892440504-42a792e24d32",
+                "https://images.unsplash.com/photo-1564501049412-61c2a3083791",
+                "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9",
             ],
             "amenities": [
                 "Restaurante",
@@ -590,17 +592,17 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "short_description": "Hotel en el bosque nuboso con jardines exuberantes y observación de aves.",
             "description": "Monteverde Lodge & Gardens ofrece una experiencia auténtica en el corazón del bosque nuboso.",
             "property_type": PropertyType.ECO_LODGE,
-            "category": "MOUNTAIN",
+            "category": PropertyCategory.MOUNTAIN,
             "province": "Puntarenas",
             "region": "Monteverde",
             "city": "Monteverde",
             "latitude": 10.3031,
             "longitude": -84.8175,
-            "cover_image": "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1590490360182-c33d57733427",
             "images": [
-                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
-                "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&q=80",
-                "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945",
+                "https://images.unsplash.com/photo-1584132967334-10e028bd69f7",
+                "https://images.unsplash.com/photo-1571896349842-33c89424de2d",
             ],
             "amenities": [
                 "Restaurante",
@@ -644,18 +646,18 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "slug": "parador-resort-manuel-antonio",
             "short_description": "Resort en acantilado con vistas al Pacífico y acceso cercano al Parque Nacional.",
             "description": "Parador Resort & Spa se encuentra en un acantilado spectacular con vistas panorámicas al Océano Pacífico.",
-            "property_type": "RESORT",
-            "category": "JUNGLE",
+            "property_type": PropertyType.RESORT,
+            "category": PropertyCategory.JUNGLE,
             "province": "Puntarenas",
             "region": "Manuel Antonio",
             "city": "Quepos",
             "latitude": 9.3815,
             "longitude": -84.1432,
-            "cover_image": "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1582719508461-905c673771fd",
             "images": [
-                "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&q=80",
-                "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
-                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+                "https://images.unsplash.com/photo-1564501049412-61c2a3083791",
+                "https://images.unsplash.com/photo-1571896349842-33c89424de2d",
+                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4",
             ],
             "amenities": [
                 "Spa",
@@ -700,18 +702,18 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "slug": "the-springs-resort-arenal",
             "short_description": "Resort de aventura con parque acuático y aguas termales.",
             "description": "The Springs Resort & Spa es el destino definitivo para familias en La Fortuna.",
-            "property_type": "RESORT",
-            "category": "JUNGLE",
+            "property_type": PropertyType.RESORT,
+            "category": PropertyCategory.JUNGLE,
             "province": "Alajuela",
             "region": "La Fortuna",
             "city": "La Fortuna",
             "latitude": 10.4892,
             "longitude": -84.2456,
-            "cover_image": "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4",
             "images": [
-                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
-                "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80",
-                "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945",
+                "https://images.unsplash.com/photo-1582719508461-905c673771fd",
+                "https://images.unsplash.com/photo-1571896349842-33c89424de2d",
             ],
             "amenities": [
                 "Parque acuático",
@@ -756,18 +758,18 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "slug": "hotel-tamarindo",
             "short_description": "Hotel en el corazón de Tamarindo, perfecto base para surf y aventuras.",
             "description": "Hotel Tamarindo ofrece comodidad y ubicación inmejorable en el centro del pueblo más vibrante de Guanacaste.",
-            "property_type": "HOTEL",
-            "category": "BEACH",
+            "property_type": PropertyType.HOTEL,
+            "category": PropertyCategory.BEACH,
             "province": "Guanacaste",
             "region": "Guanacaste",
             "city": "Tamarindo",
             "latitude": 10.3231,
             "longitude": -85.8407,
-            "cover_image": "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1590490360182-c33d57733427",
             "images": [
-                "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&q=80",
-                "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80",
-                "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&q=80",
+                "https://images.unsplash.com/photo-1564501049412-61c2a3083791",
+                "https://images.unsplash.com/photo-1611892440504-42a792e24d32",
+                "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9",
             ],
             "amenities": [
                 "Piscina",
@@ -806,18 +808,18 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "slug": "le-cameleon-puerto-viejo",
             "short_description": "Hotel boutique en Puerto Viejo con beach club y ambiente relajado.",
             "description": "Le Caméléon es un hotel boutique único en el corazón de Puerto Viejo.",
-            "property_type": "BOUTIQUE",
-            "category": "BEACH",
+            "property_type": PropertyType.BOUTIQUE,
+            "category": PropertyCategory.BEACH,
             "province": "Limón",
             "region": "Caribe",
             "city": "Puerto Viejo",
             "latitude": 9.6569,
             "longitude": -82.7569,
-            "cover_image": "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1582719508461-905c673771fd",
             "images": [
-                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
-                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
-                "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
+                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4",
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945",
+                "https://images.unsplash.com/photo-1571896349842-33c89424de2d",
             ],
             "amenities": [
                 "Beach club",
@@ -857,17 +859,17 @@ async def seed_properties(db: AsyncSession, vendor: Vendor):
             "short_description": "Eco lodge de lujo en la selva tropical, accesible solo por balsa.",
             "description": "Pacuare Lodge es un escondite de lujo en medio de la selva tropical de Turrialba.",
             "property_type": PropertyType.ECO_LODGE,
-            "category": "JUNGLE",
+            "category": PropertyCategory.JUNGLE,
             "province": "Cartago",
             "region": "Turrialba",
             "city": "Turrialba",
             "latitude": 9.8234,
             "longitude": -83.6845,
-            "cover_image": "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1590490360182-c33d57733427",
             "images": [
-                "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80",
-                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
-                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+                "https://images.unsplash.com/photo-1582719508461-905c673771fd",
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945",
+                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4",
             ],
             "amenities": [
                 "Restaurante",
@@ -925,7 +927,7 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "name": "Canopy Arenal Adventure",
             "slug": "canopy-arenal-adventure",
             "description": "Experimenta la adrenalina de volar por el dosel del bosque tropical con vistas espectaculares del Volcán Arenal.",
-            "category": "ADVENTURE",
+            "category": TourCategory.ADVENTURE,
             "difficulty": TourDifficulty.EASY,
             "duration_hours": 2.0,
             "duration_text": "2 horas",
@@ -952,10 +954,10 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "price": 65.00,
             "currency": "USD",
             "images": [
-                "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80",
-                "https://images.unsplash.com/photo-1530866495561-507c9faab2ed?w=800&q=80",
+                "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7",
+                "https://images.unsplash.com/photo-1530866495561-507c9faab2ed",
             ],
-            "cover_image": "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7",
             "schedule_days": [
                 "monday",
                 "tuesday",
@@ -976,7 +978,7 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "name": "White Water Rafting Río Pacuare",
             "slug": "white-water-rafting-pacuare",
             "description": "El Río Pacuare es considerado uno de los mejores ríos para rafting en el mundo. Rápidos de clase III-IV rodeados de selva tropical prístina.",
-            "category": "ADVENTURE",
+            "category": TourCategory.ADVENTURE,
             "difficulty": TourDifficulty.CHALLENGING,
             "duration_hours": 5.0,
             "duration_text": "5 horas",
@@ -1014,10 +1016,10 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "price": 95.00,
             "currency": "USD",
             "images": [
-                "https://images.unsplash.com/photo-1530866495561-507c9faab2ed?w=800&q=80",
-                "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80",
+                "https://images.unsplash.com/photo-1530866495561-507c9faab2ed",
+                "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7",
             ],
-            "cover_image": "https://images.unsplash.com/photo-1530866495561-507c9faab2ed?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1530866495561-507c9faab2ed",
             "schedule_days": ["monday", "wednesday", "friday", "saturday", "sunday"],
             "rating": 4.9,
             "total_reviews": 876,
@@ -1058,10 +1060,10 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "price": 49.00,
             "currency": "USD",
             "images": [
-                "https://images.unsplash.com/photo-1589802829985-817e51171b92?w=800&q=80",
-                "https://images.unsplash.com/photo-1596577932257-3c7ab64b3f8f?w=800&q=80",
+                "https://images.unsplash.com/photo-1589802829985-817e51171b92",
+                "https://images.unsplash.com/photo-1596577932257-3c7ab64b3f8f",
             ],
-            "cover_image": "https://images.unsplash.com/photo-1589802829985-817e51171b92?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1589802829985-817e51171b92",
             "schedule_days": [
                 "monday",
                 "tuesday",
@@ -1105,10 +1107,10 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "price": 50.00,
             "currency": "USD",
             "images": [
-                "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0?w=800&q=80",
-                "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=800&q=80",
+                "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0",
+                "https://images.unsplash.com/photo-1598971639058-fab3c3109a00",
             ],
-            "cover_image": "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0",
             "schedule_days": [
                 "monday",
                 "tuesday",
@@ -1155,10 +1157,10 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "price": 54.00,
             "currency": "USD",
             "images": [
-                "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80",
-                "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&q=80",
+                "https://images.unsplash.com/photo-1551632811-561732d1e306",
+                "https://images.unsplash.com/photo-1547036967-23d11aacaee0",
             ],
-            "cover_image": "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1551632811-561732d1e306",
             "schedule_days": [
                 "monday",
                 "tuesday",
@@ -1208,10 +1210,10 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "price": 108.00,
             "currency": "USD",
             "images": [
-                "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80",
-                "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&q=80",
+                "https://images.unsplash.com/photo-1544551763-46a013bb70d5",
+                "https://images.unsplash.com/photo-1538108149393-fbbd81895907",
             ],
-            "cover_image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5",
             "schedule_days": ["monday", "wednesday", "friday", "saturday"],
             "rating": 4.8,
             "total_reviews": 543,
@@ -1261,10 +1263,10 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "price": 85.00,
             "currency": "USD",
             "images": [
-                "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0?w=800&q=80",
-                "https://images.unsplash.com/photo-1544979590-37e9b7c5c72e?w=800&q=80",
+                "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0",
+                "https://images.unsplash.com/photo-1544979590-37e9b7c5c72e",
             ],
-            "cover_image": "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1504208434309-cb69f4fe52f0",
             "schedule_days": ["monday", "wednesday", "friday", "saturday"],
             "rating": 4.7,
             "total_reviews": 432,
@@ -1277,7 +1279,7 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "name": "Canyoning y Rappel en La Fortuna",
             "slug": "canyoning-rappel-la-fortuna",
             "description": "Desciende por cascadas naturales y rappel en la selva tropical. Aventura extrema con guías certificados y equipo profesional.",
-            "category": "ADVENTURE",
+            "category": TourCategory.ADVENTURE,
             "difficulty": TourDifficulty.CHALLENGING,
             "duration_hours": 4.0,
             "duration_text": "4 horas",
@@ -1310,10 +1312,10 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "price": 125.00,
             "currency": "USD",
             "images": [
-                "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=800&q=80",
-                "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80",
+                "https://images.unsplash.com/photo-1598971639058-fab3c3109a00",
+                "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7",
             ],
-            "cover_image": "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1598971639058-fab3c3109a00",
             "schedule_days": ["tuesday", "thursday", "saturday"],
             "rating": 4.9,
             "total_reviews": 321,
@@ -1343,10 +1345,10 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "price": 55.00,
             "currency": "USD",
             "images": [
-                "https://images.unsplash.com/photo-1518623380242-4a8806cef5b8?w=800&q=80",
-                "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80",
+                "https://images.unsplash.com/photo-1518623380242-4a8806cef5b8",
+                "https://images.unsplash.com/photo-1551632811-561732d1e306",
             ],
-            "cover_image": "https://images.unsplash.com/photo-1518623380242-4a8806cef5b8?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1518623380242-4a8806cef5b8",
             "schedule_days": ["monday", "wednesday", "friday", "saturday"],
             "rating": 4.8,
             "total_reviews": 567,
@@ -1390,10 +1392,10 @@ async def seed_tours(db: AsyncSession, vendor: Vendor):
             "price": 45.00,
             "currency": "USD",
             "images": [
-                "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=800&q=80",
-                "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&q=80",
+                "https://images.unsplash.com/photo-1447933601403-0c6688de566e",
+                "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd",
             ],
-            "cover_image": "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=800&q=80",
+            "cover_image": "https://images.unsplash.com/photo-1447933601403-0c6688de566e",
             "schedule_days": [
                 "monday",
                 "tuesday",
@@ -1434,7 +1436,7 @@ async def seed_blog_posts(db: AsyncSession):
             "slug": "guia-completa-visitar-volcan-arenal-2025",
             "excerpt": "Todo lo que necesitas saber para planificar tu visita al Volcán Arenal: mejores hoteles, tours, aguas termales y cuando ir.",
             "content": """<h2>El Volcán Arenal: Un Destino Imperdible</h2><p>El Volcán Arenal es, sin duda, uno de los destinos más emblemáticos de Costa Rica. Durante más de 40 años, este coloso de 1,633 metros fue el volcano más activo del país.</p><h2>Mejor Época para Visitar</h2><p>La mejor época para visitar el Volcán Arenal es de <strong>diciembre a marzo</strong>, cuando las lluvias son menos frecuentes y la visibilidad del volcano es óptima.</p><h2>Qué Hacer en La Fortuna</h2><h3>1. Caminata al Volcán Arenal</h3><p>El sendero de 3.7 km te lleva a través de antiguas lenguas de lava y ofrece vistas espectaculares del crater.</p><h3>2. Aguas Termales</h3><p>No puedes ir a La Fortuna sin bañarte en sus famosas aguas termales. Tabacon, Baldi, and Eco Termales ofrecen experiencias desde lujo hasta económico.</p><h3>3. Cascada La Fortuna</h3><p>A solo 5 km del centro de town, esta cascada de 70 metros es perfecta para una excursión de medio día.</p><h3>4. Puentes colgantes y Canopy</h3><p>Para los amantes de la adrenalina, las 15+ platforms y 2 km de cables de Sky Trek ofrecen una experiencia de canopy inolvidable.</p><h2>Dónde Hospedarse</h2><p>La Fortuna ofrece opciones para todos los presupuestos: Lujo (Nayara Springs, The Springs, Tabacon), Medio (Arenal Kioro, Hotel Lagos), Económico (Arenal Backpackers).</p>""",
-            "featured_image": "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=1200&q=80",
+            "featured_image": "https://images.unsplash.com/photo-1598971639058-fab3c3109a00",
             "category": "Destinos",
             "tags": ["arenal", "la fortuna", "volcano", "hot springs", "adventure"],
             "status": BlogPostStatus.PUBLISHED,
@@ -1447,7 +1449,7 @@ async def seed_blog_posts(db: AsyncSession):
             "slug": "mejores-playas-costa-rica-surf",
             "excerpt": "Descubre las mejores playas para surf en Costa Rica: Tamarindo, Jacó, Manuel Antonio y más. Ondas para todos los niveles.",
             "content": """<h2>Costa Rica: Paraíso del Surf</h2><p>Costa Rica es un destino de clase mundial para el surf, con olas para todos los niveles y una cultura de surf vibrante.</p><h2>Las 10 Mejores Playas para Surf</h2><h3>1. Tamarindo - Guanacaste</h3><p>El hotspot de surf más famoso de Costa Rica. Olas consistentes para todos los niveles.</p><h3>2. Jacó - Pacífico Central</h3><p>La playa más accessible desde San José. Olas consistentes y una escena de surf floreciente.</p><h3>3. Playa Hermosa - Guanacaste</h3><p>Conocida por sus olas potentes, perfecta para surfers intermedios y avanzados.</p><h3>4. Boca Barranca - Pacífico Central</h3><p>Considerada la mejor playa para principiantes en Costa Rica.</p><h3>5. Santa Teresa - Península de Nicoya</h3><p>Un destino remoto con olas consistentes y un ambiente bohemio único.</p><h3>6. Puerto Viejo - Caribe</h3><p>El Caribe tiene su propia energía de surf. Olas diferentes, más suitable para intermedios.</p><h2>Mejor Época para Surfear</h2><ul><li><strong>Pacífico:</strong> Mayo - Noviembre (mejor swells de diciembre a marzo)</li><li><strong>Caribe:</strong> Diciembre - Marzo, pero las mejores olas de julio a octubre</li></ul>""",
-            "featured_image": "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=1200&q=80",
+            "featured_image": "https://images.unsplash.com/photo-1538108149393-fbbd81895907",
             "category": "Actividades",
             "tags": ["surf", "playas", "tamarindo", "jaco", "puerto viejo"],
             "status": BlogPostStatus.PUBLISHED,
@@ -1460,7 +1462,7 @@ async def seed_blog_posts(db: AsyncSession):
             "slug": "que-hacer-monteverde-guia-bosque-nuboso",
             "excerpt": "Descubre las mejores actividades en Monteverde: puentes colgantes, avistamiento de quetzales, tour nocturno y más.",
             "content": """<h2>Monteverde: El Paraíso del Bosque Nuboso</h2><p>Monteverde es mucho más que un destino turístico; es un ecosistema único donde la naturaleza reigns supreme.</p><h2>Cómo Llegar a Monteverde</h2><p>Monteverde se encuentra en las montañas de Puntarenas, a unas 3-4 horas de San José.</p><h2>Las Mejores Actividades</h2><h3>1. Puentes Colgantes Sky Walk</h3><p>Los puentes colgantes de Monteverde te llevan a través del dosel del bosque, ofreciendo vistas espectaculares.</p><h3>2. Avistamiento de Quetzales</h3><p>El quetzal es el santo grial para birdwatchers. La mejor época es de enero a marzo.</p><h3>3. Tour Nocturno</h3><p>El bosque se transforma después del atardecer. Ranas venenosas, serpientes, búhos y otros creatures nocturnos.</p><h3>4. Conservatorio de Colibríes Selvatura</h3><p>Este jardín es home to 14 species de colibríes. Un paraíso para fotógrafos.</p><h2>Dónde Hospedarse</h2><p>Monteverde Lodge & Gardens, Hotel Belmar, Senda Monteverde son opciones recomendadas.</p>""",
-            "featured_image": "https://images.unsplash.com/photo-1518623380242-4a8806cef5b8?w=1200&q=80",
+            "featured_image": "https://images.unsplash.com/photo-1518623380242-4a8806cef5b8",
             "category": "Destinos",
             "tags": ["monteverde", "cloud forest", "quetzal", "ziplines", "nature"],
             "status": BlogPostStatus.PUBLISHED,
@@ -1473,7 +1475,7 @@ async def seed_blog_posts(db: AsyncSession):
             "slug": "costa-rica-en-familia-mejores-destinos-ninos",
             "excerpt": "Planifica tu viaje familiar a Costa Rica. Los mejores destinos, hoteles y actividades para viajar con niños.",
             "content": """<h2>Viajar a Costa Rica con Niños</h2><p>Costa Rica es uno de los mejores destinos familiares del mundo. La combinación de naturaleza accessible, aventura adaptée para todas las edades y la calidez del pueblo tico hacen de este país un paradise para familias.</p><h2>Mejores Destinos Familiares</h2><h3>1. La Fortuna</h3><p>Perfecto para familias con niños de todas las edades. Las aguas termales son ideales para pequenos.</p><h3>2. Manuel Antonio</h3><p>Las playas de Manuel Antonio son perfectas para niños. El agua es tranquila y poco profunda.</p><h3>3. Monteverde</h3><p>Los niños aman los puentes colgantes y la posibilidad de ver colibríes de cerca.</p><h3>4. Guanacaste (Tamarindo area)</h3><p>Las playas de Guanacaste tienen algo para todos. Los niños pueden aprender a surfear en olas suaves.</p><h2>Hoteles Familiares Recomendados</h2><p>The Springs Resort & Spa (Water park), Parador Resort (Kids club), Hotel Tamarindo (Family-friendly).</p>""",
-            "featured_image": "https://images.unsplash.com/photo-1589802829985-817e51171b92?w=1200&q=80",
+            "featured_image": "https://images.unsplash.com/photo-1589802829985-817e51171b92",
             "category": "Familia",
             "tags": ["family", "kids", "children", "activities", "planning"],
             "status": BlogPostStatus.PUBLISHED,
@@ -1486,7 +1488,7 @@ async def seed_blog_posts(db: AsyncSession):
             "slug": "temporada-tortugas-marinas-tortuguero-guia-2025",
             "excerpt": "Todo sobre la temporada de anidación de tortugas marinas en Tortuguero. Cuándo ir, tours y cómo contribuir a la conservación.",
             "content": """<h2>Tortuguero: Santuario de Tortugas Marinas</h2><p>Tortuguero, ubicado en la costa caribeña de Costa Rica, es uno de los santuarios de anidación de tortugas marinas más importantes del mundo.</p><h2>Temporada de Anidación</h2><h3>Tortuga Verde</h3><p>La principal temporada de anidación va de <strong>julio a octubre</strong>, con peak en agosto y septiembre.</p><h3>Tortuga Carey</h3><p>La tortuga carey anida de <strong>mayo a noviembre</strong>, con peak en septiembre-octubre.</p><h3>Tortuga Lora</h3><p>La más pequeña también tiene su momento, de <strong>julio a septiembre</strong>.</p><h2>Cómo Visitar</h2><p>Para ver la anidación, necesitas contratar un guía local certificado. Solo así podrás acceder a las playas durante la noche.</p><h2>Conservación</h2><p>Tortuguero es un modelo de conservación exitoso. Los programas locales han protegido las playas por décadas.</p>""",
-            "featured_image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&q=80",
+            "featured_image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5",
             "category": "Vida Silvestre",
             "tags": ["tortuguero", "turtles", "sea turtles", "nesting", "conservation"],
             "status": BlogPostStatus.PUBLISHED,
@@ -1538,6 +1540,36 @@ async def seed_admin_users(db: AsyncSession, default_password: str) -> None:
     await db.commit()
 
 
+async def seed_role_permissions(db: AsyncSession):
+    """Seed default role permissions into the database if not already set."""
+    print("\nSeeding role permissions...")
+    count = 0
+    for role, modules in DEFAULT_ROLE_PERMISSIONS.items():
+        for module, actions in modules.items():
+            result = await db.execute(
+                select(RolePermission).where(
+                    RolePermission.role == role,
+                    RolePermission.module == module,
+                )
+            )
+            existing = result.scalar_one_or_none()
+            if not existing:
+                db.add(
+                    RolePermission(
+                        role=role,
+                        module=module,
+                        permissions=actions,
+                        is_active=True,
+                    )
+                )
+                count += 1
+    if count:
+        await db.commit()
+        print(f"  Created {count} permission configurations")
+    else:
+        print("  All permissions already exist, skipping")
+
+
 async def main():
     """Main function to seed all data."""
     print("=" * 60)
@@ -1557,6 +1589,7 @@ async def main():
             await seed_properties(db, vendor)
             await seed_tours(db, vendor)
             await seed_blog_posts(db)
+            await seed_role_permissions(db)
 
             print("\n" + "=" * 60)
             print("SEED COMPLETE!")
@@ -1567,6 +1600,7 @@ async def main():
                 (Property, "Properties"),
                 (Tour, "Tours"),
                 (BlogPost, "Blog Posts"),
+                (RolePermission, "Role Permissions"),
             ]:
                 result = await db.execute(select(func.count(model.id)))
                 print(f"  {name}: {result.scalar()}")

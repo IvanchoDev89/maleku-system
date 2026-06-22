@@ -2,12 +2,19 @@
 Boat Equipment Schemas - Náutico
 """
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 
 from app.models import BoatType
+from . import is_dangerous_sql
+
+
+def _sanitize_boat_field(cls, v: Optional[str]) -> Optional[str]:
+    if v is not None and is_dangerous_sql(v):
+        raise ValueError("Invalid input")
+    return v
 
 
 class BoatEquipmentBase(BaseModel):
@@ -26,6 +33,11 @@ class BoatEquipmentBase(BaseModel):
     license_notes: Optional[str] = None
     location: Optional[str] = None
     operating_area: Optional[str] = None
+
+    @field_validator("brand", "model", "license_notes", "location", "operating_area")
+    @classmethod
+    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+        return _sanitize_boat_field(cls, v)
 
 
 class BoatEquipmentCreate(BoatEquipmentBase):
@@ -49,6 +61,11 @@ class BoatEquipmentUpdate(BaseModel):
     location: Optional[str] = None
     operating_area: Optional[str] = None
     is_available: Optional[bool] = None
+
+    @field_validator("brand", "model", "license_notes", "location", "operating_area")
+    @classmethod
+    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+        return _sanitize_boat_field(cls, v)
 
 
 class BoatEquipmentResponse(BoatEquipmentBase):

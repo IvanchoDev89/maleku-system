@@ -93,7 +93,7 @@ const handleSearch = async () => {
         muted
         loop
         playsinline
-        poster="https://images.unsplash.com/photo-1518638150340-f706e86654de?w=1920&q=80"
+        poster="https://images.unsplash.com/photo-1518638150340-f706e86654de"
         class="w-full h-full object-cover transition-opacity duration-1000"
         :class="{ 'opacity-100': isVideoLoaded, 'opacity-0': !isVideoLoaded }"
         @loadeddata="isVideoLoaded = true"
@@ -102,7 +102,7 @@ const handleSearch = async () => {
       </video>
       <NuxtImg
         v-show="!isVideoLoaded"
-        src="https://images.unsplash.com/photo-1518638150340-f706e86654de?w=1920&q=80"
+        src="https://images.unsplash.com/photo-1518638150340-f706e86654de"
         class="absolute inset-0 w-full h-full object-cover"
         :alt="t('hero.video.fallbackAlt')"
         width="1920"

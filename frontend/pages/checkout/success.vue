@@ -85,7 +85,7 @@ const shareBooking = () => {
         <!-- Actions -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <NuxtLink
-            to="/dashboard/traveler"
+            to="/"
             class="px-8 py-4 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
           >
             <MapPin class="w-5 h-5" />

@@ -27,14 +27,15 @@ export default defineEventHandler(async (event) => {
 
     if (apiUrl) {
       const [destinations, properties, tours, blogPosts] = await Promise.all([
-        $fetch<{ items: { slug: string }[] }>(`${apiUrl}/api/v1/destinations?page_size=100`).catch(() => null),
+        $fetch<{ slug: string }[] | { items: { slug: string }[] }>(`${apiUrl}/api/v1/destinations`).catch(() => null),
         $fetch<{ items: { slug: string }[] }>(`${apiUrl}/api/v1/properties?page_size=100`).catch(() => null),
         $fetch<{ items: { slug: string }[] }>(`${apiUrl}/api/v1/tours?page_size=100`).catch(() => null),
         $fetch<{ items: { slug: string }[] }>(`${apiUrl}/api/v1/blog?page_size=100&status=published`).catch(() => null),
       ])
 
-      if (destinations?.items) {
-        dynamicPages.push(...destinations.items.map(d => ({
+      const destList = Array.isArray(destinations) ? destinations : (destinations as any)?.items || []
+      if (destList.length > 0) {
+        dynamicPages.push(...destList.map((d: { slug: string }) => ({
           loc: `/destinos/${d.slug}`,
           changefreq: 'weekly' as const,
           priority: 0.8

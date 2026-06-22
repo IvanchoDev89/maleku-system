@@ -532,7 +532,7 @@ const executeImpersonateUser = async (user: any) => {
     auth.token = response.impersonation_token
     auth.user = response.target_user
 
-    navigateTo('/dashboard')
+    navigateTo('/')
   } catch (error) {
     console.error('Error impersonating:', error)
   }

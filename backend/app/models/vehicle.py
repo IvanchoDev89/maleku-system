@@ -26,7 +26,7 @@ from sqlalchemy.orm import relationship
 from app.models.base import Base
 
 
-class VehicleType(enum.Enum):
+class VehicleType(str, enum.Enum):
     """Vehicle type enumeration."""
 
     CAR = "car"
@@ -36,14 +36,14 @@ class VehicleType(enum.Enum):
     MOTORCYCLE = "motorcycle"
 
 
-class TransmissionType(enum.Enum):
+class TransmissionType(str, enum.Enum):
     """Transmission type enumeration."""
 
     AUTOMATIC = "automatic"
     MANUAL = "manual"
 
 
-class FuelType(enum.Enum):
+class FuelType(str, enum.Enum):
     """Fuel type enumeration."""
 
     GASOLINE = "gasoline"
@@ -150,6 +150,9 @@ class Vehicle(Base):
     # Indexes for performance
     __table_args__ = (
         Index("idx_vehicle_vendor", "vendor_id"),
+        Index("idx_vehicle_is_active", "is_active"),
+        Index("idx_vehicle_is_available", "is_available"),
+        Index("idx_vehicle_created_at", "created_at"),
         Index("idx_vehicle_type", "vehicle_type"),
         Index("idx_vehicle_available", "is_available", "is_active", "deleted_at"),
         Index("idx_vehicle_price", "price_per_day"),

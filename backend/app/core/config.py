@@ -41,7 +41,18 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> list[str]:
         import json
 
-        return json.loads(self.BACKEND_CORS_ORIGINS)
+        try:
+            origins = json.loads(self.BACKEND_CORS_ORIGINS)
+            if not isinstance(origins, list):
+                raise ValueError("CORS origins must be a JSON array of strings")
+            return origins
+        except (json.JSONDecodeError, ValueError) as e:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                f"Invalid BACKEND_CORS_ORIGINS '{self.BACKEND_CORS_ORIGINS}': {e}. Falling back to defaults."
+            )
+            return ["http://localhost:3000"]
 
     STRIPE_SECRET_KEY: str = ""
     STRIPE_PUBLISHABLE_KEY: str = ""
@@ -109,4 +120,14 @@ if len(settings.SECRET_KEY) < 32:
     raise ValueError(
         "SECRET_KEY must be at least 32 characters for adequate entropy. "
         "Generate a strong key with: python3 -c 'import secrets; print(secrets.token_hex(32))'"
+    )
+
+# CORS security: reject wildcard origins in production
+_origins = settings.cors_origins_list
+if settings.is_production and (
+    "*" in _origins or any("0.0.0.0" in o for o in _origins if isinstance(o, str))
+):
+    raise ValueError(
+        "CORS origins must not contain wildcard (*) or 0.0.0.0 in production! "
+        f"Got: {_origins}"
     )

@@ -84,22 +84,22 @@ const loading = ref(true)
 const experiences = [
   {
     slug: 'adventure',
-    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5',
     price: '$60+'
   },
   {
     slug: 'nature',
-    image: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46',
     price: '$45+'
   },
   {
     slug: 'beach',
-    image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907',
     price: '$50+'
   },
   {
     slug: 'culture',
-    image: 'https://images.unsplash.com/photo-1588708885923-98c04a8e4c3f?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1588708885923-98c04a8e4c3f',
     price: '$40+'
   }
 ]

@@ -4,18 +4,17 @@ Blog post model for content management.
 
 import uuid
 from datetime import datetime, timezone
+import sqlalchemy as sa
 from sqlalchemy import (
     Column,
     String,
     Boolean,
     DateTime,
-    ForeignKey,
     Text,
-    Integer,
     JSON,
-    Enum,
+    Integer,
+    ForeignKey,
     Index,
-    text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -64,7 +63,7 @@ class BlogPost(Base):
     )
 
     # Publication
-    status = Column(Enum(BlogPostStatus), default=BlogPostStatus.DRAFT, nullable=False)
+    status = Column(String(20), default=BlogPostStatus.DRAFT.value, nullable=False)
     published_at = Column(DateTime(timezone=True), nullable=True)
 
     # Stats
@@ -95,6 +94,8 @@ class BlogPost(Base):
     author = relationship("User", back_populates="blog_posts")
 
     __table_args__ = (
+        Index("idx_blog_created_at", "created_at"),
+        Index("idx_blog_status_published", "status", "published_at"),
         Index("idx_blog_status", "status", "deleted_at"),
         Index("idx_blog_author", "author_id"),
         Index("idx_blog_category", "category"),
@@ -105,7 +106,7 @@ class BlogPost(Base):
         # See app/models/tour.py for the rationale behind using raw text().
         Index(
             "idx_blog_fts",
-            text(
+            sa.text(
                 "to_tsvector('spanish', COALESCE(title, '') || ' ' || "
                 "COALESCE(content, '') || ' ' || COALESCE(excerpt, ''))"
             ),

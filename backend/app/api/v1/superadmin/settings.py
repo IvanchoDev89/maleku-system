@@ -8,11 +8,12 @@ Handles environment variables, integrations, email templates, and feature flags.
 from typing import List, Optional
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Request
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin
 from app.core.config import settings
 from app.models import User
@@ -189,7 +190,9 @@ async def get_settings(
 
 
 @router.put("", response_model=SettingsResponse)
+@limiter.limit("10/minute")
 async def update_settings(
+    request: Request,
     data: SettingsUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
@@ -270,7 +273,9 @@ async def get_email_template(
 
 
 @router.put("/email-templates/{template_id}", response_model=EmailTemplate)
+@limiter.limit("10/minute")
 async def update_email_template(
+    request: Request,
     template_id: str,
     data: EmailTemplateUpdate,
     db: AsyncSession = Depends(get_db),
@@ -313,7 +318,9 @@ async def get_feature_flags(
 
 
 @router.put("/feature-flags/{flag_name}", response_model=dict)
+@limiter.limit("10/minute")
 async def update_feature_flag(
+    request: Request,
     flag_name: str,
     enabled: bool = Body(...),
     rollout_percentage: int = Body(100, ge=0, le=100),
@@ -346,7 +353,9 @@ async def update_feature_flag(
 
 
 @router.post("/maintenance-mode", response_model=dict)
+@limiter.limit("5/minute")
 async def toggle_maintenance_mode(
+    request: Request,
     enabled: bool = Body(..., embed=True),
     message: str = Body("", max_length=500),
     db: AsyncSession = Depends(get_db),

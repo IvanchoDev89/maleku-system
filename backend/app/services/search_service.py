@@ -4,8 +4,8 @@ from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 
-from app.models.property import Property
-from app.models.tour import Tour
+from app.models.property import Property, PropertyType, PropertyCategory
+from app.models.tour import Tour, TourCategory
 from app.models.blog import BlogPost
 
 
@@ -24,6 +24,8 @@ class SearchService:
         self,
         db: AsyncSession,
         query: str,
+        property_type: Optional[str] = None,
+        category: Optional[str] = None,
         amenities: Optional[List[str]] = None,
         region: Optional[str] = None,
         min_price: Optional[float] = None,
@@ -58,6 +60,10 @@ class SearchService:
         )
 
         # Apply filters
+        if property_type:
+            stmt = stmt.where(Property.property_type == PropertyType(property_type))
+        if category:
+            stmt = stmt.where(Property.category == PropertyCategory(category))
         if amenities:
             stmt = stmt.where(Property.amenities.op("@>")(amenities))
         if region:
@@ -100,7 +106,7 @@ class SearchService:
         )
 
         if category:
-            stmt = stmt.where(Tour.category == category)
+            stmt = stmt.where(Tour.category == TourCategory(category))
         if location:
             stmt = stmt.where(Tour.location.ilike(f"%{location}%"))
 

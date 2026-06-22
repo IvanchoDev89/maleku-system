@@ -91,7 +91,7 @@ def calculate_tour_price(tour: Tour, participants: int) -> dict:
     """
     Calculate tour booking price breakdown
     """
-    price_per_person = tour.price or 0
+    price_per_person = float(tour.price or 0)
     subtotal = price_per_person * participants
 
     return {

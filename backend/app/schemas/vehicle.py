@@ -2,12 +2,19 @@
 Vehicle Schemas - Rent a Car
 """
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 
 from app.models import VehicleType, TransmissionType, FuelType
+from . import is_dangerous_sql
+
+
+def _sanitize_vehicle_field(cls, v: Optional[str]) -> Optional[str]:
+    if v is not None and is_dangerous_sql(v):
+        raise ValueError("Invalid input")
+    return v
 
 
 class VehicleBase(BaseModel):
@@ -32,6 +39,11 @@ class VehicleBase(BaseModel):
     pickup_locations: List[str] = []
     dropoff_locations: List[str] = []
     requirements: List[str] = []
+
+    @field_validator("brand", "model", "license_plate", "color", "location")
+    @classmethod
+    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+        return _sanitize_vehicle_field(cls, v)
 
 
 class VehicleCreate(VehicleBase):
@@ -60,6 +72,12 @@ class VehicleUpdate(BaseModel):
     pickup_locations: Optional[List[str]] = None
     dropoff_locations: Optional[List[str]] = None
     requirements: Optional[List[str]] = None
+
+    @field_validator("brand", "model", "license_plate", "color", "location")
+    @classmethod
+    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+        return _sanitize_vehicle_field(cls, v)
+
     is_available: Optional[bool] = None
 
 

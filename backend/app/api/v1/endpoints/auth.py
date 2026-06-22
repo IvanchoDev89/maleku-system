@@ -27,6 +27,8 @@ from app.core.security import (
 )
 from app.models.user import User
 from app.models.base import UserRole
+from app.models.audit import SecurityAction
+from app.services.audit_service import AuditService
 from app.services.base import BaseService
 from app.services.email_service import email_service
 from app.core.logging import get_logger
@@ -36,20 +38,35 @@ logger = get_logger(__name__)
 router = APIRouter()
 user_service = BaseService(User)
 security = HTTPBearer()
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=get_remote_address, enabled=settings.ENVIRONMENT != "test")
 
 
-def normalize_role(role: UserRole) -> str:
+def _validate_password_strength(v: str) -> str:
+    v = v.strip()
+    if len(v) < 8:
+        raise ValueError("Password must be at least 8 characters long")
+    if not re.search(r"[A-Z]", v):
+        raise ValueError("Password must contain at least one uppercase letter")
+    if not re.search(r"[a-z]", v):
+        raise ValueError("Password must contain at least one lowercase letter")
+    if not re.search(r"\d", v):
+        raise ValueError("Password must contain at least one number")
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
+        raise ValueError("Password must contain at least one special character")
+    return v
+
+
+def normalize_role(role: str) -> str:
     """Normalize role to consistent string format for API responses."""
     role_map = {
-        UserRole.SUPER_ADMIN: "super_admin",
-        UserRole.ADMIN: "admin",
-        UserRole.AGENT: "agent",
-        UserRole.CUSTOMER_SERVICE: "customer_service",
-        UserRole.VENDOR: "vendor",
-        UserRole.CLIENT: "client",
+        "super_admin": "super_admin",
+        "admin": "admin",
+        "agent": "agent",
+        "customer_service": "customer_service",
+        "vendor": "vendor",
+        "client": "client",
     }
-    return role_map.get(role, role.value)
+    return role_map.get(role, role)
 
 
 # Schemas
@@ -62,16 +79,7 @@ class RegisterRequest(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password_strength(cls, v: str) -> str:
-        """Validate password has uppercase, lowercase, number, and special char."""
-        if not re.search(r"[A-Z]", v):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", v):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search(r"\d", v):
-            raise ValueError("Password must contain at least one number")
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError("Password must contain at least one special character")
-        return v
+        return _validate_password_strength(v)
 
     @field_validator("full_name")
     @classmethod
@@ -110,15 +118,7 @@ class ResetPasswordRequest(BaseModel):
     @field_validator("new_password")
     @classmethod
     def validate_password_strength(cls, v: str) -> str:
-        if not re.search(r"[A-Z]", v):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", v):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search(r"\d", v):
-            raise ValueError("Password must contain at least one number")
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError("Password must contain at least one special character")
-        return v
+        return _validate_password_strength(v)
 
 
 class VerifyEmailRequest(BaseModel):
@@ -197,7 +197,7 @@ async def register(
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
-        "expires_in": 900,
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         "user": {
             "id": str(user.id),
             "email": user.email,
@@ -218,15 +218,7 @@ class VendorRegisterRequest(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password_strength(cls, v: str) -> str:
-        if not re.search(r"[A-Z]", v):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", v):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search(r"\d", v):
-            raise ValueError("Password must contain at least one number")
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError("Password must contain at least one special character")
-        return v
+        return _validate_password_strength(v)
 
 
 @router.post(
@@ -350,6 +342,14 @@ async def login(
         user.failed_login_attempts += 1
         if user.failed_login_attempts >= 5:
             user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=30)
+            await AuditService.log_security_event(
+                db=db,
+                action=SecurityAction.ACCOUNT_LOCKED,
+                user=user,
+                severity="warning",
+                description=f"Account locked after {user.failed_login_attempts} consecutive failed login attempts",
+                request=request,
+            )
         await db.commit()
 
         raise HTTPException(
@@ -363,9 +363,18 @@ async def login(
         )
 
     # Reset failed attempts and update last login
+    was_locked = user.locked_until is not None or user.failed_login_attempts > 0
     user.failed_login_attempts = 0
     user.locked_until = None
     user.last_login = datetime.now(timezone.utc)
+    if was_locked:
+        await AuditService.log_security_event(
+            db=db,
+            action=SecurityAction.ACCOUNT_UNLOCKED,
+            user=user,
+            description="Account unlocked after successful login",
+            request=request,
+        )
     await db.commit()
 
     # Generate tokens
@@ -388,10 +397,13 @@ async def login(
 
 
 @router.post("/refresh", response_model=TokenResponse)
+@limiter.limit("10/minute")
 async def refresh_token(
-    refresh_in: RefreshRequest, db: AsyncSession = Depends(get_async_session)
+    refresh_in: RefreshRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session),
 ):
-    """Refresh access token using refresh token."""
+    """Refresh access token using refresh token with rotation."""
     payload = decode_token(refresh_in.refresh_token)
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(
@@ -407,13 +419,23 @@ async def refresh_token(
             detail="User not found or inactive",
         )
 
+    # Rotate tokens: invalidate old, issue new
+    try:
+        await token_blacklist.blacklist_token(
+            refresh_in.refresh_token,
+            datetime.fromtimestamp(payload["exp"], tz=timezone.utc),
+        )
+        logger.info(f"Rotated refresh token for user {user.id}")
+    except Exception as e:
+        logger.warning(f"Failed to blacklist old refresh token: {e}")
+
     # Generate new tokens
     access_token = create_access_token(str(user.id))
-    refresh_token = create_refresh_token(str(user.id))
+    new_refresh_token = create_refresh_token(str(user.id))
 
     return {
         "access_token": access_token,
-        "refresh_token": refresh_token,
+        "refresh_token": new_refresh_token,
         "token_type": "bearer",
         "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         "user": {
@@ -427,7 +449,10 @@ async def refresh_token(
 
 
 @router.post("/logout", response_model=MessageResponse)
-async def logout(credentials: HTTPAuthorizationCredentials = Depends(security)):
+@limiter.limit("10/minute")
+async def logout(
+    request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)
+):
     """Logout - invalidate token (add to blacklist)."""
     token = credentials.credentials
 
@@ -591,6 +616,7 @@ async def reset_password(
 
 
 @router.post("/verify-email", response_model=MessageResponse)
+@limiter.limit("5/minute")
 async def verify_email(
     verify_in: VerifyEmailRequest,
     request: Request,
@@ -642,6 +668,7 @@ async def verify_email(
 
 
 @router.post("/resend-verification", response_model=MessageResponse)
+@limiter.limit("3/hour")
 async def resend_verification(
     request: Request,
     current_user: User = Depends(get_current_user),

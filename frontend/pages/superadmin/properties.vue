@@ -6,42 +6,30 @@
         <h1 class="text-2xl font-bold text-gray-900">Gestión de Propiedades</h1>
         <p class="text-gray-500 mt-1">Moderación, destacados y control de contenido</p>
       </div>
-      <div class="flex gap-3">
-        <button
-          @click="showModerationQueue = true"
-          class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
-        >
-          <span>🛡️</span>
-          <span>Moderación</span>
-          <span v-if="moderationCount > 0" class="px-2 py-0.5 bg-white/20 rounded-full text-sm">
-            {{ moderationCount }}
-          </span>
-        </button>
-      </div>
     </div>
 
     <!-- Stats -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <UiCard padding="xs">
         <p class="text-sm text-gray-500">Total Propiedades</p>
         <p class="text-2xl font-bold text-gray-900">{{ stats.total }}</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      </UiCard>
+      <UiCard padding="xs">
         <p class="text-sm text-gray-500">Activas</p>
         <p class="text-2xl font-bold text-green-600">{{ stats.active }}</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      </UiCard>
+      <UiCard padding="xs">
         <p class="text-sm text-gray-500">Destacadas</p>
         <p class="text-2xl font-bold text-purple-600">{{ stats.featured }}</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <p class="text-sm text-gray-500">Pendientes Review</p>
-        <p class="text-2xl font-bold text-amber-600">{{ stats.pending_review }}</p>
-      </div>
+      </UiCard>
+      <UiCard padding="xs">
+        <p class="text-sm text-gray-500">Rating Promedio</p>
+        <p class="text-2xl font-bold text-amber-600">{{ stats.average_rating || '—' }}</p>
+      </UiCard>
     </div>
 
     <!-- Filters -->
-    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+    <UiCard padding="xs">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
@@ -66,10 +54,10 @@
           <UiSelect v-model="filters.region" :options="regionOptions" placeholder="Todas" @update:model-value="page = 1; loadProperties()" />
         </div>
       </div>
-    </div>
+    </UiCard>
 
     <!-- Properties Table -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <UiCard padding="none" class="overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead class="bg-gray-50">
@@ -125,20 +113,12 @@
                     {{ property.is_featured ? '💔' : '⭐' }}
                   </button>
                   <button
-                    v-if="property.status === 'pending_review'"
-                    @click="confirmApproveProperty(property)"
-                    class="p-2 text-green-600 hover:bg-green-50 rounded-lg"
-                    title="Aprobar"
-                  >
-                    ✅
-                  </button>
-                  <button
                     @click="confirmToggleStatus(property)"
                     class="p-2 rounded-lg"
-                    :class="property.status === 'active' ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'"
-                    :title="property.status === 'active' ? 'Desactivar' : 'Activar'"
+                    :class="property.is_active ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'"
+                    :title="property.is_active ? 'Desactivar' : 'Activar'"
                   >
-                    {{ property.status === 'active' ? '🚫' : '✅' }}
+                    {{ property.is_active ? '🚫' : '✅' }}
                   </button>
                 </div>
               </td>
@@ -175,48 +155,11 @@
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center py-8">
         <div class="flex flex-col items-center gap-2">
-          <div class="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+          <UiSpinner size="md" color="primary" />
           <span class="text-sm text-gray-500">Cargando...</span>
         </div>
       </div>
-    </div>
-
-    <!-- Moderation Queue Modal -->
-    <UiModal v-if="showModerationQueue" :model-value="showModerationQueue" title="Cola de Moderación" max-width="max-w-4xl" @update:model-value="showModerationQueue = false">
-      <div v-if="moderationQueue.length === 0" class="text-center py-8 text-gray-500">
-        No hay elementos pendientes de moderación
-      </div>
-
-      <div v-else class="space-y-4">
-        <div
-          v-for="item in moderationQueue"
-          :key="item.id"
-          class="border border-gray-200 rounded-xl p-4"
-        >
-          <div class="flex justify-between items-start">
-            <div>
-              <h4 class="font-bold text-gray-900">{{ item.property_name }}</h4>
-              <p class="text-sm text-gray-500">{{ item.vendor_name }} • {{ item.submitted_at }}</p>
-              <p class="text-sm text-gray-600 mt-2">{{ item.change_summary }}</p>
-            </div>
-            <div class="flex gap-2">
-              <button
-                @click="moderateItem(item, 'reject')"
-                class="px-3 py-1 bg-red-100 text-red-700 rounded-lg text-sm"
-              >
-                Rechazar
-              </button>
-              <button
-                @click="moderateItem(item, 'approve')"
-                class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm"
-              >
-                Aprobar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </UiModal>
+    </UiCard>
 
     <!-- Confirm Dialog -->
     <UiConfirmDialog
@@ -243,9 +186,7 @@ const api = useApi()
 
 const properties = ref<any[]>([])
 const stats = ref({ total: 0, active: 0, featured: 0, pending_review: 0 })
-const moderationCount = ref(0)
-const showModerationQueue = ref(false)
-const moderationQueue = ref<any[]>([])
+
 const loading = ref(false)
 
 const showConfirm = ref(false)
@@ -274,7 +215,6 @@ const statusOptions = [
   { value: 'all', label: 'Todas' },
   { value: 'active', label: 'Activas' },
   { value: 'inactive', label: 'Inactivas' },
-  { value: 'pending_review', label: 'Pendientes Review' },
 ]
 
 const typeOptions = [
@@ -335,7 +275,11 @@ const loadProperties = async () => {
     if (filters.value.region) params.region = filters.value.region
 
     const response = await api.get('/properties', params)
-    properties.value = response.items || response
+    const items = response.items || (Array.isArray(response) ? response : [])
+    properties.value = items.map((p: any) => ({
+      ...p,
+      status: p.is_active ? 'active' : 'inactive',
+    }))
     total.value = response.total || properties.value.length
   } catch (error) {
     console.error('Error loading properties:', error)
@@ -352,23 +296,17 @@ const changePage = (p: number) => {
 const loadStats = async () => {
   try {
     const response = await api.get('/superadmin/dashboard/stats')
+    const active = properties.value.filter((p: any) => p.is_active).length
+    const featured = properties.value.filter((p: any) => p.is_featured).length
     stats.value = {
       total: response.total_properties || 0,
-      active: response.active_properties || 0,
-      featured: response.featured_properties || 0,
-      pending_review: response.pending_properties || 0,
+      active: active || response.total_properties || 0,
+      featured,
+      pending_review: 0,
+      average_rating: response.average_rating,
     }
-    moderationCount.value = stats.value.pending_review
   } catch (error) {
     console.error('Error loading stats:', error)
-  }
-}
-
-const loadModerationQueue = async () => {
-  try {
-    moderationQueue.value = await api.get('/properties', { status: 'pending_review' })
-  } catch (error) {
-    console.error('Error loading moderation queue:', error)
   }
 }
 
@@ -411,8 +349,8 @@ const executeApproveProperty = async (property: any) => {
 }
 
 const confirmToggleStatus = (property: any) => {
-  const newStatus = property.status === 'active' ? 'inactive' : 'active'
-  const actionLabel = newStatus === 'active' ? 'Activar' : 'Desactivar'
+  const newActive = !property.is_active
+  const actionLabel = newActive ? 'Activar' : 'Desactivar'
   openConfirm(
     `${actionLabel} Propiedad`,
     `¿${actionLabel.toLowerCase()} ${property.name}?`,
@@ -422,9 +360,8 @@ const confirmToggleStatus = (property: any) => {
 }
 
 const executeToggleStatus = async (property: any) => {
-  const newStatus = property.status === 'active' ? 'inactive' : 'active'
   try {
-    await api.put(`/properties/${property.id}`, { is_active: newStatus === 'active' })
+    await api.put(`/properties/${property.id}`, { is_active: !property.is_active })
     await loadProperties()
     await loadStats()
   } catch (error) {
@@ -432,21 +369,10 @@ const executeToggleStatus = async (property: any) => {
   }
 }
 
-const moderateItem = async (item: any, action: string) => {
-  try {
-    await api.put(`/properties/${item.id}`, { is_active: action === 'approve' })
-    await loadModerationQueue()
-    await loadStats()
-  } catch (error) {
-    console.error('Error moderating item:', error)
-  }
-}
-
 const formatStatus = (status: string) => {
   const statuses: Record<string, string> = {
     active: 'Activa',
     inactive: 'Inactiva',
-    pending_review: 'Pendiente',
   }
   return statuses[status] || status
 }
@@ -455,14 +381,9 @@ function statusVariant(status: string) {
   const map: Record<string, string> = {
     active: 'success',
     inactive: 'default',
-    pending_review: 'warning',
   }
   return (map[status] || 'default') as any
 }
-
-watch(showModerationQueue, (show) => {
-  if (show) loadModerationQueue()
-})
 
 onMounted(() => {
   loadProperties()

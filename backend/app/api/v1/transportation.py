@@ -4,11 +4,12 @@ Transportation API - Transporte Privado
 
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import get_current_user, require_role
 from app.models import User, UserRole, Vendor, PricingType
 from app.models import Transportation, TransportServiceType
@@ -68,21 +69,25 @@ async def list_transportation(
     location: str | None = None,
     service_type: TransportServiceType | None = None,
     capacity: int | None = None,
+    skip: int = 0,
+    limit: int = 20,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> list[transportation_schema.TransportationResponse]:
+) -> dict:
     """
-    List all available private transportation services with filters.
+    List all available private transportation services with filters and pagination.
 
     Args:
         location: Filter by service location
         service_type: Type of service (airport_transfer, city_tour, custom_route)
         capacity: Minimum passenger capacity
+        skip: Number of records to skip (pagination offset)
+        limit: Maximum number of records to return
         db: Database session
         current_user: Authenticated user
 
     Returns:
-        List of transportation services matching the filters
+        Paginated list of transportation services matching the filters
 
     Note: Geolocation-based search not yet implemented
     """
@@ -97,10 +102,34 @@ async def list_transportation(
     if capacity:
         query = query.where(Transportation.capacity >= capacity)
 
-    result = await db.execute(query.order_by(Transportation.base_price))
+    count_query = select(
+        select(Transportation.id)
+        .where(Transportation.is_active, Transportation.is_available)
+        .subquery()
+        .c.id
+    )
+    if location:
+        count_query = count_query.where(Transportation.locations.contains(location))
+    if service_type:
+        count_query = count_query.where(Transportation.service_type == service_type)
+    if capacity:
+        count_query = count_query.where(Transportation.capacity >= capacity)
+
+    limit = min(limit, 100)
+    result = await db.execute(
+        query.order_by(Transportation.base_price).offset(skip).limit(limit)
+    )
     services = result.scalars().all()
 
-    return services
+    total_result = await db.execute(count_query)
+    total = len(total_result.scalars().all())
+
+    return {
+        "items": services,
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+    }
 
 
 @router.get(
@@ -134,7 +163,9 @@ async def get_transportation(
 
 
 @router.post("", response_model=transportation_schema.TransportationResponse)
+@limiter.limit("10/minute")
 async def create_transportation(
+    request: Request,
     transport_data: transportation_schema.TransportationCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.VENDOR)),
@@ -182,7 +213,9 @@ async def create_transportation(
 @router.put(
     "/{transport_id}", response_model=transportation_schema.TransportationResponse
 )
+@limiter.limit("10/minute")
 async def update_transportation(
+    request: Request,
     transport_id: uuid.UUID,
     transport_data: transportation_schema.TransportationUpdate,
     db: AsyncSession = Depends(get_db),
@@ -297,10 +330,12 @@ async def get_my_transportation(
 
 
 @router.post("/calculate-price", response_model=dict)
+@limiter.limit("30/minute")
 async def calculate_price(
     transport_id: uuid.UUID,
     distance_km: float,
     duration_hours: float | None = None,
+    request: Request = None,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Calculate transportation price"""

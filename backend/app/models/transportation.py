@@ -26,7 +26,7 @@ from sqlalchemy.orm import relationship
 from app.models.base import Base
 
 
-class TransportServiceType(enum.Enum):
+class TransportServiceType(str, enum.Enum):
     """Transportation service type enumeration."""
 
     AIRPORT_TRANSFER = "airport_transfer"
@@ -34,7 +34,7 @@ class TransportServiceType(enum.Enum):
     CUSTOM_ROUTE = "custom_route"
 
 
-class TransportVehicleType(enum.Enum):
+class TransportVehicleType(str, enum.Enum):
     """Transport vehicle type enumeration."""
 
     SEDAN = "sedan"
@@ -43,7 +43,7 @@ class TransportVehicleType(enum.Enum):
     BUS = "bus"
 
 
-class PricingType(enum.Enum):
+class PricingType(str, enum.Enum):
     """Pricing model enumeration."""
 
     PER_DAY = "per_day"
@@ -52,7 +52,7 @@ class PricingType(enum.Enum):
     PER_ROUTE = "per_route"
 
 
-class DayType(enum.Enum):
+class DayType(str, enum.Enum):
     """Day type enumeration for pricing."""
 
     WEEKDAY = "weekday"
@@ -146,6 +146,9 @@ class Transportation(Base):
     # Indexes for performance
     __table_args__ = (
         Index("idx_transport_vendor", "vendor_id"),
+        Index("idx_transport_is_active", "is_active"),
+        Index("idx_transport_is_available", "is_available"),
+        Index("idx_transport_created_at", "created_at"),
         Index("idx_transport_service_type", "service_type"),
         Index("idx_transport_vehicle_type", "vehicle_type"),
         Index("idx_transport_available", "is_available", "is_active", "deleted_at"),

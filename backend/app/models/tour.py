@@ -16,7 +16,6 @@ from sqlalchemy import (
     Float,
     Integer,
     JSON,
-    Enum,
     Index,
     Numeric,
     text,
@@ -28,7 +27,7 @@ from sqlalchemy.orm import relationship
 from app.models.base import Base
 
 
-class TourCategory(enum.Enum):
+class TourCategory(str, enum.Enum):
     """Tour category enumeration."""
 
     ADVENTURE = "adventure"
@@ -37,14 +36,19 @@ class TourCategory(enum.Enum):
     WATER = "water"
     WELLNESS = "wellness"
     GASTRONOMY = "gastronomy"
+    BEACH = "beach"
+    WILDLIFE = "wildlife"
+    CULTURE = "culture"
 
 
-class TourDifficulty(enum.Enum):
+class TourDifficulty(str, enum.Enum):
     """Tour difficulty level enumeration."""
 
     EASY = "easy"
     MODERATE = "moderate"
     CHALLENGING = "challenging"
+    MEDIUM = "medium"
+    HARD = "hard"
 
 
 class Tour(Base):
@@ -89,8 +93,8 @@ class Tour(Base):
     name = Column(String(255), nullable=False)
     slug = Column(String(255), unique=True, index=True, nullable=False)
     description = Column(Text, nullable=True)
-    category = Column(Enum(TourCategory), nullable=False)
-    difficulty = Column(Enum(TourDifficulty), default=TourDifficulty.EASY)
+    category = Column(String(30), nullable=False, default=TourCategory.ADVENTURE.value)
+    difficulty = Column(String(20), default=TourDifficulty.EASY.value)
 
     duration_hours = Column(Float, nullable=False)
     duration_text = Column(String(50), nullable=True)
@@ -142,6 +146,8 @@ class Tour(Base):
 
     __table_args__ = (
         Index("idx_tour_vendor", "vendor_id"),
+        Index("idx_tour_created_at", "created_at"),
+        Index("idx_tour_active_created", "is_active", "created_at"),
         Index("idx_tour_category", "category"),
         Index("idx_tour_active", "is_active"),
         Index("idx_tour_featured", "is_featured", "is_active", "deleted_at"),

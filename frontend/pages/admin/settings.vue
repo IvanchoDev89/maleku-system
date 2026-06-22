@@ -13,161 +13,43 @@
     </div>
 
     <div class="space-y-6">
-      <div v-if="activeCategory === 'general'" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 class="text-gray-900 font-bold text-lg mb-5">⚙️ Configuración General</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Nombre del Sitio</label>
-            <input v-model="settings.site_name" type="text" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Descripción</label>
-            <input v-model="settings.site_description" type="text" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Palabras Clave SEO</label>
-            <input v-model="settings.site_keywords" type="text" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Logo URL</label>
-            <input v-model="settings.site_logo" type="text" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-        </div>
-      </div>
-
-      <div v-if="activeCategory === 'contact'" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 class="text-gray-900 font-bold text-lg mb-5">📞 Información de Contacto</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Email de Contacto</label>
-            <input v-model="settings.contact_email" type="email" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Teléfono</label>
-            <input v-model="settings.contact_phone" type="tel" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">WhatsApp</label>
-            <input v-model="settings.contact_whatsapp" type="tel" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Dirección</label>
-            <input v-model="settings.contact_address" type="text" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-        </div>
-      </div>
-
-      <div v-if="activeCategory === 'business'" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 class="text-gray-900 font-bold text-lg mb-5">💰 Configuración de Negocios</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Tasa de Comisión (%)</label>
-            <input v-model.number="settings.commission_rate" type="number" min="0" max="100" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Moneda</label>
-            <UiSelect v-model="settings.currency" :options="currencyOptions" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Monto Mínimo de Reserva</label>
-            <input v-model.number="settings.min_booking_amount" type="number" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Horas para Cancelar</label>
-            <input v-model.number="settings.booking_cancellation_hours" type="number" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-        </div>
-      </div>
-
-      <div v-if="activeCategory === 'social'" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 class="text-gray-900 font-bold text-lg mb-5">📱 Redes Sociales</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Facebook</label>
-            <input v-model="settings.social_facebook" type="url" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Instagram</label>
-            <input v-model="settings.social_instagram" type="url" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Twitter/X</label>
-            <input v-model="settings.social_twitter" type="url" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">YouTube</label>
-            <input v-model="settings.social_youtube" type="url" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-        </div>
-      </div>
-
-      <div v-if="activeCategory === 'seo'" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 class="text-gray-900 font-bold text-lg mb-5">🔍 Configuración SEO</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Imagen OG por Defecto</label>
-            <input v-model="settings.seo_og_image" type="url" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Google Analytics ID</label>
-            <input v-model="settings.seo_google_analytics_id" type="text" placeholder="G-XXXXXXXXXX" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Google Search Console</label>
-            <input v-model="settings.seo_google_search_console" type="text" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Directivas Robots</label>
-            <input v-model="settings.seo_robots" type="text" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-        </div>
-      </div>
-
-      <div v-if="activeCategory === 'appearance'" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 class="text-gray-900 font-bold text-lg mb-5">🎨 Apariencia</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Color Primario</label>
-            <div class="flex gap-3">
-              <input v-model="settings.theme_primary_color" type="color" class="w-14 h-11 rounded-xl cursor-pointer border border-gray-200" />
-              <input v-model="settings.theme_primary_color" type="text" class="flex-1 bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
+      <div v-for="section in sections" :key="section.key" v-if="activeCategory === section.key" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <h3 class="text-gray-900 font-bold text-lg mb-5">{{ section.icon }} {{ section.title }}</h3>
+        <div :class="section.noGrid ? 'space-y-4' : 'grid grid-cols-1 md:grid-cols-2 gap-5'">
+          <template v-for="field in section.fields" :key="field.key">
+            <div v-if="field.type === 'text' || field.type === 'email' || field.type === 'tel' || field.type === 'url'" :class="field.fullWidth ? 'md:col-span-2' : ''">
+              <label class="block text-gray-500 text-sm mb-1.5 font-medium">{{ field.label }}</label>
+              <input :type="field.type" v-model="settings[field.key]" :placeholder="field.placeholder || ''" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
             </div>
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Color Secundario</label>
-            <div class="flex gap-3">
-              <input v-model="settings.theme_secondary_color" type="color" class="w-14 h-11 rounded-xl cursor-pointer border border-gray-200" />
-              <input v-model="settings.theme_secondary_color" type="text" class="flex-1 bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
+            <div v-else-if="field.type === 'number'" :class="field.fullWidth ? 'md:col-span-2' : ''">
+              <label class="block text-gray-500 text-sm mb-1.5 font-medium">{{ field.label }}</label>
+              <input :type="field.type" v-model.number="settings[field.key]" :min="field.min" :max="field.max" :step="field.step" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
             </div>
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Color de Acento</label>
-            <div class="flex gap-3">
-              <input v-model="settings.theme_accent_color" type="color" class="w-14 h-11 rounded-xl cursor-pointer border border-gray-200" />
-              <input v-model="settings.theme_accent_color" type="text" class="flex-1 bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
+            <div v-else-if="field.type === 'select'" :class="field.fullWidth ? 'md:col-span-2' : ''">
+              <label class="block text-gray-500 text-sm mb-1.5 font-medium">{{ field.label }}</label>
+              <UiSelect v-model="settings[field.key]" :options="field.options" />
             </div>
-          </div>
-          <div>
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Fuente</label>
-            <UiSelect v-model="settings.theme_font_family" :options="fontOptions" />
-          </div>
-        </div>
-      </div>
-
-      <div v-if="activeCategory === 'maintenance'" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 class="text-gray-900 font-bold text-lg mb-5">🔧 Mantenimiento</h3>
-        <div class="space-y-4">
-          <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-gray-50 transition-colors">
-            <input v-model="settings.maintenance_mode" type="checkbox" class="w-5 h-5 text-primary rounded focus:ring-primary" />
-            <div>
-              <span class="text-gray-700 font-medium">Modo Mantenimiento</span>
-              <p class="text-gray-400 text-sm">Muestra página de mantenimiento a visitantes</p>
+            <div v-else-if="field.type === 'color'" :class="field.fullWidth ? 'md:col-span-2' : ''">
+              <label class="block text-gray-500 text-sm mb-1.5 font-medium">{{ field.label }}</label>
+              <div class="flex gap-3">
+                <input v-model="settings[field.key]" type="color" class="w-14 h-11 rounded-xl cursor-pointer border border-gray-200" />
+                <input v-model="settings[field.key]" type="text" class="flex-1 bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </div>
             </div>
-          </label>
-          <div v-if="settings.maintenance_mode" class="pl-8">
-            <label class="block text-gray-500 text-sm mb-1.5 font-medium">Mensaje de Mantenimiento</label>
-            <textarea v-model="settings.maintenance_message" rows="3" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"></textarea>
-          </div>
+            <div v-else-if="field.type === 'checkbox'" class="md:col-span-2">
+              <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                <input v-model="settings[field.key]" type="checkbox" class="w-5 h-5 text-primary rounded focus:ring-primary" />
+                <div>
+                  <span class="text-gray-700 font-medium">{{ field.label }}</span>
+                  <p v-if="field.description" class="text-gray-400 text-sm">{{ field.description }}</p>
+                </div>
+              </label>
+            </div>
+            <div v-else-if="field.type === 'textarea' && (!field.showIf || settings[field.showIf])" class="md:col-span-2">
+              <label class="block text-gray-500 text-sm mb-1.5 font-medium">{{ field.label }}</label>
+              <textarea v-model="settings[field.key]" rows="3" class="w-full bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"></textarea>
+            </div>
+          </template>
         </div>
       </div>
 
@@ -210,15 +92,71 @@ const fontOptions = [
 const activeCategory = ref('general')
 const saving = ref(false)
 
-const categories = [
-  { key: 'general', label: 'General', icon: '⚙️' },
-  { key: 'contact', label: 'Contacto', icon: '📞' },
-  { key: 'business', label: 'Negocio', icon: '💰' },
-  { key: 'social', label: 'Social', icon: '📱' },
-  { key: 'seo', label: 'SEO', icon: '🔍' },
-  { key: 'appearance', label: 'Apariencia', icon: '🎨' },
-  { key: 'maintenance', label: 'Mantenimiento', icon: '🔧' }
+const sections = [
+  {
+    key: 'general', icon: '⚙️', title: 'Configuración General',
+    fields: [
+      { key: 'site_name', label: 'Nombre del Sitio', type: 'text' },
+      { key: 'site_description', label: 'Descripción', type: 'text' },
+      { key: 'site_keywords', label: 'Palabras Clave SEO', type: 'text' },
+      { key: 'site_logo', label: 'Logo URL', type: 'text' },
+    ]
+  },
+  {
+    key: 'contact', icon: '📞', title: 'Información de Contacto',
+    fields: [
+      { key: 'contact_email', label: 'Email de Contacto', type: 'email' },
+      { key: 'contact_phone', label: 'Teléfono', type: 'tel' },
+      { key: 'contact_whatsapp', label: 'WhatsApp', type: 'tel' },
+      { key: 'contact_address', label: 'Dirección', type: 'text' },
+    ]
+  },
+  {
+    key: 'business', icon: '💰', title: 'Configuración de Negocios',
+    fields: [
+      { key: 'commission_rate', label: 'Tasa de Comisión (%)', type: 'number', min: 0, max: 100 },
+      { key: 'currency', label: 'Moneda', type: 'select', options: currencyOptions },
+      { key: 'min_booking_amount', label: 'Monto Mínimo de Reserva', type: 'number' },
+      { key: 'booking_cancellation_hours', label: 'Horas para Cancelar', type: 'number' },
+    ]
+  },
+  {
+    key: 'social', icon: '📱', title: 'Redes Sociales',
+    fields: [
+      { key: 'social_facebook', label: 'Facebook', type: 'url' },
+      { key: 'social_instagram', label: 'Instagram', type: 'url' },
+      { key: 'social_twitter', label: 'Twitter/X', type: 'url' },
+      { key: 'social_youtube', label: 'YouTube', type: 'url' },
+    ]
+  },
+  {
+    key: 'seo', icon: '🔍', title: 'Configuración SEO',
+    fields: [
+      { key: 'seo_og_image', label: 'Imagen OG por Defecto', type: 'url' },
+      { key: 'seo_google_analytics_id', label: 'Google Analytics ID', type: 'text', placeholder: 'G-XXXXXXXXXX' },
+      { key: 'seo_google_search_console', label: 'Google Search Console', type: 'text' },
+      { key: 'seo_robots', label: 'Directivas Robots', type: 'text' },
+    ]
+  },
+  {
+    key: 'appearance', icon: '🎨', title: 'Apariencia',
+    fields: [
+      { key: 'theme_primary_color', label: 'Color Primario', type: 'color' },
+      { key: 'theme_secondary_color', label: 'Color Secundario', type: 'color' },
+      { key: 'theme_accent_color', label: 'Color de Acento', type: 'color' },
+      { key: 'theme_font_family', label: 'Fuente', type: 'select', options: fontOptions },
+    ]
+  },
+  {
+    key: 'maintenance', icon: '🔧', title: 'Mantenimiento', noGrid: true,
+    fields: [
+      { key: 'maintenance_mode', label: 'Modo Mantenimiento', type: 'checkbox', description: 'Muestra página de mantenimiento a visitantes' },
+      { key: 'maintenance_message', label: 'Mensaje de Mantenimiento', type: 'textarea', showIf: 'maintenance_mode' },
+    ]
+  }
 ]
+
+const categories = sections.map(s => ({ key: s.key, label: s.title, icon: s.icon }))
 
 const settings = reactive({
   site_name: 'Costa Rica Travel',

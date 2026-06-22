@@ -21,7 +21,7 @@
       </div>
 
       <button
-        @click="showCreateModal = true"
+        @click="navigateTo('/admin/destinations/new')"
         class="bg-primary hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all"
       >
         + Nuevo Destino
@@ -30,10 +30,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div v-if="loading" class="col-span-full py-12 text-center text-gray-400">
-        <svg class="animate-spin h-8 w-8 mx-auto mb-4 text-primary" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
+        <UiSpinner size="lg" color="primary" class="mx-auto mb-4" />
         Cargando...
       </div>
 
@@ -43,7 +40,7 @@
 
       <div v-for="dest in destinations" :key="dest.id" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
         <div class="aspect-video bg-gray-100 relative overflow-hidden">
-          <NuxtImg v-if="dest.image_url" :src="dest.image_url" :alt="dest.name" class="w-full h-full object-cover" width="400" height="200" format="webp" />
+          <NuxtImg v-if="dest.image" :src="dest.image" :alt="dest.name" class="w-full h-full object-cover" width="400" height="200" format="webp" />
           <div v-else class="w-full h-full flex items-center justify-center text-4xl">🌴</div>
           <div class="absolute top-3 right-3 flex gap-2">
             <button @click="editDestination(dest)" class="p-2 bg-white/90 rounded-lg shadow hover:bg-white">
@@ -68,7 +65,7 @@
           </div>
           <p class="text-gray-500 text-sm line-clamp-2">{{ dest.description }}</p>
           <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-            <span class="text-sm text-gray-500">Orden: {{ dest.position || 0 }}</span>
+            <span class="text-sm text-gray-500">Orden: {{ dest.order || 0 }}</span>
             <NuxtLink :to="`/admin/destinations/${dest.id}`" class="text-primary font-medium text-sm hover:underline">
               Ver detalles →
             </NuxtLink>
@@ -81,6 +78,7 @@
 
 <script setup lang="ts">
 const api = useApi()
+const toast = useToast()
 
 definePageMeta({
   layout: 'admin',
@@ -90,7 +88,6 @@ definePageMeta({
 const destinations = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
-const showCreateModal = ref(false)
 
 const activeFilterOptions = [
   { value: 'true', label: 'Activos' },
@@ -110,7 +107,7 @@ const fetchDestinations = async () => {
     const response = await api.get('/destinations', params)
     destinations.value = Array.isArray(response) ? response : response.items || []
   } catch (error) {
-    console.error('Error fetching destinations:', error)
+    toast.error('Error al cargar destinos')
   } finally {
     loading.value = false
   }
@@ -120,8 +117,9 @@ const toggleActive = async (dest: any) => {
   try {
     await api.put(`/destinations/${dest.id}`, { is_active: !dest.is_active })
     dest.is_active = !dest.is_active
+    toast.success(dest.is_active ? 'Destino activado' : 'Destino desactivado')
   } catch (error) {
-    console.error('Error toggling destination:', error)
+    toast.error('Error al cambiar estado')
   }
 }
 

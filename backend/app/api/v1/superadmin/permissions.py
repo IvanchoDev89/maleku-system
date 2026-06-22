@@ -15,12 +15,13 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from pydantic import BaseModel, Field, ConfigDict
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin
 from app.models import User, RolePermission, UserRole
 from app.services.audit_service import AuditService
@@ -235,6 +236,21 @@ SYSTEM_PERMISSIONS = {
             action="seo", description="Manage SEO settings", scope="all"
         ),
     ],
+    "tours": [
+        PermissionDefinition(action="create", description="Create tours", scope="all"),
+        PermissionDefinition(action="read", description="View tours", scope="all"),
+        PermissionDefinition(action="update", description="Update tours", scope="all"),
+        PermissionDefinition(action="delete", description="Delete tours", scope="all"),
+    ],
+    "chat": [
+        PermissionDefinition(
+            action="create", description="Start conversations", scope="all"
+        ),
+        PermissionDefinition(action="read", description="Read messages", scope="all"),
+        PermissionDefinition(
+            action="delete", description="Delete conversations", scope="all"
+        ),
+    ],
     "analytics": [
         PermissionDefinition(action="read", description="View analytics", scope="all"),
         PermissionDefinition(
@@ -388,7 +404,9 @@ async def get_role_permissions(
 
 
 @router.post("/roles/{role}/modules/{module}", response_model=RolePermissionResponse)
+@limiter.limit("10/minute")
 async def set_role_permissions(
+    request: Request,
     role: str,
     module: str,
     data: RolePermissionCreate,
@@ -493,7 +511,9 @@ async def set_role_permissions(
 
 
 @router.put("/roles/{role}/modules/{module}", response_model=RolePermissionResponse)
+@limiter.limit("10/minute")
 async def update_role_permissions(
+    request: Request,
     role: str,
     module: str,
     data: RolePermissionUpdate,
@@ -619,7 +639,9 @@ async def delete_role_permissions(
 
 
 @router.post("/check", response_model=PermissionCheckResponse)
+@limiter.limit("30/minute")
 async def check_permission(
+    request: Request,
     data: PermissionCheckRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
@@ -642,7 +664,7 @@ async def check_permission(
     result = await db.execute(
         select(RolePermission).where(
             and_(
-                RolePermission.role == target_user.role.value,
+                RolePermission.role == target_user.role,
                 RolePermission.module == data.module,
                 RolePermission.is_active,
             )
@@ -653,7 +675,7 @@ async def check_permission(
     if not role_perm:
         return PermissionCheckResponse(
             has_permission=False,
-            reason=f"No permissions configured for {target_user.role.value} on {data.module}",
+            reason=f"No permissions configured for {target_user.role} on {data.module}",
         )
 
     has_perm = data.action in role_perm.permissions
@@ -674,7 +696,9 @@ async def check_permission(
 
 
 @router.post("/roles/{role}/reset", response_model=dict)
+@limiter.limit("5/minute")
 async def reset_role_to_defaults(
+    request: Request,
     role: str,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),

@@ -101,11 +101,11 @@
               </NuxtLink>
               <NuxtLink
                 v-else
-                to="/dashboard"
+                to="/"
                 class="hidden sm:flex items-center gap-2 px-4 py-2 bg-white text-primary-700 font-semibold rounded-lg hover:bg-gray-100 transition-all text-sm shadow"
               >
                 <LayoutDashboard class="w-4 h-4" />
-                Dashboard
+                Mi Cuenta
               </NuxtLink>
               <button
                 @click="logout"
@@ -228,6 +228,9 @@
 
     <!-- Footer -->
     <FooterV2 />
+
+    <!-- Toast Notifications -->
+    <UiToast />
   </div>
 </template>
 

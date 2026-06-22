@@ -16,8 +16,7 @@
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div v-for="(stat, index) in statsCards" :key="index"
-        class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+      <UiCard v-for="(stat, index) in statsCards" :key="index" padding="sm" hover>
         <div class="flex items-start justify-between">
           <div>
             <p class="text-gray-500 text-sm font-medium">{{ stat.label }}</p>
@@ -33,13 +32,13 @@
             <span class="text-2xl">{{ stat.icon }}</span>
           </div>
         </div>
-      </div>
+      </UiCard>
     </div>
 
     <!-- Charts Section -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Revenue Chart - Large -->
-      <div class="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md" class="lg:col-span-2">
         <div class="flex justify-between items-center mb-6">
           <div>
             <h3 class="text-lg font-bold text-gray-900">Ingresos y Ganancias</h3>
@@ -57,10 +56,10 @@
         <div class="h-72">
           <canvas ref="revenueChartRef"></canvas>
         </div>
-      </div>
+      </UiCard>
 
       <!-- Bookings by Status -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <h3 class="text-lg font-bold text-gray-900 mb-6">Estado de Reservas</h3>
         <div class="h-56">
           <canvas ref="bookingsChartRef"></canvas>
@@ -74,13 +73,13 @@
             <span class="font-semibold text-gray-900">{{ status.count }}</span>
           </div>
         </div>
-      </div>
+      </UiCard>
     </div>
 
     <!-- Second Row -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Top Vendors -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-bold text-gray-900">Top Proveedores</h3>
           <NuxtLink to="/admin/vendors" class="text-primary text-sm hover:underline">Ver todos →</NuxtLink>
@@ -102,10 +101,10 @@
           </div>
           <p v-if="topVendors.length === 0" class="text-gray-400 text-center py-4">No hay datos aún</p>
         </div>
-      </div>
+      </UiCard>
 
       <!-- Recent Bookings -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-bold text-gray-900">Reservas Recientes</h3>
           <NuxtLink to="/admin/bookings" class="text-primary text-sm hover:underline">Ver todas →</NuxtLink>
@@ -126,10 +125,10 @@
           </div>
           <p v-if="recentBookings.length === 0" class="text-gray-400 text-center py-4">No hay reservas</p>
         </div>
-      </div>
+      </UiCard>
 
       <!-- System Health -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <h3 class="text-lg font-bold text-gray-900 mb-4">Estado del Sistema</h3>
         <div class="space-y-4">
           <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
@@ -163,7 +162,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </UiCard>
     </div>
 
     <!-- Quick Actions -->

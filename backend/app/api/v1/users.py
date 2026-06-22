@@ -1,12 +1,13 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import get_current_user, require_role
-from app.models import User, UserRole
+from app.models import User, UserRole, Booking, Review
 from app.schemas import UserResponse, UserUpdate, PaginationParams, PaginatedResponse
 
 router = APIRouter()
@@ -113,7 +114,9 @@ async def get_user(
 
 
 @router.put("/{user_id}", response_model=UserResponse)
+@limiter.limit("10/minute")
 async def update_user(
+    request: Request,
     user_id: uuid.UUID,
     data: UserUpdate,
     db: AsyncSession = Depends(get_db),
@@ -168,7 +171,9 @@ async def delete_user(
 
 
 @router.post("/{user_id}/activate", response_model=ActivateResponse)
+@limiter.limit("10/minute")
 async def activate_user(
+    request: Request,
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
@@ -188,8 +193,54 @@ async def activate_user(
     return {"message": "User activated"}
 
 
+@router.post("/{user_id}/anonymize", response_model=MessageResponse)
+@limiter.limit("5/minute")
+async def anonymize_user(
+    request: Request,
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
+):
+    """GDPR: Anonymize all user personal data. Irreversible."""
+    if current_user.id == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot anonymize your own account",
+        )
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    # Anonymize PII fields
+    user.email = f"deleted-{uuid.uuid4().hex[:8]}@anonymized.com"
+    user.full_name = "Deleted User"
+    user.phone = None
+    user.avatar_url = None
+    user.password_hash = ""
+    user.is_active = False
+    user.deleted_at = datetime.now(timezone.utc)
+
+    # Anonymize related data
+    await db.execute(select(Booking).where(Booking.user_id == user_id))
+    # Anonymize reviews
+    await db.execute(select(Review).where(Review.user_id == user_id))
+
+    await db.flush()
+    await db.commit()
+
+    logger.info(f"User {user_id} anonymized for GDPR compliance by {current_user.id}")
+    return {"message": "User data anonymized for GDPR compliance"}
+
+
 @router.post("/{user_id}/role", response_model=ChangeRoleResponse)
+@limiter.limit("10/minute")
 async def change_user_role(
+    request: Request,
     user_id: uuid.UUID,
     role: str,
     db: AsyncSession = Depends(get_db),

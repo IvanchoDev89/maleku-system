@@ -3,17 +3,15 @@ Newsletter API endpoints for email subscriptions.
 """
 
 import secrets
-import time
-from collections import defaultdict, deque
 from datetime import datetime, timezone
-from typing import Deque, Dict
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.logging import get_logger
+from app.core.rate_limiter import limiter
 from app.models import NewsletterSubscriber
 from app.schemas import NewsletterSubscribe, NewsletterSubscribeResponse
 from app.services.email_service import email_service
@@ -21,40 +19,9 @@ from app.services.email_service import email_service
 router = APIRouter()
 logger = get_logger(__name__)
 
-# SECURITY: per-IP rate limit for the public subscribe endpoint
-# Prevents email-bombing / DB-flooding from a single source.
-_NEWSLETTER_LIMIT_PER_HOUR = 5
-_newsletter_attempts: Dict[str, Deque[float]] = defaultdict(deque)
-
-
-def _client_ip(request: Request) -> str:
-    xff = request.headers.get("x-forwarded-for")
-    if xff:
-        return xff.split(",")[0].strip()
-    real_ip = request.headers.get("x-real-ip")
-    if real_ip:
-        return real_ip
-    return request.client.host if request.client else "unknown"
-
-
-def _enforce_newsletter_rate_limit(request: Request) -> None:
-    """Allow at most N subscribe attempts per hour per IP."""
-    ip = _client_ip(request)
-    now = time.time()
-    window_start = now - 3600
-    attempts = _newsletter_attempts[ip]
-    while attempts and attempts[0] < window_start:
-        attempts.popleft()
-    if len(attempts) >= _NEWSLETTER_LIMIT_PER_HOUR:
-        logger.warning(f"Newsletter subscribe rate limit hit for IP {ip}")
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Too many subscribe attempts. Please try again later.",
-        )
-    attempts.append(now)
-
 
 @router.post("/subscribe", response_model=NewsletterSubscribeResponse)
+@limiter.limit("5/hour")
 async def subscribe_to_newsletter(
     request: Request, data: NewsletterSubscribe, db: AsyncSession = Depends(get_db)
 ):
@@ -66,8 +33,6 @@ async def subscribe_to_newsletter(
     - Reactivates if previously unsubscribed
     - Returns success message
     """
-    # SECURITY: rate-limit per IP to prevent email-bombing
-    _enforce_newsletter_rate_limit(request)
 
     # Check if email already exists
     query = select(NewsletterSubscriber).where(NewsletterSubscriber.email == data.email)
@@ -132,7 +97,10 @@ async def subscribe_to_newsletter(
 
 
 @router.post("/unsubscribe", response_model=NewsletterSubscribeResponse)
-async def unsubscribe_from_newsletter(email: str, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/hour")
+async def unsubscribe_from_newsletter(
+    request: Request, email: str, db: AsyncSession = Depends(get_db)
+):
     """
     Unsubscribe from newsletter.
 

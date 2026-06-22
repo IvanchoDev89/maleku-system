@@ -26,28 +26,28 @@
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <UiCard padding="xs">
         <p class="text-sm text-gray-500">Eventos Hoy</p>
         <p class="text-2xl font-bold text-gray-900">{{ stats.today_count }}</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      </UiCard>
+      <UiCard padding="xs">
         <p class="text-sm text-gray-500">Acciones de Usuarios</p>
         <p class="text-2xl font-bold text-blue-600">{{ stats.user_actions }}</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      </UiCard>
+      <UiCard padding="xs">
         <p class="text-sm text-gray-500">Eventos de Seguridad</p>
         <p class="text-2xl font-bold text-purple-600">{{ stats.security_events }}</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      </UiCard>
+      <UiCard padding="xs">
         <p class="text-sm text-gray-500">Intentos Fallidos</p>
         <p class="text-2xl font-bold" :class="stats.failed_logins > 0 ? 'text-red-600' : 'text-green-600'">
           {{ stats.failed_logins }}
         </p>
-      </div>
+      </UiCard>
     </div>
 
     <!-- Tabs -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+    <UiCard padding="none">
       <div class="border-b border-gray-200">
         <div class="flex">
           <button
@@ -218,7 +218,7 @@
           No hay eventos de seguridad
         </p>
       </div>
-    </div>
+    </UiCard>
 
     <!-- Log Details Modal -->
     <UiModal

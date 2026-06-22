@@ -19,7 +19,7 @@ class LandingDestination(BaseModel):
     id: str
     name: str
     slug: str
-    region: str
+    region: Optional[str] = None
     description: Optional[str] = None
     image: Optional[str] = None
 
@@ -121,7 +121,7 @@ async def get_landing_content(db: AsyncSession = Depends(get_db)):
                 "cover_image": p.cover_image,
                 "base_price": p.base_price,
                 "rating": p.rating,
-                "property_type": p.property_type.value if p.property_type else None,
+                "property_type": p.property_type,
             }
             for p in properties
         ],
@@ -137,7 +137,7 @@ async def get_landing_content(db: AsyncSession = Depends(get_db)):
                 "rating": t.rating,
                 "duration_text": t.duration_text,
                 "duration_hours": t.duration_hours,
-                "category": t.category.value if t.category else None,
+                "category": t.category,
             }
             for t in tours
         ],

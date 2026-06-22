@@ -1,12 +1,14 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.security import require_role
 from app.core.utils import escape_like_pattern
 from app.models import User, UserRole, Vendor
+from app.services.vendor_service import VendorService
 from pydantic import BaseModel
 from typing import Optional
 
@@ -248,20 +250,7 @@ async def get_vendor(
     current_user: User = Depends(require_admin),
 ):
     """Get vendor details with owner info"""
-    result = await db.execute(
-        select(Vendor, User)
-        .outerjoin(User, Vendor.user_id == User.id)
-        .where(Vendor.id == vendor_id)
-    )
-    row = result.first()
-
-    if not row:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
-
-    vendor = row[0]
-    user = row[1] if row[1] is not None else None
+    vendor = await VendorService.get_with_user_or_404(db, vendor_id)
 
     # SECURITY: Admin-safe response - NO financial data or PII
     return {
@@ -282,12 +271,14 @@ async def get_vendor(
         "is_active": vendor.is_active,
         "created_at": vendor.created_at.isoformat() if vendor.created_at else None,
         # SECURITY: Owner info limited to name only - no email, phone, ID
-        "owner_name": user.full_name if user else None,
+        "owner_name": vendor.user.full_name if vendor.user else None,
     }
 
 
 @router.put("/{vendor_id}", response_model=VendorUpdateResponse)
+@limiter.limit("10/minute")
 async def update_vendor(
+    request: Request,
     vendor_id: uuid.UUID,
     data: dict,
     db: AsyncSession = Depends(get_db),
@@ -298,13 +289,7 @@ async def update_vendor(
     SECURITY: Field whitelist prevents mass assignment.
     Admin CANNOT modify financial or sensitive fields.
     """
-    result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
-    vendor = result.scalar_one_or_none()
-
-    if not vendor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+    vendor = await VendorService.get_or_404(db, vendor_id)
 
     # SECURITY: Field whitelist - admin can only modify safe fields
     # Financial fields (commission_rate, stripe_account_id) EXCLUDED
@@ -338,28 +323,28 @@ async def update_vendor(
     await db.refresh(vendor)
     await db.commit()
 
+    await VendorService.invalidate_cache(vendor.id, vendor.business_slug)
+
     return {"message": "Vendor updated successfully", "id": str(vendor.id)}
 
 
 @router.put("/{vendor_id}/verify", response_model=VendorVerifyResponse)
+@limiter.limit("10/minute")
 async def verify_vendor(
+    request: Request,
     vendor_id: uuid.UUID,
     is_verified: bool = True,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
 ):
     """Verify or unverify a vendor"""
-    result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
-    vendor = result.scalar_one_or_none()
-
-    if not vendor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+    vendor = await VendorService.get_or_404(db, vendor_id)
 
     vendor.is_verified = is_verified
     await db.flush()
     await db.commit()
+
+    await VendorService.invalidate_cache(vendor.id, vendor.business_slug)
 
     return {
         "message": f"Vendor {'verified' if is_verified else 'unverified'} successfully",
@@ -368,24 +353,22 @@ async def verify_vendor(
 
 
 @router.put("/{vendor_id}/active", response_model=VendorActiveResponse)
+@limiter.limit("10/minute")
 async def toggle_vendor_active(
+    request: Request,
     vendor_id: uuid.UUID,
     is_active: bool = True,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
     """Activate or deactivate a vendor"""
-    result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
-    vendor = result.scalar_one_or_none()
-
-    if not vendor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+    vendor = await VendorService.get_or_404(db, vendor_id)
 
     vendor.is_active = is_active
     await db.flush()
     await db.commit()
+
+    await VendorService.invalidate_cache(vendor.id, vendor.business_slug)
 
     return {
         "message": f"Vendor {'activated' if is_active else 'deactivated'} successfully",
@@ -400,16 +383,12 @@ async def delete_vendor(
     current_user: User = Depends(require_role(UserRole.SUPER_ADMIN)),
 ):
     """Soft delete a vendor (deactivate)"""
-    result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
-    vendor = result.scalar_one_or_none()
-
-    if not vendor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+    vendor = await VendorService.get_or_404(db, vendor_id)
 
     vendor.is_active = False
     await db.flush()
     await db.commit()
+
+    await VendorService.invalidate_cache(vendor.id, vendor.business_slug)
 
     return {"message": "Vendor deleted successfully"}

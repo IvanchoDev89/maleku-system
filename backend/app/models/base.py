@@ -10,7 +10,7 @@ from app.core.database import Base
 __all__ = ["Base", "UserRole", "VendorStatus", "BookingStatus", "BlogPostStatus"]
 
 
-class UserRole(enum.Enum):
+class UserRole(str, enum.Enum):
     """User role enumeration for access control."""
 
     SUPER_ADMIN = "super_admin"
@@ -21,7 +21,7 @@ class UserRole(enum.Enum):
     CLIENT = "client"
 
 
-class VendorStatus(enum.Enum):
+class VendorStatus(str, enum.Enum):
     """Vendor account status enumeration."""
 
     PENDING = "pending"
@@ -30,7 +30,7 @@ class VendorStatus(enum.Enum):
     REJECTED = "rejected"
 
 
-class BookingStatus(enum.Enum):
+class BookingStatus(str, enum.Enum):
     """Booking status enumeration for lifecycle management."""
 
     PENDING = "pending"
@@ -40,7 +40,7 @@ class BookingStatus(enum.Enum):
     REFUNDED = "refunded"
 
 
-class BlogPostStatus(enum.Enum):
+class BlogPostStatus(str, enum.Enum):
     """Blog post publication status enumeration."""
 
     DRAFT = "draft"
@@ -48,7 +48,7 @@ class BlogPostStatus(enum.Enum):
     ARCHIVED = "archived"
 
 
-class TourType(enum.Enum):
+class TourType(str, enum.Enum):
     """Tour type enumeration for categorization."""
 
     ADVENTURE = "adventure"

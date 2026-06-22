@@ -17,7 +17,7 @@
 
     <!-- Stats -->
     <div v-if="stats" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-600">Campañas</p>
@@ -27,9 +27,9 @@
             <Icon name="lucide:megaphone" class="w-6 h-6 text-primary-600" />
           </div>
         </div>
-      </div>
+      </UiCard>
 
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-600">Clientes Alcanzados</p>
@@ -39,9 +39,9 @@
             <Icon name="lucide:users" class="w-6 h-6 text-blue-600" />
           </div>
         </div>
-      </div>
+      </UiCard>
 
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-600">Aperturas</p>
@@ -51,9 +51,9 @@
             <Icon name="lucide:eye" class="w-6 h-6 text-green-600" />
           </div>
         </div>
-      </div>
+      </UiCard>
 
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <UiCard padding="md">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-600">Engagement Rate</p>
@@ -63,17 +63,17 @@
             <Icon name="lucide:trending-up" class="w-6 h-6 text-purple-600" />
           </div>
         </div>
-      </div>
+      </UiCard>
     </div>
 
     <!-- Campaigns -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+    <UiCard padding="none">
       <div class="p-6 border-b border-gray-100">
         <h2 class="text-lg font-semibold text-gray-900">Tus Promociones</h2>
       </div>
 
       <div v-if="loading" class="p-12 text-center">
-        <Icon name="lucide:loader" class="w-8 h-8 animate-spin text-primary-600 mx-auto" />
+        <UiSpinner size="lg" color="primary" class="mx-auto" />
         <p class="mt-4 text-gray-600">Cargando...</p>
       </div>
 
@@ -124,7 +124,7 @@
                 :disabled="sendingId === campaign.id"
                 class="mt-2 px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
               >
-                <Icon v-if="sendingId === campaign.id" name="lucide:loader" class="w-4 h-4 animate-spin inline mr-1" />
+                <UiSpinner v-if="sendingId === campaign.id" size="sm" color="primary" class="inline mr-1" />
                 <Icon v-else name="lucide:send" class="w-4 h-4 inline mr-1" />
                 Enviar
               </button>
@@ -132,7 +132,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </UiCard>
 
     <!-- Tips -->
     <div class="mt-8 bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl p-6">
@@ -191,7 +191,7 @@
           :disabled="!isValidCampaign || creating"
           class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:opacity-50"
         >
-          <Icon v-if="creating" name="lucide:loader" class="w-4 h-4 animate-spin inline mr-1" />
+          <UiSpinner v-if="creating" size="sm" color="primary" class="inline mr-1" />
           Crear Promoción
         </button>
       </template>
@@ -245,39 +245,6 @@ onMounted(async () => {
     $toast.error('Error cargando datos')
   }
 })
-
-// Methods
-const statusClass = (status: string) => {
-  const classes: Record<string, string> = {
-    draft: 'px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800',
-    scheduled: 'px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800',
-    sending: 'px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800',
-    sent: 'px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800'
-  }
-  return classes[status] || classes.draft
-}
-
-const statusLabel = (status: string) => {
-  const labels: Record<string, string> = {
-    draft: 'Borrador',
-    scheduled: 'Programado',
-    sending: 'Enviando',
-    sent: 'Enviado'
-  }
-  return labels[status] || status
-}
-
-const formatNumber = (num: number) => {
-  return new Intl.NumberFormat('es-CR').format(num || 0)
-}
-
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('es-CR', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
 
 const createCampaign = async () => {
   creating.value = true

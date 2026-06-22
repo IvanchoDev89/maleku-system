@@ -23,6 +23,8 @@ async def _make_resource(db_session, model, vendor_id):
     if model is Tour:
         obj.name = "Test Tour"
         obj.slug = f"test-tour-{uuid.uuid4().hex[:8]}"
+        obj.category = "adventure"
+        obj.duration_hours = 4.0
         obj.price = 100.0
         obj.currency = "USD"
         obj.is_active = True

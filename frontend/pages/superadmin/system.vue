@@ -42,133 +42,147 @@
     </div>
 
     <!-- System Health Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- API Status -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div class="flex justify-between items-start">
-          <div>
-            <p class="text-sm text-gray-500">API Server</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">{{ systemHealth.api.status }}</p>
+    <template v-if="systemHealth">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- API Status -->
+        <UiCard padding="md">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-sm text-gray-500">API Server</p>
+              <p class="text-2xl font-bold text-gray-900 mt-1">{{ systemHealth.api?.status || '—' }}</p>
+            </div>
+            <div
+              class="w-3 h-3 rounded-full"
+              :class="systemHealth.api?.status === 'healthy' ? 'bg-green-500' : 'bg-gray-300'"
+            ></div>
           </div>
-          <div
-            class="w-3 h-3 rounded-full"
-            :class="systemHealth.api.status === 'healthy' ? 'bg-green-500' : 'bg-red-500'"
-          ></div>
-        </div>
-        <div class="mt-4 space-y-2">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Versión</span>
-            <span class="font-medium">{{ systemHealth.api.version }}</span>
+          <div class="mt-4 space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Versión</span>
+              <span class="font-medium">{{ systemHealth.api?.version || '—' }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Tiempo activo</span>
+              <span class="font-medium">{{ systemHealth.api?.uptime || '—' }}</span>
+            </div>
           </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Tiempo activo</span>
-            <span class="font-medium">{{ systemHealth.api.uptime }}</span>
-          </div>
-        </div>
-      </div>
+        </UiCard>
 
-      <!-- Database -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div class="flex justify-between items-start">
-          <div>
-            <p class="text-sm text-gray-500">Base de Datos</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">{{ systemHealth.database.status }}</p>
+        <!-- Database -->
+        <UiCard padding="md">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-sm text-gray-500">Base de Datos</p>
+              <p class="text-2xl font-bold text-gray-900 mt-1">{{ systemHealth.database?.status || '—' }}</p>
+            </div>
+            <div
+              class="w-3 h-3 rounded-full"
+              :class="systemHealth.database?.status === 'connected' ? 'bg-green-500' : 'bg-gray-300'"
+            ></div>
           </div>
-          <div
-            class="w-3 h-3 rounded-full"
-            :class="systemHealth.database.status === 'connected' ? 'bg-green-500' : 'bg-red-500'"
-          ></div>
-        </div>
-        <div class="mt-4 space-y-2">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Tablas</span>
-            <span class="font-medium">{{ systemHealth.database.tables }}</span>
+          <div class="mt-4 space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Tablas</span>
+              <span class="font-medium">{{ systemHealth.database?.tables ?? '—' }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Tamaño</span>
+              <span class="font-medium">{{ systemHealth.database?.size || '—' }}</span>
+            </div>
           </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Tamaño</span>
-            <span class="font-medium">{{ systemHealth.database.size }}</span>
-          </div>
-        </div>
-      </div>
+        </UiCard>
 
-      <!-- Cache -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div class="flex justify-between items-start">
-          <div>
-            <p class="text-sm text-gray-500">Cache (Redis)</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">{{ systemHealth.cache.status }}</p>
+        <!-- Cache -->
+        <UiCard padding="md">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-sm text-gray-500">Cache (Redis)</p>
+              <p class="text-2xl font-bold text-gray-900 mt-1">{{ systemHealth.cache?.status || '—' }}</p>
+            </div>
+            <div
+              class="w-3 h-3 rounded-full"
+              :class="systemHealth.cache?.status === 'connected' ? 'bg-green-500' : 'bg-gray-300'"
+            ></div>
           </div>
-          <div
-            class="w-3 h-3 rounded-full"
-            :class="systemHealth.cache.status === 'connected' ? 'bg-green-500' : 'bg-yellow-500'"
-          ></div>
-        </div>
-        <div class="mt-4 space-y-2">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Keys en cache</span>
-            <span class="font-medium">{{ systemHealth.cache.keys || 'N/A' }}</span>
+          <div class="mt-4 space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Keys en cache</span>
+              <span class="font-medium">{{ systemHealth.cache?.keys ?? '—' }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Hit rate</span>
+              <span class="font-medium">{{ systemHealth.cache?.hit_rate ?? '—' }}</span>
+            </div>
           </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Hit rate</span>
-            <span class="font-medium">{{ systemHealth.cache.hit_rate || 'N/A' }}</span>
-          </div>
-        </div>
+        </UiCard>
       </div>
+    </template>
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <UiCard v-for="i in 3" :key="i" padding="md" class="animate-pulse">
+        <div class="h-4 bg-gray-200 rounded w-24 mb-3"></div>
+        <div class="h-8 bg-gray-200 rounded w-32 mb-4"></div>
+        <div class="space-y-2">
+          <div class="h-3 bg-gray-200 rounded w-20"></div>
+          <div class="h-3 bg-gray-200 rounded w-28"></div>
+        </div>
+      </UiCard>
     </div>
 
     <!-- Environment Info -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <h3 class="text-lg font-bold text-gray-900 mb-4">Información del Entorno</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="space-y-3">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Environment</span>
-            <span class="font-medium px-2 py-1 bg-gray-100 rounded">{{ envInfo.environment }}</span>
+    <template v-if="envInfo">
+      <UiCard padding="md">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Información del Entorno</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Environment</span>
+              <span class="font-medium px-2 py-1 bg-gray-100 rounded">{{ envInfo.environment || '—' }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Debug Mode</span>
+              <span class="font-medium" :class="envInfo.debug ? 'text-yellow-600' : 'text-green-600'">
+                {{ envInfo.debug ? 'Activado' : 'Desactivado' }}
+              </span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Timezone</span>
+              <span class="font-medium">{{ envInfo.timezone || '—' }}</span>
+            </div>
           </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Debug Mode</span>
-            <span class="font-medium" :class="envInfo.debug ? 'text-yellow-600' : 'text-green-600'">
-              {{ envInfo.debug ? 'Activado' : 'Desactivado' }}
-            </span>
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Python Version</span>
+              <span class="font-medium">{{ envInfo.python_version || '—' }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">PostgreSQL</span>
+              <span class="font-medium">{{ envInfo.postgresql_version || '—' }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Node.js</span>
+              <span class="font-medium">{{ envInfo.node_version || '—' }}</span>
+            </div>
           </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Timezone</span>
-            <span class="font-medium">{{ envInfo.timezone }}</span>
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">API URL</span>
+              <span class="font-medium text-xs truncate max-w-[150px]">{{ envInfo.api_url || '—' }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Frontend URL</span>
+              <span class="font-medium text-xs truncate max-w-[150px]">{{ envInfo.frontend_url || '—' }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Last Deploy</span>
+              <span class="font-medium">{{ envInfo.last_deploy || '—' }}</span>
+            </div>
           </div>
         </div>
-        <div class="space-y-3">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Python Version</span>
-            <span class="font-medium">{{ envInfo.python_version }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">PostgreSQL</span>
-            <span class="font-medium">{{ envInfo.postgresql_version }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Node.js</span>
-            <span class="font-medium">{{ envInfo.node_version }}</span>
-          </div>
-        </div>
-        <div class="space-y-3">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">API URL</span>
-            <span class="font-medium text-xs truncate max-w-[150px]">{{ envInfo.api_url }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Frontend URL</span>
-            <span class="font-medium text-xs truncate max-w-[150px]">{{ envInfo.frontend_url }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Last Deploy</span>
-            <span class="font-medium">{{ envInfo.last_deploy }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+      </UiCard>
+    </template>
 
     <!-- Database Management -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <UiCard padding="none" class="overflow-hidden">
       <div class="p-6 border-b border-gray-200">
         <h3 class="text-lg font-bold text-gray-900">Base de Datos</h3>
       </div>
@@ -227,10 +241,10 @@
           </div>
         </div>
       </div>
-    </div>
+    </UiCard>
 
     <!-- Cache Management -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <UiCard padding="none" class="overflow-hidden">
       <div class="p-6 border-b border-gray-200">
         <h3 class="text-lg font-bold text-gray-900">Gestión de Cache</h3>
       </div>
@@ -259,7 +273,7 @@
           </button>
         </div>
       </div>
-    </div>
+    </UiCard>
 
     <!-- Danger Zone -->
     <div class="bg-red-50 rounded-xl p-6 border border-red-200">
@@ -378,38 +392,22 @@ async function executeConfirmAction() {
   }
 }
 
-const systemHealth = ref({
-  api: { status: 'healthy', version: '1.0.0', uptime: '0h 0m' },
-  database: { status: 'connected', tables: 0, size: '0 MB' },
-  cache: { status: 'disconnected', keys: null, hit_rate: null },
-})
+const systemHealth = ref<any>(null)
 
-const envInfo = ref({
-  environment: 'development',
-  debug: false,
-  timezone: 'UTC',
-  python_version: '3.12',
-  postgresql_version: '15',
-  node_version: '20',
-  api_url: 'http://localhost:8000',
-  frontend_url: 'http://localhost:3000',
-  last_deploy: 'N/A',
-})
+const envInfo = ref<any>(null)
 
 const loadSystemHealth = async () => {
   try {
     const health = await api.get('/superadmin/system/health')
-    systemHealth.value = {
-      ...systemHealth.value,
-      ...health,
-    }
+    systemHealth.value = health
 
-    // Check maintenance mode
     const env = await api.get('/superadmin/system/environment')
     maintenanceMode.value = env.maintenance_mode || false
-    envInfo.value = { ...envInfo.value, ...env }
+    envInfo.value = env
   } catch (error) {
     console.error('Error loading system health:', error)
+    systemHealth.value = null
+    envInfo.value = null
   }
 }
 
@@ -470,9 +468,10 @@ const confirmOptimize = () => {
 const executeOptimize = async () => {
   try {
     await api.post('/superadmin/system/database/optimize')
+    toast.success('Base de datos optimizada')
   } catch (error) {
     console.error('Error optimizing database:', error)
-    toast.info('Función de optimización no disponible aún')
+    toast.error('Función de optimización no disponible')
   }
 }
 
@@ -491,9 +490,10 @@ const confirmClearCache = (type: string) => {
 const executeClearCache = async () => {
   try {
     await api.post('/superadmin/system/cache/flush', { type: cacheTypeToClear })
+    toast.success('Cache limpiada')
   } catch (error) {
     console.error('Error clearing cache:', error)
-    toast.info('Función de limpieza de cache no disponible aún')
+    toast.error('Función de limpieza de cache no disponible')
   }
 }
 
@@ -509,9 +509,10 @@ const confirmForceLogout = () => {
 const executeForceLogout = async () => {
   try {
     await api.post('/superadmin/system/force-logout')
+    toast.success('Logout global ejecutado')
   } catch (error) {
     console.error('Error forcing logout:', error)
-    toast.info('Función de logout forzado no disponible aún')
+    toast.error('Función de logout forzado no disponible')
   }
 }
 
@@ -527,9 +528,10 @@ const confirmResetSessions = () => {
 const executeResetSessions = async () => {
   try {
     await api.post('/superadmin/system/sessions/reset')
+    toast.success('Sesiones reseteadas')
   } catch (error) {
     console.error('Error resetting sessions:', error)
-    toast.info('Función de reset de sesiones no disponible aún')
+    toast.error('Función de reset de sesiones no disponible')
   }
 }
 
