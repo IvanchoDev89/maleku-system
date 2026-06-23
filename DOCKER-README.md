@@ -17,7 +17,7 @@ docker compose up --build -d
 | Frontend | http://localhost:3000 | Nuxt.js app |
 | Backend API | http://localhost:8000 | FastAPI |
 | API Docs | http://localhost:8000/docs | Swagger UI |
-| PostgreSQL | localhost:5432 | Database |
+| PostgreSQL | localhost:5434 | Database |
 | Redis | localhost:6379 | Cache |
 
 ## Commands

@@ -479,26 +479,45 @@ class TourUpdate(BaseModel):
 class TourResponse(TourBase):
     id: UUID
     vendor_id: UUID
+    slug: str
     duration_hours: float
+    duration_text: Optional[str] = None
     difficulty: str
     location: str
-    rating: Optional[float]
-    total_reviews: Optional[int]
+    meeting_point: Optional[str] = None
+    price: float
+    currency: str = "USD"
+    rating: Optional[float] = None
+    total_reviews: Optional[int] = None
     is_active: bool
+    is_featured: bool = False
+    max_group_size: int = 15
+    min_age: int = 0
+    included: list = []
+    not_included: list = []
+    itinerary: list = []
+    images: list = []
+    cover_image: Optional[str] = None
+    schedule_days: list = []
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
-    model_config = ConfigDict(from_attributes=True, extra="forbid")
+    model_config = ConfigDict(from_attributes=True, extra="ignore")
 
 
 class TourListResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True, extra="forbid")
+    model_config = ConfigDict(from_attributes=True, extra="ignore")
     id: UUID
     name: str
+    slug: str
     category: str
     difficulty: str
     duration_hours: float
     location: str
     price: float
-    rating: Optional[float]
+    rating: Optional[float] = None
+    cover_image: Optional[str] = None
+    is_featured: bool = False
 
 
 # ============== BOOKING SCHEMAS ==============

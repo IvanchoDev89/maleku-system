@@ -1,22 +1,15 @@
 """
 Test configuration with async database support.
-
-Strategy
---------
-* Schema is created once per session via ``Base.metadata.create_all`` (the
-  tsvector indexes now use raw ``text()`` expressions so they don't break
-  ``create_all``).
-* Each test runs inside a SAVEPOINT. Anything committed by the endpoint
-  under test is automatically rolled back when the test ends, so tests
-  cannot leak state to one another.
 """
 
 import os
 
 os.environ["ENVIRONMENT"] = "test"
 
+import asyncio
 import pytest
 import pytest_asyncio
+import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from httpx import AsyncClient
 
@@ -25,64 +18,53 @@ from app.core.security import get_password_hash, create_access_token
 from app.main import app
 from app.models import User, UserRole
 
-# Prefer a real PostgreSQL connection when DATABASE_URL is provided (matches CI).
-# Fall back to in-memory SQLite only when no PostgreSQL is reachable.
+
+# Use real PostgreSQL for tests (models use PostgreSQL-specific types).
+# Override with TEST_DATABASE_URL env var in CI.
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
-    "postgresql+asyncpg://crtravel:crtravel123@127.0.0.1:5432/costaricatravel_test",
+    "postgresql+asyncpg://postgres@127.0.0.1:5432/costaricatravel_test",
 )
-if not os.environ.get("TEST_DATABASE_URL") and "DATABASE_URL" not in os.environ:
-    TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
 @pytest_asyncio.fixture(scope="session")
-async def engine():
-    """Create async engine for tests (one per session)."""
+async def schema_engine():
+    """Create schema ONCE per session."""
+    engine = create_async_engine(TEST_DATABASE_URL, echo=False, future=True)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def engine(schema_engine):
+    """Function-scoped engine — each test has its own pool, no schema cost."""
     engine = create_async_engine(
         TEST_DATABASE_URL,
         echo=False,
         future=True,
+        pool_size=1,
+        max_overflow=0,
     )
-
-    # Drop and recreate schema to ensure clean types
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     yield engine
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
 
 
 @pytest_asyncio.fixture
 async def db_session(engine):
-    """Provide a session bound to a SAVEPOINT for clean per-test isolation.
-
-    Pattern: open an outer transaction on a connection, then for each test
-    ``begin_nested()`` opens a SAVEPOINT. When the test ends we roll back
-    the outer transaction, discarding everything the endpoint committed.
-    """
-    from sqlalchemy import event
-
-    connection = await engine.connect()
-    transaction = await connection.begin()
-
-    session = AsyncSession(bind=connection, expire_on_commit=False)
-    await session.begin_nested()
-
-    @event.listens_for(session.sync_session, "after_transaction_end")
-    def _end_savepoint(sess, trans):
-        # Reopen a SAVEPOINT if the endpoint committed the nested one.
-        if trans.nested:
-            session.begin_nested()
-
+    """Provide a fresh session per test with automatic table cleanup."""
+    session = AsyncSession(engine, expire_on_commit=False)
     try:
         yield session
     finally:
         await session.close()
-        await transaction.rollback()
-        await connection.close()
+        async with engine.begin() as conn:
+            tables = ", ".join(
+                t.name for t in reversed(Base.metadata.sorted_tables)
+            )
+            if tables:
+                await conn.execute(sa.text(f"TRUNCATE TABLE {tables} CASCADE"))
 
 
 @pytest_asyncio.fixture
@@ -94,25 +76,25 @@ async def client(db_session):
 
     app.dependency_overrides[get_db] = override_get_db
 
-    # Remove BaseHTTPMiddleware during tests. These middlewares internally
-    # schedule tasks with asyncio.ensure_future on the default event loop,
-    # which conflicts with the session-scoped test loop used by asyncpg.
-    from starlette.middleware.base import BaseHTTPMiddleware
+    async with AsyncClient(app=app, base_url="http://localhost") as ac:
+        yield ac
 
-    original_middleware = [m for m in app.user_middleware]
-    app.user_middleware = [
-        m
-        for m in app.user_middleware
-        if not (hasattr(m.cls, "__mro__") and BaseHTTPMiddleware in m.cls.__mro__)
-    ]
-    app.middleware_stack = None  # force rebuild
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def client(db_session):
+    """Create test client with overridden database dependency."""
+
+    async def override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
 
     async with AsyncClient(app=app, base_url="http://localhost") as ac:
         yield ac
 
     app.dependency_overrides.clear()
-    app.user_middleware = original_middleware
-    app.middleware_stack = None
 
 
 @pytest.fixture

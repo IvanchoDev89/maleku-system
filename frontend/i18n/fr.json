@@ -460,7 +460,10 @@
     "wildlife": "Faune",
     "beach": "Plage",
     "culture": "Culture",
-    "wellness": "Bien-être"
+    "wellness": "Bien-être",
+    "cultural": "Culturel",
+    "water": "Eau",
+    "gastronomy": "Gastronomie"
   },
   "filters": {
     "difficulty": {

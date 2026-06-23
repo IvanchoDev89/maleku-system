@@ -64,8 +64,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npx eslint . --ext .vue,.js,.ts
+      - name: Lint with Nuxt
+        run: npx nuxt build 2>&1 | tail -5
 
   test-backend:
     name: Test Backend

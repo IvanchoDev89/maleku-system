@@ -533,7 +533,10 @@
     "wildlife": "Vida Silvestre",
     "beach": "Playa",
     "culture": "Cultura",
-    "wellness": "Bienestar"
+    "wellness": "Bienestar",
+    "cultural": "Cultural",
+    "water": "Agua",
+    "gastronomy": "Gastronomía"
   },
   "filters": {
     "difficulty": {

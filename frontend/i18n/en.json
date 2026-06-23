@@ -536,7 +536,10 @@
     "wildlife": "Wildlife",
     "beach": "Beach",
     "culture": "Culture",
-    "wellness": "Wellness"
+    "wellness": "Wellness",
+    "cultural": "Cultural",
+    "water": "Water",
+    "gastronomy": "Gastronomy"
   },
   "filters": {
     "difficulty": {

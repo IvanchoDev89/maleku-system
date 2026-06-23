@@ -46,5 +46,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Run migrations and start server
-CMD python -c "from app.core.database import init_db; import asyncio; asyncio.run(init_db())" && \
+CMD alembic upgrade head && \
     uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers
