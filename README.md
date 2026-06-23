@@ -119,10 +119,10 @@ cp backend/.env.example backend/.env
 # Edit backend/.env with your secrets
 
 # 3. Start all services
-docker-compose up -d
+docker compose up -d
 
 # 4. Run migrations
-docker-compose exec api alembic upgrade head
+docker compose exec backend alembic upgrade head
 
 # 5. Access services
 # Frontend: http://localhost:3000
@@ -262,14 +262,31 @@ GET    /api/v1/vendors/{id}
 POST   /api/v1/vendors/{id}/verify  # Admin
 ```
 
-### Properties, Tours, Vehicles, Boats, Flights
+### Properties
+```
+GET    /api/v1/properties/
+POST   /api/v1/properties/        # Vendor
+GET    /api/v1/properties/{id}
+PUT    /api/v1/properties/{id}    # Owner
+DELETE /api/v1/properties/{id}    # Owner
+```
+
+### Tours
+```
+GET    /api/v1/tours/
+POST   /api/v1/tours/             # Vendor
+GET    /api/v1/tours/{id}
+PUT    /api/v1/tours/{id}         # Owner
+DELETE /api/v1/tours/{id}         # Owner
+```
+
+### Vehicles, Boats, Flights
 ```
 GET    /api/v1/{resource}/
 POST   /api/v1/{resource}/        # Vendor
 GET    /api/v1/{resource}/{id}
 PUT    /api/v1/{resource}/{id}    # Owner
 DELETE /api/v1/{resource}/{id}    # Owner
-POST   /api/v1/{resource}/{id}/restore
 ```
 
 ### Bookings
@@ -285,6 +302,28 @@ PUT  /api/v1/bookings/{id}/cancel
 ```
 GET /api/v1/search/?q=query&type=properties
 GET /api/v1/search/map
+```
+
+### Trip Planner
+```
+GET    /api/v1/trip_planner/
+POST   /api/v1/trip_planner/
+GET    /api/v1/trip_planner/{id}
+PUT    /api/v1/trip_planner/{id}
+DELETE /api/v1/trip_planner/{id}
+```
+
+### Superadmin
+```
+GET    /api/v1/superadmin/bookings
+GET    /api/v1/superadmin/search
+GET    /api/v1/superadmin/tours
+GET    /api/v1/superadmin/users
+GET    /api/v1/superadmin/users/{id}
+PUT    /api/v1/superadmin/users/{id}
+GET    /api/v1/superadmin/vendors
+GET    /api/v1/superadmin/audit
+GET    /api/v1/superadmin/content/blog
 ```
 
 ---
@@ -331,7 +370,7 @@ GET /api/v1/search/map
 costa-rica-travel/
 ├── 📁 backend/
 │   ├── 📁 app/
-│   │   ├── 📁 api/v1/endpoints/    # REST controllers
+│   │   ├── 📁 api/v1/    # REST controllers
 │   │   ├── 📁 core/                 # Config, DB, Security
 │   │   ├── 📁 models/               # SQLAlchemy models
 │   │   ├── 📁 schemas/              # Pydantic schemas
@@ -354,8 +393,13 @@ costa-rica-travel/
 │   └── 📄 vercel.json
 │
 ├── 📁 docker-compose.yml            # Local development
+├── 📁 scripts/                      # Utility scripts
 ├── 📄 deploy.sh                     # Deployment script
-└── 📄 DEPLOYMENT.md                 # Deployment guide
+├── 📄 start.sh                      # Start script
+├── 📄 CHANGELOG.md                  # Release history
+├── 📄 DEPLOYMENT.md                 # Deployment guide
+├── 📄 LICENSE                       # MIT License
+└── 📄 SECURITY.md                   # Security policy
 ```
 
 ---
@@ -452,6 +496,9 @@ La documentación completa está disponible en la carpeta [`DOCS/`](DOCS/index.m
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Stack tecnológico, estructura y diseño del sistema |
 | [`DEPLOYMENT.md`](DEPLOYMENT.md) | Guía de deploy para Railway y Vercel |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Guía para contribuir al proyecto |
+| [`CHANGELOG.md`](CHANGELOG.md) | Historial de versiones y releases |
+| [`LICENSE`](LICENSE) | Licencia MIT |
+| [`SECURITY.md`](SECURITY.md) | Política de seguridad |
 
 **Swagger UI:** `http://localhost:8000/docs` (disponible en modo debug)
 **ReDoc:** `http://localhost:8000/redoc`

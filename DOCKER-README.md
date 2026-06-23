@@ -4,10 +4,10 @@
 
 ```bash
 # Build and start all services
-docker-compose up --build
+docker compose up --build
 
 # Or detached mode (background)
-docker-compose up --build -d
+docker compose up --build -d
 ```
 
 ## Services
@@ -24,28 +24,28 @@ docker-compose up --build -d
 
 ```bash
 # Stop all services
-docker-compose down
+docker compose down
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # View specific service logs
-docker-compose logs -f backend
-docker-compose logs -f frontend
+docker compose logs -f backend
+docker compose logs -f frontend
 
 # Restart a service
-docker-compose restart backend
-docker-compose restart frontend
+docker compose restart backend
+docker compose restart frontend
 
 # Shell into backend
-docker-compose exec backend bash
+docker compose exec backend bash
 
 # Shell into frontend
-docker-compose exec frontend sh
+docker compose exec frontend sh
 
 # Rebuild everything
-docker-compose down
-docker-compose up --build
+docker compose down
+docker compose up --build
 ```
 
 ## Development
@@ -65,6 +65,6 @@ sudo lsof -ti:8000 | xargs kill -9
 
 ### Clean restart
 ```bash
-docker-compose down -v  # Remove volumes too
-docker-compose up --build
+docker compose down -v  # Remove volumes too
+docker compose up --build
 ```

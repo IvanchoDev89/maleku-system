@@ -447,22 +447,95 @@ Delete property (Owner or Admin - soft delete).
 
 ## 🎯 Tours
 
-Same endpoints as Properties:
-- `GET /tours/`
-- `POST /tours/` (Vendor)
-- `GET /tours/{id}`
-- `PUT /tours/{id}` (Owner)
-- `DELETE /tours/{id}` (Owner)
+### GET /tours/
+List tours with filters, search, and sorting.
 
-**Additional tour fields:**
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `category` | string | `adventure`, `beach`, `wildlife`, `culture`, `nature` |
+| `difficulty` | string | `easy`, `moderate`, `hard` |
+| `location` | string | City/region filter |
+| `destination` | string | Alias for location |
+| `q` | string | Full-text search (name & description) |
+| `min_price` | float | Minimum price |
+| `max_price` | float | Maximum price |
+| `rating` | float | Minimum rating (legacy alias) |
+| `min_rating` | float | Minimum rating |
+| `featured` | bool | Filter featured tours |
+| `min_duration` | float | Minimum duration in hours |
+| `max_duration` | float | Maximum duration in hours |
+| `sort` | string | `price_asc`, `price_desc`, `duration`, `popular`, `newest`, `name` |
+| `page` | int | Page number (default 1) |
+| `page_size` | int | Items per page (default 20) |
+
+**Response (200):**
 ```json
 {
-  "duration_hours": 4,
-  "difficulty": "moderate",
-  "includes": ["guide", "transport", "lunch"],
-  "meeting_point": "Hotel lobby"
+  "items": [
+    {
+      "id": "uuid",
+      "name": "Arenal Volcano Hike",
+      "slug": "arenal-volcano-hike",
+      "description": "Hike through the lush trails...",
+      "price": 89.00,
+      "duration_hours": 4,
+      "difficulty": "moderate",
+      "category": "adventure",
+      "location": "La Fortuna",
+      "rating": 4.7,
+      "max_participants": 12,
+      "includes": ["guide", "transport", "lunch"],
+      "meeting_point": "Hotel lobby",
+      "is_featured": true,
+      "images": ["https://..."],
+      "vendor": { "id": 1, "company_name": "Tropical Adventures" },
+      "created_at": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "total": 45,
+  "page": 1,
+  "page_size": 20,
+  "pages": 3,
+  "has_next": true,
+  "has_prev": false
 }
 ```
+
+### POST /tours/
+Create a new tour (Vendor).
+
+**Request:**
+```json
+{
+  "name": "Arenal Volcano Hike",
+  "description": "Hike through lush trails...",
+  "price": 89.00,
+  "duration_hours": 4,
+  "difficulty": "moderate",
+  "category": "adventure",
+  "location": "La Fortuna",
+  "max_participants": 12,
+  "includes": ["guide", "transport", "lunch"],
+  "meeting_point": "Hotel lobby",
+  "images": []
+}
+```
+
+### GET /tours/{id}
+Get tour by ID with full vendor details.
+
+### PUT /tours/{id}
+Update tour (Owner or Admin).
+
+### DELETE /tours/{id}
+Delete tour (Owner or Admin - soft delete).
+
+### GET /tours/vendor/my-tours
+List current vendor's tours.
+
+### GET /tours/featured
+List featured tours.
 
 ---
 
@@ -614,6 +687,138 @@ Get booking details.
 
 ### PUT /bookings/{id}/cancel
 Cancel booking (with refund policy).
+
+---
+
+## 🗺️ Trip Planner
+
+### POST /trip_planner/plans
+Create a new trip plan (authenticated).
+
+**Request:**
+```json
+{
+  "name": "Summer Vacation",
+  "start_date": "2025-01-15",
+  "end_date": "2025-01-22",
+  "travelers": 2,
+  "budget_min": 1000,
+  "budget_max": 3000,
+  "notes": "Looking for adventure tours"
+}
+```
+
+**Response (201):**
+```json
+{
+  "id": "uuid",
+  "name": "Summer Vacation",
+  "status": "draft",
+  "start_date": "2025-01-15",
+  "end_date": "2025-01-22",
+  "travelers": 2,
+  "budget_min": 1000,
+  "budget_max": 3000,
+  "total_estimated": 0,
+  "currency": "USD",
+  "items": [],
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
+}
+```
+
+### GET /trip_planner/plans
+List user's trip plans.
+
+**Query Parameters:**
+- `status`: draft, confirmed, cancelled
+
+### GET /trip_planner/plans/{id}
+Get plan with items.
+
+### PUT /trip_planner/plans/{id}
+Update plan.
+
+### DELETE /trip_planner/plans/{id}
+Delete plan.
+
+### POST /trip_planner/plans/{id}/items
+Add item to plan.
+
+**Request:**
+```json
+{
+  "day_index": 0,
+  "entity_type": "tour",
+  "entity_id": "uuid",
+  "start_time": "08:00",
+  "notes": "Bring hiking shoes"
+}
+```
+
+### PUT /trip_planner/items/{id}
+Update trip item.
+
+### DELETE /trip_planner/items/{id}
+Remove item from plan.
+
+### GET /trip_planner/plans/{id}/price
+Get price breakdown.
+
+### POST /trip_planner/plans/{id}/reprice
+Recalculate plan pricing (after date changes).
+
+---
+
+## 👑 Superadmin
+
+### GET /superadmin/users
+List all users with filtering.
+
+**Query Parameters:**
+- `role`: client, vendor, admin
+- `is_active`: bool
+- `search`: string
+- `page`, `page_size`: pagination
+
+### GET /superadmin/users/{id}
+Get user details.
+
+### PUT /superadmin/users/{id}
+Update user (role, status).
+
+### GET /superadmin/vendors
+List all vendors with filtering and approval status.
+
+### GET /superadmin/vendors/pending
+List vendors awaiting approval.
+
+### GET /superadmin/vendors/{id}
+Get vendor details with compliance info.
+
+### POST /superadmin/vendors/{id}/approval
+Approve or reject vendor.
+
+### GET /superadmin/bookings
+List all bookings across vendors.
+
+### GET /superadmin/search
+Cross-entity search (properties, tours, vendors).
+
+### GET /superadmin/tours
+List all tours for moderation.
+
+### GET /superadmin/content/blog
+Manage blog posts (CRUD with status filter).
+
+### GET /superadmin/audit/logs
+Query audit logs with filtering.
+
+### GET /superadmin/audit/security
+Query security logs.
+
+### GET /superadmin/settings
+System-wide settings (commission rates, etc).
 
 ---
 

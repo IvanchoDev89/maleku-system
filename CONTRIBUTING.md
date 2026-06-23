@@ -38,10 +38,10 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 
 # Start all services
-docker-compose up -d
+docker compose up -d
 
 # Run database migrations
-docker-compose exec api alembic upgrade head
+docker compose exec backend alembic upgrade head
 
 # Services will be available at:
 # - Frontend: http://localhost:3000
