@@ -84,3 +84,10 @@ class BoatEquipmentResponse(BoatEquipmentBase):
 
 class BoatEquipmentDetailResponse(BoatEquipmentResponse):
     pass
+
+
+class BoatEquipmentListResponse(BaseModel):
+    items: list[BoatEquipmentResponse]
+    total: int
+    skip: int
+    limit: int

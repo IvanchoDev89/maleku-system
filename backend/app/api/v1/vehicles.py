@@ -5,7 +5,7 @@ Vehicles API - Rent a Car
 import uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -64,7 +64,7 @@ class PresignedUrlResponse(BaseModel):
     fields: dict
 
 
-@router.get("", response_model=list[vehicle_schema.VehicleResponse])
+@router.get("", response_model=vehicle_schema.VehicleListResponse)
 async def list_vehicles(
     location: str | None = None,
     vehicle_type: VehicleType | None = None,
@@ -73,7 +73,7 @@ async def list_vehicles(
     limit: int = 20,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> dict:
+) -> vehicle_schema.VehicleListResponse:
     """
     List all available vehicles with optional filters and pagination.
 
@@ -100,11 +100,10 @@ async def list_vehicles(
     if seats:
         query = query.where(Vehicle.seats >= seats)
 
-    count_query = select(
-        select(Vehicle.id)
+    count_query = (
+        select(func.count())
+        .select_from(Vehicle)
         .where(Vehicle.is_active, Vehicle.is_available)
-        .subquery()
-        .c.id
     )
     if location:
         count_query = count_query.where(
@@ -122,14 +121,14 @@ async def list_vehicles(
     vehicles = result.scalars().all()
 
     total_result = await db.execute(count_query)
-    total = len(total_result.scalars().all())
+    total = total_result.scalar() or 0
 
-    return {
-        "items": vehicles,
-        "total": total,
-        "skip": skip,
-        "limit": limit,
-    }
+    return vehicle_schema.VehicleListResponse(
+        items=vehicles,
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
 
 
 @router.get("/{vehicle_id}", response_model=vehicle_schema.VehicleDetailResponse)

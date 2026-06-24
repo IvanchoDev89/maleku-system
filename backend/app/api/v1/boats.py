@@ -5,7 +5,7 @@ Boat Equipment API - Náutico
 import uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -64,7 +64,7 @@ class PresignedUrlResponse(BaseModel):
     fields: dict
 
 
-@router.get("", response_model=list[boat_schema.BoatEquipmentResponse])
+@router.get("", response_model=boat_schema.BoatEquipmentListResponse)
 async def list_boats(
     location: str | None = None,
     equipment_type: BoatType | None = None,
@@ -73,7 +73,7 @@ async def list_boats(
     limit: int = 20,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> dict:
+) -> boat_schema.BoatEquipmentListResponse:
     """
     List all available boat and nautical equipment with filters and pagination.
 
@@ -102,11 +102,10 @@ async def list_boats(
     if capacity:
         query = query.where(BoatEquipment.capacity >= capacity)
 
-    count_query = select(
-        select(BoatEquipment.id)
+    count_query = (
+        select(func.count())
+        .select_from(BoatEquipment)
         .where(BoatEquipment.is_active, BoatEquipment.is_available)
-        .subquery()
-        .c.id
     )
     if location:
         count_query = count_query.where(
@@ -124,14 +123,14 @@ async def list_boats(
     boats = result.scalars().all()
 
     total_result = await db.execute(count_query)
-    total = len(total_result.scalars().all())
+    total = total_result.scalar() or 0
 
-    return {
-        "items": boats,
-        "total": total,
-        "skip": skip,
-        "limit": limit,
-    }
+    return boat_schema.BoatEquipmentListResponse(
+        items=boats,
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
 
 
 @router.get("/{boat_id}", response_model=boat_schema.BoatEquipmentDetailResponse)

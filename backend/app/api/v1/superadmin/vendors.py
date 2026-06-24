@@ -643,15 +643,16 @@ async def get_vendor_analytics(
 
     # Bookings by month (last 12 months)
     months_ago = datetime.now(timezone.utc) - timedelta(days=365)
+    month_expr = func.date_trunc("month", Booking.created_at)
     result = await db.execute(
         select(
-            func.date_trunc("month", Booking.created_at).label("month"),
+            month_expr.label("month"),
             func.count(Booking.id).label("count"),
             func.sum(Booking.total_amount).label("revenue"),
         )
         .where(Booking.created_at >= months_ago)
-        .group_by(func.date_trunc("month", Booking.created_at))
-        .order_by("month")
+        .group_by(month_expr)
+        .order_by(month_expr)
     )
     bookings_by_month = [
         {

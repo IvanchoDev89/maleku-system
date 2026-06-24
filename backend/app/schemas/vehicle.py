@@ -97,3 +97,10 @@ class VehicleResponse(VehicleBase):
 
 class VehicleDetailResponse(VehicleResponse):
     pass
+
+
+class VehicleListResponse(BaseModel):
+    items: list[VehicleResponse]
+    total: int
+    skip: int
+    limit: int
