@@ -107,7 +107,7 @@ export default defineNuxtConfig({
             "frame-src 'self' https://*.stripe.com https://js.stripe.com",
             "object-src 'none'",
             "base-uri 'self'",
-            "form-action 'self'",
+            "form-action 'self' https://*.stripe.com https://api.stripe.com",
           ].join('; ')
         }
       }

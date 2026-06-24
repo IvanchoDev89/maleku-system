@@ -46,14 +46,3 @@ class BlogPostStatus(str, enum.Enum):
     DRAFT = "draft"
     PUBLISHED = "published"
     ARCHIVED = "archived"
-
-
-class TourType(str, enum.Enum):
-    """Tour type enumeration for categorization."""
-
-    ADVENTURE = "adventure"
-    CULTURAL = "cultural"
-    NATURE = "nature"
-    WILDLIFE = "wildlife"
-    GASTRONOMIC = "gastronomic"
-    BEACH = "beach"

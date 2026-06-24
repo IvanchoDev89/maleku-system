@@ -12,7 +12,6 @@ from app.models.base import (
     VendorStatus,
     BookingStatus,
     BlogPostStatus,
-    TourType,
 )
 
 from app.models.property import PropertyType
@@ -76,7 +75,6 @@ __all__ = [
     "BlogPostStatus",
     "PropertyType",
     "PropertyCategory",
-    "TourType",
     "TourCategory",
     "TourDifficulty",
     "ChatServiceType",

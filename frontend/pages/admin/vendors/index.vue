@@ -268,6 +268,7 @@
 
 <script setup lang="ts">
 const api = useApi()
+const toast = useToast()
 
 definePageMeta({
   layout: 'admin',
@@ -392,8 +393,9 @@ const toggleVerified = async (vendor: any) => {
   try {
     await api.put(`/admin/vendors/${vendor.id}/verify`, { is_verified: !vendor.is_verified })
     vendor.is_verified = !vendor.is_verified
+    toast.success(vendor.is_verified ? 'Proveedor verificado' : 'Verificación removida')
   } catch (error) {
-    console.error('Error toggling verified:', error)
+    toast.error('Error al cambiar verificación')
   }
 }
 
@@ -401,8 +403,9 @@ const toggleActive = async (vendor: any) => {
   try {
     await api.put(`/admin/vendors/${vendor.id}/active`, { is_active: !vendor.is_active })
     vendor.is_active = !vendor.is_active
+    toast.success(vendor.is_active ? 'Proveedor activado' : 'Proveedor desactivado')
   } catch (error) {
-    console.error('Error toggling active:', error)
+    toast.error('Error al cambiar estado')
   }
 }
 
@@ -424,8 +427,9 @@ const saveVendor = async () => {
     })
     showEditModal.value = false
     fetchVendors()
+    toast.success('Proveedor actualizado')
   } catch (error) {
-    console.error('Error saving vendor:', error)
+    toast.error('Error al guardar proveedor')
   } finally {
     saving.value = false
   }
@@ -443,8 +447,9 @@ const confirmDelete = async () => {
     showDeleteModal.value = false
     vendorToDelete.value = null
     fetchVendors()
+    toast.success('Proveedor eliminado')
   } catch (error) {
-    console.error('Error deleting vendor:', error)
+    toast.error('Error al eliminar proveedor')
   } finally {
     deleting.value = false
   }
