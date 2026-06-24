@@ -4,6 +4,7 @@ Unit tests for Destination schemas
 
 import pytest
 from uuid import uuid4
+from datetime import datetime
 
 
 class TestDestinationSchemas:
@@ -51,6 +52,8 @@ class TestDestinationSchemas:
             province="Puntarenas",
             is_featured=True,
             is_active=True,
+            created_at=datetime(2025, 1, 1),
+            updated_at=datetime(2025, 1, 1),
         )
         assert data.name == "Manuel Antonio"
         assert data.is_featured is True

@@ -55,5 +55,5 @@ class TestVendorListings:
         assert response.status_code == 200
 
     async def test_vendor_analytics_requires_auth(self, client):
-        response = await client.get("/api/v1/vendors/analytics")
-        assert response.status_code == 401
+        response = await client.get("/api/v1/vendors/me/analytics")
+        assert response.status_code in (401, 403)

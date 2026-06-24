@@ -41,7 +41,7 @@ to ensure we received your original message.
 - **SQL Injection**: Prevented by SQLAlchemy ORM + parameterized queries
 - **XSS**: Auto-escaped by Vue.js/Nuxt template rendering
 - **CORS**: Explicitly whitelisted origins only
-- **CSRF**: Token-based protection on state-changing endpoints
+- **CSRF**: Not applicable — auth uses `Authorization: Bearer <JWT>` (no cookies), so there is no cookie-based session for CSRF to exploit
 - **Audit Logging**: All admin and sensitive actions logged
 - **Soft Delete**: All entities use `deleted_at` instead of hard deletes
 - **Secrets**: Environment variables only, never committed to repo

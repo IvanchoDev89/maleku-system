@@ -326,6 +326,18 @@ async def create_property(
     await db.flush()
     await db.commit()
 
+    # Refresh with eager-loaded relationships for the response
+    result = await db.execute(
+        select(Property)
+        .options(
+            selectinload(Property.rooms),
+            selectinload(Property.vendor),
+            selectinload(Property.reviews),
+        )
+        .where(Property.id == property_obj.id)
+    )
+    property_obj = result.scalar_one()
+
     # Invalidate property list cache
     await cache.invalidate_tag("properties")
 
@@ -346,7 +358,15 @@ async def update_property(
     current_user: User = Depends(require_permission("properties", "update")),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Property).where(Property.id == property_id))
+    result = await db.execute(
+        select(Property)
+        .options(
+            selectinload(Property.rooms),
+            selectinload(Property.vendor),
+            selectinload(Property.reviews),
+        )
+        .where(Property.id == property_id)
+    )
     property_obj = result.scalar_one_or_none()
 
     if not property_obj:

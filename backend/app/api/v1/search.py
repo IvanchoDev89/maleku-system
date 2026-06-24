@@ -216,9 +216,7 @@ async def get_map_data(
     properties = prop_result.scalars().all()
 
     # Build tour query
-    tour_query = select(Tour).where(
-        and_(Tour.is_active, Tour.latitude.isnot(None), Tour.longitude.isnot(None))
-    )
+    tour_query = select(Tour).where(Tour.is_active)
 
     if category:
         tour_query = tour_query.where(Tour.category == TourCategory(category))
@@ -269,8 +267,8 @@ async def get_map_data(
                 "category": t.category.value if t.category else None,
                 "difficulty": t.difficulty.value if t.difficulty else None,
                 "location": t.location,
-                "latitude": t.latitude,
-                "longitude": t.longitude,
+                "latitude": None,
+                "longitude": None,
                 "cover_image": t.cover_image,
                 "images": t.images[:4] if t.images else [],
                 "price": t.price,

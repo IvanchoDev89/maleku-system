@@ -138,7 +138,7 @@ async def test_check_tour_availability_inactive_tour():
     )
 
     assert is_available is False
-    assert "not available" in reason.lower()
+    assert "not active" in reason.lower()
 
 
 @pytest.mark.asyncio
@@ -205,6 +205,10 @@ async def test_get_room_availability_calendar():
     """Test getting availability calendar"""
     mock_session = AsyncMock()
 
+    # Mock RoomAvailability result (no entries in the range)
+    avail_mock = MagicMock()
+    avail_mock.scalars.return_value.all.return_value = []
+
     # Create a booking that blocks 2 days
     blocked_booking = MockBooking(
         id="booking-1",
@@ -212,10 +216,10 @@ async def test_get_room_availability_calendar():
         check_in=datetime(2024, 1, 10),
         check_out=datetime(2024, 1, 12),
     )
+    booking_mock = MagicMock()
+    booking_mock.scalars.return_value.all.return_value = [blocked_booking]
 
-    mock_result = MagicMock()
-    mock_result.scalars.return_value.all.return_value = [blocked_booking]
-    mock_session.execute.return_value = mock_result
+    mock_session.execute.side_effect = [avail_mock, booking_mock]
 
     calendar = await get_room_availability_calendar(
         db=mock_session,

@@ -68,13 +68,13 @@ check_docker() {
         exit 1
     fi
 
-    if ! command -v docker-compose &> /dev/null; then
-        print_error "docker-compose is not installed"
+    if ! command -v docker &> /dev/null || ! docker compose version &> /dev/null; then
+        print_error "Docker Compose is not installed"
         exit 1
     fi
 
     print_status "Docker: $(docker --version | cut -d' ' -f3 | cut -d',' -f1)"
-    print_status "Docker Compose: $(docker-compose --version | cut -d' ' -f4 | cut -d',' -f1)"
+    print_status "Docker Compose: $(docker compose version --short)"
 }
 
 # Check ports
@@ -102,12 +102,12 @@ start_databases() {
     cd "$INFRA_DIR"
 
     # Start only db and redis
-    docker-compose up -d db redis
+    docker compose up -d db redis
 
     # Wait for PostgreSQL
     print_status "Waiting for PostgreSQL..."
     for i in {1..30}; do
-        if docker-compose exec -T db pg_isready -U crtravel &>/dev/null; then
+        if docker compose exec -T db pg_isready -U crtravel &>/dev/null; then
             print_status "PostgreSQL is ready"
             break
         fi
@@ -117,7 +117,7 @@ start_databases() {
     # Wait for Redis
     print_status "Waiting for Redis..."
     for i in {1..10}; do
-        if docker-compose exec -T redis redis-cli ping &>/dev/null; then
+        if docker compose exec -T redis redis-cli ping &>/dev/null; then
             print_status "Redis is ready"
             break
         fi
@@ -267,7 +267,7 @@ show_status() {
     # Check Docker
     echo "Docker Services:"
     cd "$INFRA_DIR"
-    docker-compose ps 2>/dev/null || echo "  (not running)"
+    docker compose ps 2>/dev/null || echo "  (not running)"
     echo ""
 
     # Check API
@@ -291,7 +291,7 @@ stop_services() {
 
     # Stop Docker
     cd "$INFRA_DIR"
-    docker-compose stop 2>/dev/null || true
+    docker compose stop 2>/dev/null || true
 
     print_status "Services stopped"
 }
@@ -303,7 +303,7 @@ show_logs() {
     if [ "$1" = "api" ]; then
         tail -f /tmp/api.log 2>/dev/null || echo "No API logs found"
     else
-        docker-compose logs -f "${@:-}"
+        docker compose logs -f "${@:-}"
     fi
 }
 
@@ -314,7 +314,7 @@ clean_up() {
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         cd "$INFRA_DIR"
-        docker-compose down -v
+        docker compose down -v
         print_status "Cleaned up"
     fi
 }

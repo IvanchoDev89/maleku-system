@@ -168,9 +168,8 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Dificultad</label>
             <select v-model="form.difficulty" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
               <option value="easy">Fácil</option>
-              <option value="moderate">Moderada</option>
+              <option value="medium">Moderada</option>
               <option value="hard">Difícil</option>
-              <option value="extreme">Extrema</option>
             </select>
           </div>
           <div>
@@ -246,17 +245,19 @@ const categoryOptions = [
   { value: 'adventure', label: 'Aventura' },
   { value: 'nature', label: 'Naturaleza' },
   { value: 'cultural', label: 'Cultural' },
-  { value: 'wildlife', label: 'Wildlife' },
-  { value: 'gastronomic', label: 'Gastronómico' },
+  { value: 'culture', label: 'Cultura' },
+  { value: 'water', label: 'Acuático' },
+  { value: 'wellness', label: 'Bienestar' },
+  { value: 'gastronomy', label: 'Gastronomía' },
+  { value: 'wildlife', label: 'Fauna' },
   { value: 'beach', label: 'Playa' },
 ]
 
 const difficultyOptions = [
   { value: '', label: 'Todas' },
   { value: 'easy', label: 'Fácil' },
-  { value: 'moderate', label: 'Moderada' },
+  { value: 'medium', label: 'Moderada' },
   { value: 'hard', label: 'Difícil' },
-  { value: 'extreme', label: 'Extrema' },
 ]
 
 const statusOptions = [
@@ -294,12 +295,12 @@ function resetForm() {
 }
 
 function categoryIcon(cat: string): string {
-  const icons: Record<string, string> = { adventure: '🚣', nature: '🌿', cultural: '🏛️', wildlife: '🦥', gastronomic: '🍜', beach: '🏖️' }
+  const icons: Record<string, string> = { adventure: '🚣', nature: '🌿', cultural: '🏛️', culture: '🏛️', wildlife: '🦥', gastronomy: '🍜', water: '🌊', wellness: '🧘', beach: '🏖️' }
   return icons[cat] || '🎯'
 }
 
 function difficultyVariant(d: string): string {
-  const variants: Record<string, string> = { easy: 'success', moderate: 'warning', hard: 'danger', extreme: 'danger' }
+  const variants: Record<string, string> = { easy: 'success', medium: 'warning', hard: 'danger' }
   return variants[d] || 'info'
 }
 

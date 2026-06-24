@@ -118,8 +118,8 @@ const tourCategoryOptions = [
 
 const difficultyOptions = [
   { value: 'easy', label: 'Fácil' },
-  { value: 'moderate', label: 'Moderada' },
-  { value: 'challenging', label: 'Desafiante' },
+  { value: 'medium', label: 'Moderada' },
+  { value: 'hard', label: 'Desafiante' },
 ]
 
 const currencyOptions = [

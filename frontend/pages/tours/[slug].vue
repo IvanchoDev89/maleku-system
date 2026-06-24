@@ -277,14 +277,14 @@ const formatCategory = (cat: string | undefined) => {
 const difficultyColor = computed(() => {
   const diff = tour.value?.difficulty
   if (diff === 'easy') return 'bg-green-100 text-green-700 border-green-200'
-  if (diff === 'challenging') return 'bg-red-100 text-red-700 border-red-200'
+  if (diff === 'hard') return 'bg-red-100 text-red-700 border-red-200'
   return 'bg-yellow-100 text-yellow-700 border-yellow-200'
 })
 
 const difficultyLabel = computed(() => {
   const diff = tour.value?.difficulty
   if (diff === 'easy') return 'Fácil'
-  if (diff === 'challenging') return 'Exigente'
+  if (diff === 'hard') return 'Exigente'
   return 'Moderado'
 })
 

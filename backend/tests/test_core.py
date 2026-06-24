@@ -12,7 +12,7 @@ from uuid import uuid4
 def sample_user():
     return {
         "email": "test@example.com",
-        "password": "TestPass123",
+        "password": "TestPass123!",
         "full_name": "Test User",
         "phone": "+50612345678",
     }
@@ -21,7 +21,6 @@ def sample_user():
 @pytest.fixture
 def sample_vendor():
     return {
-        "user_id": uuid4(),
         "business_name": "Test Hotel",
         "business_type": "hotel",
         "description": "A test hotel",
@@ -56,7 +55,7 @@ def test_password_strength():
     assert is_weak_password("weak")
     assert is_weak_password("12345678")
     assert is_weak_password("ABCDEFGH")
-    assert not is_weak_password("StrongPass123")
+    assert not is_weak_password("StrongPass123!")
 
 
 # Schema tests

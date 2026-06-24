@@ -42,7 +42,7 @@ from app.services.availability_service import (
     check_room_availability,
     check_tour_availability,
 )
-from app.services.email_service import email_service
+from app.services.email_service import email_service, EmailError
 from app.core.logging import get_logger
 
 router = APIRouter(tags=["Bookings"])
@@ -214,7 +214,7 @@ async def create_property_booking(
         await _send_booking_confirmation_emails(
             db, booking, property_obj, room, current_user
         )
-    except (RuntimeError, ConnectionError, ValueError) as e:
+    except (RuntimeError, ConnectionError, ValueError, EmailError) as e:
         logger.error(f"Failed to send booking confirmation emails: {e}")
 
     return BookingResponse.model_validate(booking)
@@ -363,7 +363,7 @@ async def create_tour_booking(
     # Send confirmation emails for tour booking
     try:
         await _send_tour_booking_emails(db, booking, tour, current_user)
-    except (RuntimeError, ConnectionError, ValueError) as e:
+    except (RuntimeError, ConnectionError, ValueError, EmailError) as e:
         logger.error(f"Failed to send tour booking confirmation emails: {e}")
 
     return BookingResponse.model_validate(booking)

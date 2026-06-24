@@ -62,6 +62,7 @@ class TestBlogSchemas:
         now = datetime.now(timezone.utc)
         data = BlogPostResponse(
             id=uuid4(),
+            slug="response-title",
             title="Response Title",
             content="X" * 50,
             author_id=None,
@@ -80,6 +81,7 @@ class TestBlogSchemas:
 
         data = BlogPostListResponse(
             id=uuid4(),
+            slug="list-item",
             title="List Item",
             excerpt="A brief excerpt",
             category="Travel",

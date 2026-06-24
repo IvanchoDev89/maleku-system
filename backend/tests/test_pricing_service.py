@@ -29,6 +29,7 @@ class MockRoom:
         self.base_price = price_per_night
         self.weekend_price = weekend_price or price_per_night
         self.extra_guest_price = extra_guest_price
+        self.max_guests = max_occupancy
         self.max_occupancy = max_occupancy
         self.currency = currency
 

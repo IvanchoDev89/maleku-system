@@ -145,7 +145,7 @@ class TestSearch:
 
     @pytest.mark.asyncio
     async def test_search_basic(self, client):
-        response = await client.get("/api/v1/search/search?q=playa")
+        response = await client.get("/api/v1/search?q=playa")
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert "properties" in data
@@ -154,13 +154,13 @@ class TestSearch:
 
     @pytest.mark.asyncio
     async def test_search_empty_query(self, client):
-        response = await client.get("/api/v1/search/search?q=")
+        response = await client.get("/api/v1/search?q=")
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.asyncio
     async def test_search_long_query(self, client):
         long_query = "a" * 500
-        response = await client.get(f"/api/v1/search/search?q={long_query}")
+        response = await client.get(f"/api/v1/search?q={long_query}")
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.asyncio
@@ -211,7 +211,7 @@ class TestRateLimiting:
     async def test_search_rate_limit(self, client):
         """Verify search endpoint handles requests"""
         for _ in range(5):
-            response = await client.get("/api/v1/search/search?q=test")
+            response = await client.get("/api/v1/search?q=test")
             assert response.status_code in [
                 status.HTTP_200_OK,
                 status.HTTP_429_TOO_MANY_REQUESTS,
@@ -239,11 +239,12 @@ class TestBookings:
         ]
 
     @pytest.mark.asyncio
-    async def test_get_booking_status_unauthenticated(self, client):
-        response = await client.get(
-            "/api/v1/bookings/00000000-0000-0000-0000-000000000000/status"
+    async def test_update_booking_status_unauthenticated(self, client):
+        response = await client.put(
+            "/api/v1/bookings/00000000-0000-0000-0000-000000000000/status",
+            json={"status": "confirmed"},
         )
         assert response.status_code in [
             status.HTTP_401_UNAUTHORIZED,
-            status.HTTP_404_NOT_FOUND,
+            status.HTTP_403_FORBIDDEN,
         ]

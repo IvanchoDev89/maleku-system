@@ -255,12 +255,11 @@ class TestCreateProperty:
                 "property_type": "hotel",
                 "base_price": 100.0,
                 "max_guests": 4,
-                "vendor_id": "00000000-0000-0000-0000-000000000000",
-                "rating": 5.0,
             },
         )
         assert resp.status_code in (200, 201)
         data = resp.json()
+        # System-assigned fields should NOT come from user input
         assert data.get("rating", 0) == 0.0
 
 

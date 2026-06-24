@@ -86,15 +86,9 @@ class CacheService:
         return f"costarica:cache:{key}"
 
     async def get(self, key: str) -> Optional[Any]:
-        """
-        Get value from cache.
-
-        Args:
-            key: Cache key
-
-        Returns:
-            Cached value or None if not found
-        """
+        """Disabled in test mode to prevent stale cache contamination."""
+        if settings.ENVIRONMENT == "test":
+            return None
         full_key = self._make_key(key)
 
         if self.redis_client:
@@ -118,18 +112,9 @@ class CacheService:
     async def set(
         self, key: str, value: Any, ttl: int = 3600, tags: Optional[list] = None
     ) -> bool:
-        """
-        Set value in cache.
-
-        Args:
-            key: Cache key
-            value: Value to cache
-            ttl: Time to live in seconds (default 1 hour)
-            tags: Optional tags for group invalidation
-
-        Returns:
-            True if successfully cached
-        """
+        """Disabled in test mode to prevent stale cache contamination."""
+        if settings.ENVIRONMENT == "test":
+            return True
         full_key = self._make_key(key)
 
         # Store tags for later invalidation

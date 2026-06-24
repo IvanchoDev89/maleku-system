@@ -6,7 +6,6 @@ import os
 
 os.environ["ENVIRONMENT"] = "test"
 
-import asyncio
 import pytest
 import pytest_asyncio
 import sqlalchemy as sa
@@ -60,26 +59,9 @@ async def db_session(engine):
     finally:
         await session.close()
         async with engine.begin() as conn:
-            tables = ", ".join(
-                t.name for t in reversed(Base.metadata.sorted_tables)
-            )
+            tables = ", ".join(t.name for t in reversed(Base.metadata.sorted_tables))
             if tables:
                 await conn.execute(sa.text(f"TRUNCATE TABLE {tables} CASCADE"))
-
-
-@pytest_asyncio.fixture
-async def client(db_session):
-    """Create test client with overridden database dependency."""
-
-    async def override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = override_get_db
-
-    async with AsyncClient(app=app, base_url="http://localhost") as ac:
-        yield ac
-
-    app.dependency_overrides.clear()
 
 
 @pytest_asyncio.fixture

@@ -45,8 +45,6 @@ class TourDifficulty(str, enum.Enum):
     """Tour difficulty level enumeration."""
 
     EASY = "easy"
-    MODERATE = "moderate"
-    CHALLENGING = "challenging"
     MEDIUM = "medium"
     HARD = "hard"
 

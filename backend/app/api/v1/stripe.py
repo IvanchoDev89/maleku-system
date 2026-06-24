@@ -27,7 +27,7 @@ from app.services.stripe_service import (
     refund_payment,
     StripeError,
 )
-from app.services.email_service import email_service
+from app.services.email_service import email_service, EmailError
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -444,7 +444,7 @@ async def _send_payment_confirmation_email(
                 currency=payment_result["currency"].upper(),
             )
             logger.info(f"Payment confirmation email sent to {user.email}")
-    except (RuntimeError, ConnectionError, ValueError) as e:
+    except (RuntimeError, ConnectionError, ValueError, EmailError) as e:
         logger.error(f"Failed to send payment confirmation email: {e}")
 
 
