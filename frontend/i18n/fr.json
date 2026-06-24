@@ -21,71 +21,71 @@
   "hero": {
     "title": "Découvrez la Magie du Costa Rica",
     "subtitle": {
-      "highlight": "We connect travelers with the best local providers.",
-      "main": "Pristine beaches, active volcanoes and unique adventures await you."
+      "highlight": "Nous connectons les voyageurs avec les meilleurs prestataires locaux.",
+      "main": "Des plages vierges, des volcans actifs et des aventures uniques vous attendent."
     },
     "cta": {
-      "explore": "Explore Destinations",
-      "planner": "Plan Your Trip"
+      "explore": "Explorer les Destinations",
+      "planner": "Planifier Votre Voyage"
     },
     "destinations": {
       "guanacaste": {
-        "region": "North Pacific"
+        "region": "Pacifique Nord"
       },
       "lafortuna": {
         "region": "Alajuela"
       },
       "manuelantonio": {
-        "region": "Central Pacific"
+        "region": "Pacifique Central"
       },
       "monteverde": {
         "region": "Puntarenas"
       },
       "puertoviejo": {
-        "region": "Caribbean"
+        "region": "Caraïbes"
       },
       "sanjose": {
-        "region": "Central Valley"
+        "region": "Vallée Centrale"
       }
     },
     "headline": {
-      "line1": "Discover",
+      "line1": "Découvrez",
       "line2": "Costa Rica"
     },
     "live": {
       "mockDestination": "Manuel Antonio",
       "mockUser": "Maria G.",
-      "recentBooking": "Recent: {user} booked in {destination}",
-      "usersOnline": "people exploring now"
+      "recentBooking": "Récent : {user} a réservé à {destination}",
+      "usersOnline": "personnes explorent maintenant"
     },
     "scrollIndicator": {
-      "label": "Scroll down"
+      "label": "Défiler vers le bas"
     },
     "search": {
-      "button": "Search Experiences",
+      "button": "Rechercher des Expériences",
       "dates": {
         "label": "Dates",
-        "placeholder": "When do you travel?"
+        "placeholder": "Quand voyagez-vous ?"
       },
       "destination": {
         "label": "Destination",
-        "placeholder": "Where are you going?"
+        "placeholder": "Où allez-vous ?"
       },
-      "popular": "Popular:",
-      "searching": "Searching...",
+      "popular": "Populaire :",
+      "searching": "Recherche...",
       "travelers": {
-        "label": "Travelers"
+        "label": "Voyageurs"
       },
-      "checkIn": "Check-in",
-      "checkOut": "Check-out"
+      "checkIn": "Arrivée",
+      "checkOut": "Départ"
     },
     "trust": {
-      "bestPrice": "Best price guaranteed",
-      "cancelation": "Free cancellation 48h",
-      "travelers": "+10,000 happy travelers"
+      "bestPrice": "Meilleur prix garanti",
+      "cancelation": "Annulation gratuite 48h",
+      "travelers": "+10 000 voyageurs satisfaits"
     },
     "video": {
-      "fallbackAlt": "Costa Rica beach"
+      "fallbackAlt": "Plage du Costa Rica"
     },
     "badge": "Découvrez le paradis en Amérique centrale",
     "action": "Vivez l'aventure au"
@@ -132,34 +132,34 @@
         "imageAlt": "Forêt nuageuse de Monteverde"
       },
       "valle-central": {
-        "ariaLabel": "Explore Central Valley destination",
-        "description": "San José, museums and urban culture",
-        "highlights": "City · Museums · Coffee",
-        "imageAlt": "National Theater of Costa Rica"
+        "ariaLabel": "Explorer la destination Vallée Centrale",
+        "description": "San José, musées et culture urbaine",
+        "highlights": "Ville · Musées · Café",
+        "imageAlt": "Théâtre National du Costa Rica"
       }
     }
   },
   "why": {
     "badge": "Pourquoi le Costa Rica",
-    "title": "Pourquoi visiter le Costa Rica?",
+    "title": "Pourquoi visiter le Costa Rica ?",
     "subtitle": "Un pays qui offre beaucoup plus que de beaux paysages",
     "protected": "aires protégées",
     "features": {
       "biodiversity": {
-        "description": "Just 0.03% of the world's land surface contains 6% of all known species.",
-        "title": "Unique Biodiversity"
+        "title": "Biodiversité Unique",
+        "description": "Seulement 0,03 % de la surface terrestre mondiale abrite 6 % de toutes les espèces connues."
       },
       "climate": {
-        "description": "In just 4 hours you can go from tropical beaches to temperate mountains or cloud forests.",
-        "title": "Varied Microclimate"
+        "title": "Microclimats Variés",
+        "description": "En seulement 4 heures, vous pouvez passer des plages tropicales aux montagnes tempérées ou aux forêts de nuages."
       },
       "safe": {
-        "description": "Costa Rica abolished its army in 1948, directing those funds to education, health, and environmental protection.",
-        "title": "Safe Country"
+        "title": "Pays Sûr",
+        "description": "Le Costa Rica a aboli son armée en 1948, consacrant ces fonds à l'éducation, la santé et la protection de l'environnement."
       },
       "sustainability": {
-        "description": "First country to achieve carbon neutrality. 99% of its electricity is renewable.",
-        "title": "Sustainability Leader"
+        "title": "Leader en Durabilité",
+        "description": "Premier pays à atteindre la neutralité carbone. 99 % de son électricité provient de sources renouvelables."
       }
     }
   },
@@ -169,36 +169,36 @@
     "subtitle": "Des activités qui transformeront votre voyage en aventure unique",
     "items": {
       "adventure": {
-        "ariaLabel": "View extreme adventure tours",
-        "description": "Canopy, rappelling, rafting and more thrills",
-        "difficulty": "High",
-        "duration": "1-2 days",
-        "imageAlt": "Tourist doing canopy in tropical rainforest",
-        "name": "Extreme Adventure"
+        "ariaLabel": "Voir les tours d'aventure extrême",
+        "description": "Canopée, rappel, rafting et plus de sensations fortes",
+        "difficulty": "Élevée",
+        "duration": "1-2 jours",
+        "imageAlt": "Touriste faisant de la canopée dans la forêt tropicale",
+        "name": "Aventure Extrême"
       },
       "beach": {
-        "ariaLabel": "View beach and surf tours",
-        "description": "Surf lessons, snorkeling, kayaking",
-        "difficulty": "Medium",
-        "duration": "1 day",
-        "imageAlt": "Tropical beach in Costa Rica with surfers",
-        "name": "Beaches & Surf"
+        "ariaLabel": "Voir les tours de plage et surf",
+        "description": "Cours de surf, snorkeling, kayak",
+        "difficulty": "Moyenne",
+        "duration": "1 jour",
+        "imageAlt": "Plage tropicale au Costa Rica avec surfeurs",
+        "name": "Plages & Surf"
       },
       "culture": {
-        "ariaLabel": "View cultural tours",
-        "description": "Communities, gastronomy, history",
-        "difficulty": "Easy",
-        "duration": "1 day",
-        "imageAlt": "Typical Costa Rican casado dish",
-        "name": "Cultural Tourism"
+        "ariaLabel": "Voir les tours culturels",
+        "description": "Communautés, gastronomie, histoire",
+        "difficulty": "Facile",
+        "duration": "1 jour",
+        "imageAlt": "Plat typique costaricien : le casado",
+        "name": "Tourisme Culturel"
       },
       "nature": {
-        "ariaLabel": "View wildlife watching tours",
-        "description": "Sloths, quetzals, monkeys and more",
-        "difficulty": "Easy",
-        "duration": "Half day",
-        "imageAlt": "Sloth in Costa Rica tree",
-        "name": "Wildlife Watching"
+        "ariaLabel": "Voir les tours d'observation de la faune",
+        "description": "Paresseux, quetzals, singes et plus",
+        "difficulty": "Facile",
+        "duration": "Demi-journée",
+        "imageAlt": "Paresseux dans un arbre au Costa Rica",
+        "name": "Observation de la Faune"
       }
     }
   },
@@ -216,38 +216,38 @@
     "title": "Planifiez Votre Voyage",
     "subtitle": "Créez votre itinéraire personnalisé en 5 étapes",
     "cta": {
-      "title": "Prêt à planifier votre aventure?",
+      "title": "Prêt à planifier votre aventure ?",
       "subtitle": "Notre planificateur interactif vous aide à créer le voyage parfait",
       "chat": "Parler à un expert"
     },
     "generate": "Générer l'Itinéraire"
   },
   "step1": {
-    "title": "Combien de temps avez-vous?",
+    "title": "Combien de temps avez-vous ?",
     "subtitle": "Sélectionnez la durée approximative de votre voyage",
-    "budgetLabel": "Budget estimé par personne:"
+    "budgetLabel": "Budget estimé par personne :"
   },
   "step2": {
-    "title": "Quel type de voyageur êtes-vous?",
+    "title": "Quel type de voyageur êtes-vous ?",
     "subtitle": "Choisissez le style qui vous définit"
   },
   "step3": {
-    "title": "Lesquels vous interessent?",
+    "title": "Lesquels vous intéressent ?",
     "subtitle": "Sélectionnez les régions à explorer"
   },
   "step4": {
     "title": "Derniers Détails",
     "subtitle": "Parlez-nous de vous",
-    "travelers": "Combien de voyageurs?",
-    "season": "Quand prévoyez-vous voyager?",
+    "travelers": "Combien de voyageurs ?",
+    "season": "Quand prévoyez-vous voyager ?",
     "anyTime": "N'importe quand",
     "drySeason": "Déc - Avr (Sec)",
     "rainySeason": "Mai - Nov (Pluvieux)",
-    "notes": "Autre chose à savoir?"
+    "notes": "Autre chose à savoir ?"
   },
   "step5": {
-    "title": "Votre Itinéraire Personnalisé!",
-    "subtitle": "Basé sur vos preferences, voici une recommandation",
+    "title": "Votre Itinéraire Personnalisé !",
+    "subtitle": "Basé sur vos préférences, voici une recommandation",
     "print": "Imprimer",
     "reset": "Réinitialiser"
   },
@@ -263,7 +263,7 @@
       "email": "E-mail",
       "password": "Mot de passe",
       "submit": "Se connecter",
-      "noAccount": "Pas de compte?",
+      "noAccount": "Pas de compte ?",
       "register": "Inscrivez-vous ici"
     },
     "register": {
@@ -273,7 +273,7 @@
       "password": "Mot de passe",
       "confirmPassword": "Confirmer le mot de passe",
       "submit": "Créer un compte",
-      "hasAccount": "Déjà un compte?",
+      "hasAccount": "Déjà un compte ?",
       "login": "Connectez-vous"
     }
   },
@@ -299,7 +299,54 @@
     "pendingLabel": "En attente",
     "pendingHint": "En attente de confirmation",
     "revenueLabel": "Revenus Totaux",
-    "revenueHint": "Gains accumulés"
+    "revenueHint": "Gains accumulés",
+    "quickActions": "Actions Rapides",
+    "addPropertyDesc": "Ajouter un nouvel hôtel ou villa",
+    "addTourDesc": "Créer un nouveau tour ou expérience",
+    "settingsDesc": "Configurer votre profil et vos paiements",
+    "bookingsHint": "Vos réservations totales",
+    "myBookings": "Mes Réservations",
+    "bookingsSubtitle": "Gérez vos réservations de propriétés et tours",
+    "myProperties": "Mes Propriétés",
+    "propertiesSubtitle": "Gérez vos hôtels et villas",
+    "myTours": "Mes Tours",
+    "toursSubtitle": "Gérez vos tours et expériences",
+    "newProperty": "Nouvelle Propriété",
+    "newTour": "Nouveau Tour",
+    "code": "Code",
+    "client": "Client",
+    "service": "Service",
+    "date": "Date",
+    "amount": "Montant",
+    "status": "Statut",
+    "actions": "Actions",
+    "allStatuses": "Tous les statuts",
+    "retry": "Réessayer",
+    "confirm": "Confirmer",
+    "cancel": "Annuler",
+    "complete": "Terminer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "name": "Nom",
+    "type": "Type",
+    "location": "Emplacement",
+    "rooms": "Chambres",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "category": "Catégorie",
+    "duration": "Durée",
+    "price": "Prix",
+    "noProperties": "Aucune propriété",
+    "createFirstProperty": "Créer une propriété",
+    "noTours": "Aucun tour",
+    "createFirstTour": "Créer un tour",
+    "deleteProperty": "Supprimer la Propriété",
+    "deletePropertyConfirm": "Êtes-vous sûr de vouloir supprimer",
+    "deleteTour": "Supprimer le Tour",
+    "deleteTourConfirm": "Êtes-vous sûr de vouloir supprimer",
+    "cancelBooking": "Annuler la Réservation",
+    "cancelBookingConfirm": "Êtes-vous sûr de vouloir annuler cette réservation ?",
+    "cancelBookingAction": "Annuler la Réservation"
   },
   "admin": {
     "dashboard": "Tableau de bord Admin",
@@ -309,7 +356,15 @@
     "blog": "Blog",
     "destinations": "Destinations",
     "reports": "Rapports",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "search": "Rechercher des utilisateurs...",
+    "notifications": "Notifications",
+    "allUsers": "Utilisateurs",
+    "allVendors": "Fournisseurs",
+    "content": "Contenu",
+    "allDestinations": "Destinations",
+    "allReports": "Rapports",
+    "allSettings": "Paramètres"
   },
   "common": {
     "loading": "Chargement...",
@@ -357,39 +412,39 @@
     }
   },
   "packages": {
-    "badge": "All-Inclusive Packages",
+    "badge": "Forfaits Tout Compris",
     "subtitle": "Offres tout compris",
     "title": "Forfaits",
     "viewAll": "Voir tous les forfaits",
-    "viewDetails": "View Details"
+    "viewDetails": "Voir les Détails"
   },
   "properties": {
-    "title": "Hébergements"
+    "title": "Trouvez Votre Séjour Parfait"
   },
   "search": {
     "travelers": {
-      "1": "1 person",
-      "2": "2 people",
-      "3": "3 people",
-      "4": "4 people",
-      "5plus": "5+ people"
+      "1": "1 personne",
+      "2": "2 personnes",
+      "3": "3 personnes",
+      "4": "4 personnes",
+      "5plus": "5+ personnes"
     }
   },
   "tours": {
-    "title": "Circuits"
+    "title": "Découvrez des Expériences Uniques"
   },
   "upload": {
-    "acceptedTypes": "JPG, PNG, GIF or WebP",
-    "clickToUpload": "Click to upload",
-    "delete": "Delete",
-    "dragAndDrop": "or drag and drop",
+    "acceptedTypes": "JPG, PNG, GIF ou WebP",
+    "clickToUpload": "Cliquez pour télécharger",
+    "delete": "Supprimer",
+    "dragAndDrop": "ou glissez-déposez",
     "error": {
-      "generic": "Error uploading image",
-      "maxFiles": "Maximum {count} images allowed",
-      "noImage": "Please select image files"
+      "generic": "Erreur lors du téléchargement de l'image",
+      "maxFiles": "Maximum {count} images autorisées",
+      "noImage": "Veuillez sélectionner des fichiers image"
     },
-    "multiple": "Up to {count} images",
-    "single": "One image",
+    "multiple": "Jusqu'à {count} images",
+    "single": "Une seule image",
     "uploading": "Téléversement en cours..."
   },
   "blog": {
@@ -411,13 +466,13 @@
       "refresh": "Actualiser",
       "system": {
         "operational": "Système opérationnel",
-        "dbConnected": "BDD: Connecté",
+        "dbConnected": "BDD : Connecté",
         "backup": "Sauvegarde - il y a 2h"
       }
     },
     "users": {
-      "title": "Blog de Voyage",
-      "subtitle": "Panneau de contrôle - Costa Rica Travel",
+      "title": "Gestion des Utilisateurs",
+      "subtitle": "Gérer les utilisateurs et les permissions",
       "newUser": "Nouvel utilisateur",
       "impersonate": "Usurper",
       "view": "Voir détails",
@@ -435,8 +490,8 @@
       "page": "Page {page}"
     },
     "vendors": {
-      "title": "Blog de Voyage",
-      "subtitle": "Panneau de contrôle - Costa Rica Travel",
+      "title": "Gestion des Prestataires",
+      "subtitle": "Gérer les prestataires et les approbations",
       "analytics": "Analytique",
       "pending": "En attente",
       "featured": "En vedette",
@@ -452,7 +507,28 @@
         "suspended": "Suspendu",
         "rejected": "Rejeté"
       }
-    }
+    },
+    "search": "Rechercher...",
+    "quickActions": "Actions Rapides",
+    "newUser": "Nouvel Utilisateur",
+    "newVendor": "Nouveau Prestataire",
+    "newArticle": "Nouvel Article",
+    "newProperty": "Nouvelle Propriété",
+    "emergency": "Urgence",
+    "maintenanceMode": "Mode Maintenance",
+    "forceLogout": "Forcer la Déconnexion Globale",
+    "blockIPs": "Bloquer les IP Suspectes",
+    "clearCache": "Vider le Cache Système",
+    "properties": "Propriétés",
+    "bookings": "Réservations",
+    "fleet": "Flotte",
+    "reviews": "Avis",
+    "analytics": "Analytique",
+    "reports": "Rapports",
+    "pos": "Points de Vente",
+    "audit": "Audit",
+    "system": "Système",
+    "configuration": "Configuration"
   },
   "categories": {
     "adventure": "Aventure",
@@ -472,10 +548,10 @@
       "hard": "Difficile"
     },
     "price": {
-      "under50": "Jusqu'à $50",
-      "50to100": "$50 - $100",
-      "100to200": "$100 - $200",
-      "over200": "Plus de $200"
+      "under50": "Jusqu'à 50 $",
+      "50to100": "50 $ - 100 $",
+      "100to200": "100 $ - 200 $",
+      "over200": "Plus de 200 $"
     },
     "duration": {
       "halfDay": "Demi-journée",

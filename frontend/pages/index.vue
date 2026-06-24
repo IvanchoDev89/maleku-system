@@ -321,12 +321,11 @@ import {
 } from 'lucide-vue-next'
 
 const config = useRuntimeConfig()
-const apiBase = config.public.apiBase
 
 const { scrollProgress } = useScrollProgress()
 
 const { data: landingData } = useFetch(
-  () => `${apiBase}/landing/content`,
+  () => `${config.public.apiBase}/landing/content`,
   { key: 'landing-content', default: () => null }
 )
 
