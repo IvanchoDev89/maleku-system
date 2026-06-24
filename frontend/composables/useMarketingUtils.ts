@@ -18,10 +18,6 @@ export const statusLabel = (status: string) => {
   return labels[status] || status
 }
 
-export const formatNumber = (num: number) => {
-  return new Intl.NumberFormat('es-CR').format(num || 0)
-}
-
 export const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('es-CR', {
     year: 'numeric',

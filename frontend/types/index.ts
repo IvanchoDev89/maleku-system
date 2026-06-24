@@ -155,8 +155,8 @@ export interface Tour {
   updated_at: string
 }
 
-export type TourCategory = 'adventure' | 'nature' | 'cultural' | 'water' | 'beach' | 'wildlife'
-export type TourDifficulty = 'easy' | 'moderate' | 'challenging' | 'extreme'
+export type TourCategory = 'adventure' | 'nature' | 'cultural' | 'water' | 'beach' | 'wildlife' | 'wellness' | 'gastronomy'
+export type TourDifficulty = 'easy' | 'medium' | 'hard'
 
 export interface ItineraryItem {
   time: string

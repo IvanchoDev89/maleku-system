@@ -38,7 +38,6 @@ class TourCategory(str, enum.Enum):
     GASTRONOMY = "gastronomy"
     BEACH = "beach"
     WILDLIFE = "wildlife"
-    CULTURE = "culture"
 
 
 class TourDifficulty(str, enum.Enum):

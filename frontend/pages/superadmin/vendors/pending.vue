@@ -372,13 +372,6 @@ const formatDate = (date: string) => {
   })
 }
 
-const formatNumber = (num: number) => {
-  if (!num) return '0'
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
-  return num.toString()
-}
-
 const formatComplianceFlag = (flag: string) => {
   const flags: Record<string, string> = {
     no_properties: 'No tiene propiedades/tours registrados',

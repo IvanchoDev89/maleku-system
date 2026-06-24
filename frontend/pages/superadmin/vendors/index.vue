@@ -503,13 +503,6 @@ function statusVariant(status: string) {
   return (map[status] || 'default') as any
 }
 
-const formatNumber = (num: number) => {
-  if (!num) return '0'
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
-  return num.toString()
-}
-
 watch(showAnalytics, (show) => {
   if (show) loadStats()
 })

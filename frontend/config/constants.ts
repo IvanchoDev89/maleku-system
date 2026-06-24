@@ -43,7 +43,6 @@ export const TOUR_CATEGORIES = [
   { value: 'nature', key: 'categories.nature', icon: '🌿' },
   { value: 'wildlife', key: 'categories.wildlife', icon: '🦥' },
   { value: 'beach', key: 'categories.beach', icon: '🏖️' },
-  { value: 'culture', key: 'categories.culture', icon: '🏛️' },
   { value: 'cultural', key: 'categories.cultural', icon: '🏛️' },
   { value: 'water', key: 'categories.water', icon: '🌊' },
   { value: 'wellness', key: 'categories.wellness', icon: '🧘' },

@@ -37,7 +37,7 @@ const categoryIcons: Record<string, string> = {
   nature: '🌿',
   wildlife: '🦥',
   beach: '🏖️',
-  culture: '🏛️',
+  cultural: '🏛️',
   wellness: '🧘'
 }
 

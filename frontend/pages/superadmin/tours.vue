@@ -245,7 +245,7 @@ const categoryOptions = [
   { value: 'adventure', label: 'Aventura' },
   { value: 'nature', label: 'Naturaleza' },
   { value: 'cultural', label: 'Cultural' },
-  { value: 'culture', label: 'Cultura' },
+  { value: 'cultural', label: 'Cultura' },
   { value: 'water', label: 'Acuático' },
   { value: 'wellness', label: 'Bienestar' },
   { value: 'gastronomy', label: 'Gastronomía' },
@@ -295,7 +295,7 @@ function resetForm() {
 }
 
 function categoryIcon(cat: string): string {
-  const icons: Record<string, string> = { adventure: '🚣', nature: '🌿', cultural: '🏛️', culture: '🏛️', wildlife: '🦥', gastronomy: '🍜', water: '🌊', wellness: '🧘', beach: '🏖️' }
+  const icons: Record<string, string> = { adventure: '🚣', nature: '🌿', cultural: '🏛️', wildlife: '🦥', gastronomy: '🍜', water: '🌊', wellness: '🧘', beach: '🏖️' }
   return icons[cat] || '🎯'
 }
 

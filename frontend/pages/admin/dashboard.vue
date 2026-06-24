@@ -261,8 +261,6 @@ const bookingStatusLabel: Record<string, string> = {
   completed: 'Completada'
 }
 
-const formatNumber = (num: number) => new Intl.NumberFormat('en-US').format(num || 0)
-
 const loadAnalytics = async () => {
   try {
     const [overview, revenue, vendors, status, bookings] = await Promise.all([
