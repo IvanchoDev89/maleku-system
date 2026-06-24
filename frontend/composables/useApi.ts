@@ -8,6 +8,12 @@ export const useApi = () => {
     throw new Error('API base must use HTTPS in production (got ' + baseURL + ')')
   }
 
+  const cache = new Map<string, { data: any; expires: number }>()
+  const CACHE_TTL = 30000
+
+  const getCacheKey = (endpoint: string, params?: Record<string, any>) =>
+    `${endpoint}?${JSON.stringify(params || {})}`
+
   const tryRefreshToken = async (): Promise<boolean> => {
     try {
       const auth = useAuthStore()
@@ -46,8 +52,16 @@ export const useApi = () => {
       url += `?${params}`
     }
 
+    if (options.method === undefined || options.method === 'GET') {
+      const cacheKey = getCacheKey(endpoint, options.params)
+      const cached = cache.get(cacheKey)
+      if (cached && cached.expires > Date.now()) {
+        return cached.data as T
+      }
+    }
+
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 30000)
+    const timeout = setTimeout(() => controller.abort(new DOMException('Request timed out after 15s', 'TimeoutError')), 15000)
 
     try {
       const response = await $fetch<T>(url, {
@@ -56,9 +70,13 @@ export const useApi = () => {
         headers,
         signal: controller.signal
       })
+      if (options.method === undefined || options.method === 'GET') {
+        const cacheKey = getCacheKey(endpoint, options.params)
+        cache.set(cacheKey, { data: response, expires: Date.now() + CACHE_TTL })
+      }
       return response
     } catch (error: any) {
-      if (error.name === 'AbortError') {
+      if (error.name === 'AbortError' || error.name === 'TimeoutError') {
         throw { status: 408, data: { detail: 'Request timed out' } }
       }
 
@@ -110,7 +128,7 @@ export const useApi = () => {
     }
 
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 30000)
+    const timeout = setTimeout(() => controller.abort(new DOMException('Upload timed out after 30s', 'TimeoutError')), 30000)
 
     try {
       const response = await $fetch<T>(`${baseURL}${endpoint}`, {
@@ -121,7 +139,7 @@ export const useApi = () => {
       })
       return response
     } catch (error: any) {
-      if (error.name === 'AbortError') {
+      if (error.name === 'AbortError' || error.name === 'TimeoutError') {
         throw { status: 408, data: { detail: 'Upload timed out' } }
       }
       console.error(`Upload Error [${endpoint}]:`, error)
