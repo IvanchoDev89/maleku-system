@@ -77,8 +77,9 @@
       <!-- User Section -->
       <div class="p-4 border-t border-white/10">
         <div class="flex items-center gap-3 p-3 bg-white/10 rounded-xl hover:bg-white/15 transition-colors" :class="sidebarCollapsed ? 'justify-center p-2' : ''">
-          <div class="w-9 h-9 bg-gradient-to-br from-primary-400 to-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0">
+          <div class="w-9 h-9 bg-gradient-to-br from-primary-400 to-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0 relative">
             {{ userInitials }}
+            <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-primary-800" :class="apiConnected ? 'bg-green-400' : 'bg-red-400'"></span>
           </div>
           <div v-if="!sidebarCollapsed" class="flex-1 min-w-0">
             <p class="font-medium text-white text-xs truncate">{{ user?.full_name }}</p>
@@ -206,6 +207,10 @@
 
       <!-- Page Content -->
       <div id="main-content" class="flex-1 overflow-y-auto overflow-x-auto p-8 bg-gray-50 dark:bg-gray-950 transition-colors">
+        <div v-if="!apiConnected" class="mb-6 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3 text-sm text-red-700 dark:text-red-300">
+          <AlertTriangle class="w-4 h-4 shrink-0" />
+          <span>API no disponible — revisa que el backend esté corriendo en <code class="font-mono text-xs bg-red-100 dark:bg-red-900/40 px-1.5 py-0.5 rounded">localhost:8000</code></span>
+        </div>
         <slot />
       </div>
     </main>
@@ -356,12 +361,25 @@ const clearCacheLoading = ref(false)
 
 const pendingVendorCount = ref(0)
 const { count: notificationCount, startPolling } = useNotifications()
+const apiConnected = ref(true)
+
+const checkApiHealth = async () => {
+  try {
+    const api = useApi()
+    await api.get('/health')
+    apiConnected.value = true
+  } catch {
+    apiConnected.value = false
+  }
+}
 
 // Restore sidebar state from localStorage
 onMounted(() => {
   const saved = localStorage.getItem('superadmin_sidebar_collapsed')
   if (saved) sidebarCollapsed.value = saved === 'true'
   startPolling()
+  checkApiHealth()
+  setInterval(checkApiHealth, 30000)
 })
 
 watch(sidebarCollapsed, (val) => {
