@@ -9,7 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
@@ -19,7 +19,7 @@ from app.models import User, UserRole, Vendor, Booking, AuditAction
 from app.models.audit import SecurityAction
 from app.services.audit_service import log_create, log_update, log_delete, AuditService
 
-router = APIRouter()
+router = APIRouter(tags=["SuperAdmin - Users"])
 
 
 # Request/Response Models
@@ -92,6 +92,15 @@ class UserActivityItem(BaseModel):
     created_at: datetime
 
 
+class BlockUserRequest(BaseModel):
+    """Request to block a user."""
+
+    reason: str = Field(..., max_length=500, description="Reason for blocking")
+    duration_hours: Optional[int] = Field(
+        None, description="Block duration in hours (null for permanent)"
+    )
+
+
 # Endpoints
 @router.get("", response_model=List[UserListItem])
 async def list_users(
@@ -109,7 +118,22 @@ async def list_users(
     """
     List all users with filtering and pagination.
     """
-    query = select(User)
+    vendor_subq = (
+        select(func.count(Vendor.id))
+        .where(Vendor.user_id == User.id)
+        .correlate(User)
+        .scalar_subquery()
+        .label("vendor_count")
+    )
+    booking_subq = (
+        select(func.count(Booking.id))
+        .where(Booking.user_id == User.id)
+        .correlate(User)
+        .scalar_subquery()
+        .label("booking_count")
+    )
+
+    query = select(User, vendor_subq, booking_subq)
 
     # Apply filters
     if search:
@@ -139,40 +163,25 @@ async def list_users(
     query = query.offset(offset).limit(limit)
 
     result = await db.execute(query)
-    users = result.scalars().all()
+    rows = result.all()
 
-    # Build response with counts
-    response = []
-    for user in users:
-        # Count vendors and bookings
-        vendor_count_result = await db.execute(
-            select(func.count()).select_from(Vendor).where(Vendor.user_id == user.id)
-        )
-        vendor_count = vendor_count_result.scalar() or 0
-
-        booking_count_result = await db.execute(
-            select(func.count()).select_from(Booking).where(Booking.user_id == user.id)
-        )
-        booking_count = booking_count_result.scalar() or 0
-
-        response.append(
-            {
-                "id": str(user.id),
-                "email": user.email,
-                "full_name": user.full_name,
-                "role": user.role,
-                "is_active": user.is_active,
-                "is_verified": user.is_verified,
-                "phone": user.phone,
-                "avatar_url": user.avatar_url,
-                "last_login": user.last_login,
-                "created_at": user.created_at,
-                "vendor_count": vendor_count,
-                "booking_count": booking_count,
-            }
-        )
-
-    return response
+    return [
+        {
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role,
+            "is_active": user.is_active,
+            "is_verified": user.is_verified,
+            "phone": user.phone,
+            "avatar_url": user.avatar_url,
+            "last_login": user.last_login,
+            "created_at": user.created_at,
+            "vendor_count": vendor_count or 0,
+            "booking_count": booking_count or 0,
+        }
+        for user, vendor_count, booking_count in rows
+    ]
 
 
 @router.get("/count", response_model=dict)
@@ -598,10 +607,7 @@ async def impersonate_user(
 async def block_user(
     request: Request,
     user_id: UUID,
-    reason: str = Query(..., max_length=500, description="Reason for blocking"),
-    duration_hours: Optional[int] = Query(
-        None, description="Block duration in hours (null for permanent)"
-    ),
+    body: BlockUserRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
 ):
@@ -624,8 +630,8 @@ async def block_user(
 
     user.is_active = False
 
-    if duration_hours:
-        user.locked_until = datetime.now(timezone.utc) + timedelta(hours=duration_hours)
+    if body.duration_hours:
+        user.locked_until = datetime.now(timezone.utc) + timedelta(hours=body.duration_hours)
     else:
         user.locked_until = None  # Permanent
 
@@ -639,10 +645,10 @@ async def block_user(
         entity_type="user",
         entity_id=user.id,
         entity_name=user.full_name,
-        changes_summary=f"User blocked: {reason}. Duration: {duration_hours} hours"
-        if duration_hours
-        else f"User permanently blocked: {reason}",
-        metadata={"reason": reason, "duration_hours": duration_hours},
+        changes_summary=f"User blocked: {body.reason}. Duration: {body.duration_hours} hours"
+        if body.duration_hours
+        else f"User permanently blocked: {body.reason}",
+        metadata={"reason": body.reason, "duration_hours": body.duration_hours},
     )
 
     await AuditService.log_security_event(
@@ -650,17 +656,17 @@ async def block_user(
         action=SecurityAction.ACCOUNT_LOCKED,
         user=user,
         severity="critical",
-        description=f"Account locked by super admin: {reason}"
-        + (f" for {duration_hours}h" if duration_hours else " permanently"),
+        description=f"Account locked by super admin: {body.reason}"
+        + (f" for {body.duration_hours}h" if body.duration_hours else " permanently"),
     )
 
     await db.commit()
 
     return {
         "message": f"User {user.email} has been blocked",
-        "reason": reason,
-        "duration_hours": duration_hours,
-        "is_permanent": duration_hours is None,
+        "reason": body.reason,
+        "duration_hours": body.duration_hours,
+        "is_permanent": body.duration_hours is None,
     }
 
 

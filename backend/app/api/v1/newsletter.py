@@ -16,7 +16,7 @@ from app.models import NewsletterSubscriber
 from app.schemas import NewsletterSubscribe, NewsletterSubscribeResponse
 from app.services.email_service import email_service
 
-router = APIRouter()
+router = APIRouter(tags=["Newsletter"])
 logger = get_logger(__name__)
 
 

@@ -10,6 +10,12 @@ stop:
 	pkill -f "node.*nuxt" 2>/dev/null || true
 	@echo "Servidores detenidos"
 
+stop-service:
+	-systemctl --user stop fastapi-backend.service 2>/dev/null
+	-systemctl --user stop nuxt-frontend.service 2>/dev/null
+	-systemctl --user stop nuxt-dev-frontend.service 2>/dev/null
+	@echo "Servicios detenidos"
+
 dev: dev-backend dev-frontend
 
 dev-backend:
@@ -17,6 +23,14 @@ dev-backend:
 
 dev-frontend:
 	cd frontend && npm run dev
+
+dev-backend-service:
+	systemd-run --user --unit=fastapi-backend --working-directory=$(PWD)/backend uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+dev-frontend-service:
+	systemd-run --user --unit=nuxt-frontend --working-directory=$(PWD)/frontend node node_modules/.bin/nuxi dev
+
+dev-service: dev-backend-service dev-frontend-service
 
 dev-docker:
 	docker compose up --build
@@ -33,22 +47,38 @@ build-frontend:
 
 # ─── Tests ─────────────────────────────────────────────────────
 
-test: test-backend test-frontend
+test: test-infra-up test-backend test-frontend test-infra-down
 
 test-reservation:  # smoke test: full reservation flow via live API
 	bash backend/tests/test_reservation_flow.sh
 
+test-infra-up:  # Start test DB, Redis, MailHog
+	docker-compose -f docker-compose.test.yml up -d
+
+test-infra-down:  # Stop test infrastructure
+	docker-compose -f docker-compose.test.yml down
+
+test-infra-reset:  # Stop and remove volumes, then restart
+	docker-compose -f docker-compose.test.yml down -v
+	docker-compose -f docker-compose.test.yml up -d
+
 test-backend:
-	cd backend && python -m pytest -v --tb=short -x
+	cd backend && python3 -m pytest -v --tb=short -x
 
 test-backend-coverage:
-	cd backend && python -m pytest -v --tb=short --cov=app --cov-report=term-missing
+	cd backend && python3 -m pytest -v --tb=short --cov=app --cov-report=term-missing
+
+test-backend-watch:
+	cd backend && ptw --now --clear
 
 test-frontend:
 	cd frontend && npx vitest run
 
 test-frontend-watch:
 	cd frontend && npx vitest
+
+test-frontend-coverage:
+	cd frontend && npx vitest run --coverage
 
 test-e2e:
 	npx playwright test

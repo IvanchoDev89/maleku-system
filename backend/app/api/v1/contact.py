@@ -26,6 +26,7 @@ class ContactRequest(BaseModel):
 
 @router.post(
     "/contact",
+    response_model=dict,
     summary="Submit contact form",
     description="Receives a contact form submission and logs it. Rate limited to 5/minute/IP.",
 )

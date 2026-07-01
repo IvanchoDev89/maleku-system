@@ -234,7 +234,7 @@ const query = computed(() => route.query.q as string || '')
 const searchInput = ref(query.value)
 
 const { data: results, pending, error } = useFetch(
-  () => `${apiBase}/search/search`,
+  () => `${apiBase}/search`,
   {
     key: 'search-results',
     query: { q: query.value },

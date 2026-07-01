@@ -192,7 +192,7 @@ async def get_booking(
     )
 
 
-@router.put("/{booking_id}/status")
+@router.put("/{booking_id}/status", response_model=dict)
 @limiter.limit("10/minute")
 async def update_booking_status(
     request: Request,
@@ -220,3 +220,27 @@ async def update_booking_status(
     await db.refresh(booking)
 
     return {"message": "Status updated", "status": booking.status.value}
+
+
+@router.delete(
+    "/{booking_id}",
+    response_model=dict,
+    summary="Delete a booking",
+    description="Permanently removes a booking record.",
+)
+@limiter.limit("10/minute")
+async def delete_booking(
+    request: Request,
+    booking_id: UUID,
+    current_user: User = Depends(require_superadmin()),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Booking).where(Booking.id == booking_id))
+    booking = result.scalar_one_or_none()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    await db.delete(booking)
+    await db.commit()
+
+    return {"success": True, "message": "Booking deleted successfully"}

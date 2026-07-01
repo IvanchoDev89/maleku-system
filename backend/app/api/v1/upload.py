@@ -152,10 +152,10 @@ async def save_upload_file(file: UploadFile, folder: str) -> UploadResponse:
         )
 
     # SECURITY: verify magic bytes match the claimed image type
-    validate_image_bytes(contents)
+    await asyncio.to_thread(validate_image_bytes, contents)
 
     # SECURITY: strip EXIF metadata (GPS, camera serial, etc.)
-    contents = _strip_exif(contents)
+    contents = await asyncio.to_thread(_strip_exif, contents)
 
     ext = Path(file.filename).suffix.lower()
     unique_id = uuid.uuid4().hex
@@ -188,10 +188,10 @@ async def upload_to_cloudinary(file: UploadFile, folder: str) -> UploadResponse:
     contents = await file.read()
 
     # SECURITY: verify magic bytes match the claimed image type
-    validate_image_bytes(contents)
+    await asyncio.to_thread(validate_image_bytes, contents)
 
     # SECURITY: strip EXIF metadata (GPS, camera serial, etc.)
-    contents = _strip_exif(contents)
+    contents = await asyncio.to_thread(_strip_exif, contents)
 
     ext = Path(file.filename).suffix.lower()
     unique_id = uuid.uuid4().hex[:16]
@@ -325,7 +325,6 @@ async def get_presigned_url(
     current_user: User = Depends(get_current_user),
     request: Request = None,
 ):
-    validate_file(file)
     folder = validate_folder(folder)
     ext = Path(filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:

@@ -20,7 +20,7 @@ from app.core.logging import get_logger
 from app.models import User, AuditLog, SecurityLog, AuditAction, SecurityAction
 
 logger = get_logger(__name__)
-router = APIRouter()
+router = APIRouter(tags=["SuperAdmin - Audit"])
 
 
 # Response Models
@@ -79,6 +79,21 @@ class ClientEventCreate(BaseModel):
     path: str = Field(..., max_length=500)
     metadata: Optional[dict] = None
     severity: Optional[str] = Field(None, max_length=20)
+
+
+class ExportLogsRequest(BaseModel):
+    """Request to export audit/security logs."""
+
+    format: str = Field("json", description="Export format: json, csv")
+    start_date: Optional[datetime] = Field(
+        None, description="Filter logs from this date"
+    )
+    end_date: Optional[datetime] = Field(
+        None, description="Filter logs until this date"
+    )
+    log_type: str = Field(
+        "audit", description="Type of logs: 'audit' or 'security'"
+    )
 
 
 # Endpoints
@@ -482,10 +497,7 @@ async def get_logs_summary(
 @limiter.limit("5/minute")
 async def export_logs(
     request: Request,
-    log_type: str = Query(..., description="Type of logs: 'audit' or 'security'"),
-    date_from: Optional[datetime] = Query(None),
-    date_to: Optional[datetime] = Query(None),
-    format: str = Query("json", description="Export format: json, csv"),
+    body: ExportLogsRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
 ):
@@ -502,6 +514,11 @@ async def export_logs(
     from fastapi.responses import StreamingResponse
     from app.models.audit import AuditLog, SecurityLog
 
+    log_type = body.log_type
+    date_from = body.start_date
+    date_to = body.end_date
+    fmt = body.format
+
     await AuditService.log_action(
         db=db,
         user=current_user,
@@ -511,7 +528,7 @@ async def export_logs(
         entity_name=f"{log_type}_logs",
         changes_summary=f"Exported {log_type} logs from {date_from} to {date_to}",
         extra_data={
-            "format": format,
+            "format": fmt,
             "date_from": date_from.isoformat() if date_from else None,
             "date_to": date_to.isoformat() if date_to else None,
         },
@@ -528,7 +545,7 @@ async def export_logs(
     result = await db.execute(stmt)
     rows = result.scalars().all()
 
-    if format == "csv":
+    if fmt == "csv":
         columns = [c.name for c in model_cls.__table__.columns]
 
         async def csv_stream():

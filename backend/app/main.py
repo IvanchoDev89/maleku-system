@@ -36,6 +36,8 @@ from app.api.v1.availability import router as availability_router
 from app.api.v1.stripe import router as stripe_router
 from app.api.v1.marketing import router as marketing_router
 from app.api.v1.newsletter import router as newsletter_router
+from app.api.v1.reviews import router as reviews_router
+from app.api.v1.pages import router as pages_router
 from app.api.v1.contact import router as contact_router
 from app.api.v1.planner import router as planner_router
 from app.api.v1.trip_planner import router as trip_planner_router
@@ -281,11 +283,13 @@ app.include_router(
 )
 app.include_router(tours.router, prefix=f"{api_v1}/tours", tags=["Tours"])
 app.include_router(bookings.router, prefix=f"{api_v1}/bookings", tags=["Bookings"])
+app.include_router(reviews_router, prefix=api_v1, tags=["Reviews"])
 app.include_router(blog.router, prefix=f"{api_v1}/blog", tags=["Blog"])
 app.include_router(
     destinations.router, prefix=f"{api_v1}/destinations", tags=["Destinations"]
 )
-app.include_router(landing_router, prefix=f"{api_v1}/landing", tags=["Landing"])
+if landing_router is not None:
+    app.include_router(landing_router, prefix=f"{api_v1}/landing", tags=["Landing"])
 app.include_router(search_router, prefix=f"{api_v1}/search", tags=["Search"])
 
 # Marketplace services
@@ -305,6 +309,7 @@ app.include_router(stripe_router, prefix=f"{api_v1}/stripe", tags=["Stripe Payme
 app.include_router(
     newsletter_router, prefix=f"{api_v1}/newsletter", tags=["Newsletter"]
 )
+app.include_router(pages_router, prefix=api_v1, tags=["Pages"])
 app.include_router(contact_router, prefix=api_v1, tags=["Contact"])
 app.include_router(planner_router, prefix=f"{api_v1}/planner", tags=["Planner"])
 app.include_router(
@@ -417,26 +422,27 @@ async def health_live():
 app.add_middleware(FeatureFlagMiddleware)
 
 
-# Redoc documentation (always available for production API consumers)
-@app.get("/docs/redoc", include_in_schema=False)
-async def redoc_docs():
-    from fastapi.responses import HTMLResponse
+if settings.DEBUG:
 
-    return HTMLResponse("""
-    <!DOCTYPE html>
-    <html>
-    <head><title>Costa Rica Travel API - Docs</title>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet"/>
-    </head>
-    <body>
-    <redoc spec-url='/openapi.json' expand-responses="200,201" hide-download-button="false"
-           theme='{ "colors": { "primary": { "main": "#0D9488" } } }'></redoc>
-    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
-    </body>
-    </html>
-    """)
+    @app.get("/docs/redoc", include_in_schema=False)
+    async def redoc_docs():
+        from fastapi.responses import HTMLResponse
+
+        return HTMLResponse("""
+        <!DOCTYPE html>
+        <html>
+        <head><title>Costa Rica Travel API - Docs</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet"/>
+        </head>
+        <body>
+        <redoc spec-url='/openapi.json' expand-responses="200,201" hide-download-button="false"
+               theme='{ "colors": { "primary": { "main": "#0D9488" } } }'></redoc>
+        <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+        </body>
+        </html>
+        """)
 
 
 # Prometheus metrics endpoint (no auth — intended for internal scraping)

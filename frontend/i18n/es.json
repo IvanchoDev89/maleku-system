@@ -386,7 +386,9 @@
     "filter": "Filtrar",
     "noResults": "No se encontraron resultados",
     "seeAll": "Ver todos",
-    "back": "Volver"
+    "back": "Volver",
+    "prev": "Anterior",
+    "next": "Siguiente"
   },
   "blog": {
     "title": "Blog de Viajes",

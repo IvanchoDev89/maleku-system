@@ -35,6 +35,7 @@ class Vendor(Base):
         business_name: Legal business name
         business_slug: URL-friendly identifier
         business_type: Type of business (hotel, tour operator, etc.)
+        tax_id: Tax identification number
         description: Business description
         logo_url: Business logo URL
         cover_image: Cover image URL
@@ -48,6 +49,7 @@ class Vendor(Base):
         stripe_connected: Whether Stripe account is connected
         is_verified: Whether vendor is verified
         is_active: Whether vendor account is active
+        is_featured: Whether vendor is featured
         created_at: Creation timestamp
         updated_at: Last update timestamp
     """
@@ -64,6 +66,7 @@ class Vendor(Base):
     business_name = Column(String(255), nullable=False)
     business_slug = Column(String(255), unique=True, index=True, nullable=False)
     business_type = Column(String(50), nullable=False)
+    tax_id = Column(String(50), nullable=True)
     description = Column(Text, nullable=True)
     logo_url = Column(String(500), nullable=True)
     cover_image = Column(String(500), nullable=True)
@@ -77,6 +80,7 @@ class Vendor(Base):
     stripe_connected = Column(Boolean, default=False)
     is_verified = Column(Boolean, default=False, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
+    is_featured = Column(Boolean, default=False, nullable=False)
     status = Column(String(20), default=VendorStatus.PENDING.value, nullable=False)
 
     # Soft Delete
@@ -118,6 +122,7 @@ class Vendor(Base):
         Index("idx_vendor_slug", "business_slug"),
         Index("idx_vendor_verified", "is_verified"),
         Index("idx_vendor_active", "is_active"),
+        Index("idx_vendor_featured", "is_featured"),
         Index("idx_vendor_business_type", "business_type"),
         Index("idx_vendor_created_at", "created_at"),
     )

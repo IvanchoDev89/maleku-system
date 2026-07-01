@@ -100,6 +100,17 @@ def _build_limiter() -> Limiter:
 
 limiter = _build_limiter()
 
+# Workaround: slowapi's async_wrapper calls _inject_headers(response, ...) where
+# response comes from kwargs.get("response"). Endpoints without a
+# `response: Response` parameter make this None, causing a 500 error.
+# This patch skips header injection when response is None.
+_original_inject_headers = Limiter._inject_headers
+def _safe_inject_headers(self, response, current_limit):
+    if response is None:
+        return response
+    return _original_inject_headers(self, response, current_limit)
+Limiter._inject_headers = _safe_inject_headers
+
 
 async def rate_limit_exceeded_handler(
     request: Request, exc: RateLimitExceeded

@@ -43,7 +43,7 @@ async def test_user_can_read_own_conversation(
         json={"participant_vendor_id": vendor_id},
         headers={"Authorization": f"Bearer {user_token}"},
     )
-    assert conv_resp.status_code == 200, conv_resp.text
+    assert conv_resp.status_code == 201, conv_resp.text
     conv_id = conv_resp.json()["id"]
 
     get_resp = await client.get(
@@ -69,7 +69,7 @@ async def test_other_user_cannot_read_conversation(
         json={"participant_vendor_id": vendor_id},
         headers={"Authorization": f"Bearer {user1_token}"},
     )
-    assert conv_resp.status_code == 200, conv_resp.text
+    assert conv_resp.status_code == 201, conv_resp.text
     conv_id = conv_resp.json()["id"]
 
     second_user_data = sample_user_data.copy()
@@ -99,7 +99,7 @@ async def test_other_user_cannot_get_messages(
         json={"participant_vendor_id": vendor_id},
         headers={"Authorization": f"Bearer {user1_token}"},
     )
-    assert conv_resp.status_code == 200, conv_resp.text
+    assert conv_resp.status_code == 201, conv_resp.text
     conv_id = conv_resp.json()["id"]
 
     second_user_data = sample_user_data.copy()
@@ -128,7 +128,7 @@ async def test_other_user_cannot_send_message(
         json={"participant_vendor_id": vendor_id},
         headers={"Authorization": f"Bearer {user1_token}"},
     )
-    assert conv_resp.status_code == 200, conv_resp.text
+    assert conv_resp.status_code == 201, conv_resp.text
     conv_id = conv_resp.json()["id"]
 
     second_user_data = sample_user_data.copy()
@@ -158,7 +158,7 @@ async def test_other_user_cannot_mark_read(
         json={"participant_vendor_id": vendor_id},
         headers={"Authorization": f"Bearer {user1_token}"},
     )
-    assert conv_resp.status_code == 200, conv_resp.text
+    assert conv_resp.status_code == 201, conv_resp.text
     conv_id = conv_resp.json()["id"]
 
     second_user_data = sample_user_data.copy()

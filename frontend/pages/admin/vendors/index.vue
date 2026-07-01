@@ -326,7 +326,8 @@ const pagination = ref({
   has_prev: false
 })
 
-let searchTimeout = null
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
+onUnmounted(() => clearTimeout(searchTimeout!))
 
 const debouncedSearch = () => {
   clearTimeout(searchTimeout)

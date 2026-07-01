@@ -182,6 +182,9 @@ export const useAuthStore = defineStore('auth', {
       this.isAuthenticated = false
 
       clearAuthFromSession()
+      if (process.client) {
+        localStorage.removeItem('remembered_session')
+      }
     },
 
     async refreshToken() {

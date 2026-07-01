@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, case
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models import User, UserRole, Booking, BookingStatus, Vendor
 
-router = APIRouter()
+router = APIRouter(tags=["Analytics"])
 
 
 # Analytics Response Models
@@ -83,13 +83,13 @@ async def get_overview_stats(
             func.count(Booking.id).label("total"),
             func.coalesce(func.sum(Booking.total_amount), 0).label("total_revenue"),
             func.sum(
-                func.case((Booking.status == BookingStatus.PENDING, 1), else_=0)
+                case((Booking.status == BookingStatus.PENDING, 1), else_=0)
             ).label("pending"),
             func.sum(
-                func.case((Booking.status == BookingStatus.CONFIRMED, 1), else_=0)
+                case((Booking.status == BookingStatus.CONFIRMED, 1), else_=0)
             ).label("confirmed"),
             func.sum(
-                func.case((Booking.status == BookingStatus.CANCELLED, 1), else_=0)
+                case((Booking.status == BookingStatus.CANCELLED, 1), else_=0)
             ).label("cancelled"),
         )
     )
@@ -122,9 +122,10 @@ async def get_revenue_stats(
     start_date = datetime.now(timezone.utc) - timedelta(days=days)
 
     # Single aggregated query instead of per-day loop
+    day_expr = func.date_trunc("day", Booking.created_at)
     result = await db.execute(
         select(
-            func.date_trunc("day", Booking.created_at).label("day"),
+            day_expr.label("day"),
             func.coalesce(func.sum(Booking.total_amount), 0).label("revenue"),
             func.count(Booking.id).label("count"),
         )
@@ -134,8 +135,8 @@ async def get_revenue_stats(
                 Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED]),
             )
         )
-        .group_by(func.date_trunc("day", Booking.created_at))
-        .order_by(func.date_trunc("day", Booking.created_at))
+        .group_by(day_expr)
+        .order_by(day_expr)
     )
     rows = {r.day.strftime("%Y-%m-%d"): r for r in result.all()}
 
@@ -234,13 +235,13 @@ async def get_user_stats(
     result = await db.execute(
         select(
             func.count(User.id).label("total"),
-            func.sum(func.case((User.created_at >= today_start, 1), else_=0)).label(
+            func.sum(case((User.created_at >= today_start, 1), else_=0)).label(
                 "new_today"
             ),
-            func.sum(func.case((User.created_at >= week_start, 1), else_=0)).label(
+            func.sum(case((User.created_at >= week_start, 1), else_=0)).label(
                 "new_week"
             ),
-            func.sum(func.case((User.created_at >= month_start, 1), else_=0)).label(
+            func.sum(case((User.created_at >= month_start, 1), else_=0)).label(
                 "new_month"
             ),
             User.role,
@@ -309,14 +310,15 @@ async def get_booking_trends(
     start_date = datetime.now(timezone.utc) - timedelta(days=days)
 
     # Single aggregated query
+    day_expr = func.date_trunc("day", Booking.created_at)
     result = await db.execute(
         select(
-            func.date_trunc("day", Booking.created_at).label("day"),
+            day_expr.label("day"),
             func.count(Booking.id).label("count"),
         )
         .where(Booking.created_at >= start_date)
-        .group_by(func.date_trunc("day", Booking.created_at))
-        .order_by(func.date_trunc("day", Booking.created_at))
+        .group_by(day_expr)
+        .order_by(day_expr)
     )
     counts = {r.day.strftime("%Y-%m-%d"): r.count for r in result.all()}
 

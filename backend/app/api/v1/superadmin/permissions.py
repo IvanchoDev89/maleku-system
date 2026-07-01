@@ -403,7 +403,7 @@ async def get_role_permissions(
     return [RolePermissionResponse.model_validate(p) for p in permissions]
 
 
-@router.post("/roles/{role}/modules/{module}", response_model=RolePermissionResponse)
+@router.post("/roles/{role}/modules/{module}", response_model=RolePermissionResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("10/minute")
 async def set_role_permissions(
     request: Request,

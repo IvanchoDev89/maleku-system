@@ -7,7 +7,7 @@ from app.core.security import require_permission
 from app.core.rate_limiter import limiter
 from app.models import User
 
-router = APIRouter()
+router = APIRouter(tags=["Admin - Settings"])
 
 
 class SettingsResponse(BaseModel):

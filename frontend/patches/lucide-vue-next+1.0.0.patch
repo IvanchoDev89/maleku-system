@@ -1,0 +1,217 @@
+diff --git a/node_modules/lucide-vue-next/dist/cjs/lucide-vue-next.js b/node_modules/lucide-vue-next/dist/cjs/lucide-vue-next.js
+index 638198a..8857e87 100644
+--- a/node_modules/lucide-vue-next/dist/cjs/lucide-vue-next.js
++++ b/node_modules/lucide-vue-next/dist/cjs/lucide-vue-next.js
+@@ -48,47 +48,53 @@ var defaultAttributes = {
+   "stroke-linejoin": "round"
+ };
+ 
+-const Icon = ({
+-  name,
+-  iconNode,
+-  absoluteStrokeWidth,
+-  "absolute-stroke-width": absoluteStrokeWidthKebabCase,
+-  strokeWidth,
+-  "stroke-width": strokeWidthKebabCase,
+-  size = defaultAttributes.width,
+-  color = defaultAttributes.stroke,
+-  ...props
+-}, { slots }) => {
+-  return vue.h(
+-    "svg",
+-    {
+-      ...defaultAttributes,
++const Icon = vue.defineComponent((props, { slots, attrs }) => {
++  return () => {
++    const merged = { ...attrs, ...props };
++    const {
++      name,
++      iconNode,
++      absoluteStrokeWidth,
++      "absolute-stroke-width": absoluteStrokeWidthKebabCase,
++      strokeWidth,
++      "stroke-width": strokeWidthKebabCase,
++      size = defaultAttributes.width,
++      color = defaultAttributes.stroke,
++      ...rest
++    } = merged;
++    return vue.h(
++      "svg",
++      {
++        ...defaultAttributes,
++        ...rest,
++        width: size,
++        height: size,
++        stroke: color,
++        "stroke-width": isEmptyString(absoluteStrokeWidth) || isEmptyString(absoluteStrokeWidthKebabCase) || absoluteStrokeWidth === true || absoluteStrokeWidthKebabCase === true ? Number(strokeWidth || strokeWidthKebabCase || defaultAttributes["stroke-width"]) * 24 / Number(size) : strokeWidth || strokeWidthKebabCase || defaultAttributes["stroke-width"],
++        class: mergeClasses(
++          "lucide",
++          rest.class,
++          ...name ? [`lucide-${toKebabCase(toPascalCase(name))}-icon`, `lucide-${toKebabCase(name)}`] : ["lucide-icon"]
++        ),
++        ...!slots.default && !hasA11yProp(rest) && { "aria-hidden": "true" }
++      },
++      [...iconNode.map((child) => vue.h(...child)), ...slots.default ? [slots.default()] : []]
++    );
++  };
++});
++
++const createLucideIcon = (iconName, iconNode) => vue.defineComponent((props, { slots, attrs }) => {
++  return () => vue.h(
++    Icon,
++    {
++      ...attrs,
+       ...props,
+-      width: size,
+-      height: size,
+-      stroke: color,
+-      "stroke-width": isEmptyString(absoluteStrokeWidth) || isEmptyString(absoluteStrokeWidthKebabCase) || absoluteStrokeWidth === true || absoluteStrokeWidthKebabCase === true ? Number(strokeWidth || strokeWidthKebabCase || defaultAttributes["stroke-width"]) * 24 / Number(size) : strokeWidth || strokeWidthKebabCase || defaultAttributes["stroke-width"],
+-      class: mergeClasses(
+-        "lucide",
+-        props.class,
+-        ...name ? [`lucide-${toKebabCase(toPascalCase(name))}-icon`, `lucide-${toKebabCase(name)}`] : ["lucide-icon"]
+-      ),
+-      ...!slots.default && !hasA11yProp(props) && { "aria-hidden": "true" }
++      iconNode,
++      name: iconName
+     },
+-    [...iconNode.map((child) => vue.h(...child)), ...slots.default ? [slots.default()] : []]
++    slots
+   );
+-};
+-
+-const createLucideIcon = (iconName, iconNode) => (props, { slots, attrs }) => vue.h(
+-  Icon,
+-  {
+-    ...attrs,
+-    ...props,
+-    iconNode,
+-    name: iconName
+-  },
+-  slots
+-);
++});
+ 
+ const AArrowDown = createLucideIcon("a-arrow-down", [
+   ["path", { d: "m14 12 4 4 4-4", key: "buelq4" }],
+diff --git a/node_modules/lucide-vue-next/dist/esm/Icon.js b/node_modules/lucide-vue-next/dist/esm/Icon.js
+index 47234cb..853f68b 100644
+--- a/node_modules/lucide-vue-next/dist/esm/Icon.js
++++ b/node_modules/lucide-vue-next/dist/esm/Icon.js
+@@ -5,7 +5,7 @@
+  * See the LICENSE file in the root directory of this source tree.
+  */
+ 
+-import { h } from 'vue';
++import { defineComponent, h } from 'vue';
+ import { hasA11yProp } from './shared/src/utils/hasA11yProp.js';
+ import { isEmptyString } from './shared/src/utils/isEmptyString.js';
+ import { mergeClasses } from './shared/src/utils/mergeClasses.js';
+@@ -13,36 +13,40 @@ import { toKebabCase } from './shared/src/utils/toKebabCase.js';
+ import { toPascalCase } from './shared/src/utils/toPascalCase.js';
+ import defaultAttributes from './defaultAttributes.js';
+ 
+-const Icon = ({
+-  name,
+-  iconNode,
+-  absoluteStrokeWidth,
+-  "absolute-stroke-width": absoluteStrokeWidthKebabCase,
+-  strokeWidth,
+-  "stroke-width": strokeWidthKebabCase,
+-  size = defaultAttributes.width,
+-  color = defaultAttributes.stroke,
+-  ...props
+-}, { slots }) => {
+-  return h(
+-    "svg",
+-    {
+-      ...defaultAttributes,
+-      ...props,
+-      width: size,
+-      height: size,
+-      stroke: color,
+-      "stroke-width": isEmptyString(absoluteStrokeWidth) || isEmptyString(absoluteStrokeWidthKebabCase) || absoluteStrokeWidth === true || absoluteStrokeWidthKebabCase === true ? Number(strokeWidth || strokeWidthKebabCase || defaultAttributes["stroke-width"]) * 24 / Number(size) : strokeWidth || strokeWidthKebabCase || defaultAttributes["stroke-width"],
+-      class: mergeClasses(
+-        "lucide",
+-        props.class,
+-        ...name ? [`lucide-${toKebabCase(toPascalCase(name))}-icon`, `lucide-${toKebabCase(name)}`] : ["lucide-icon"]
+-      ),
+-      ...!slots.default && !hasA11yProp(props) && { "aria-hidden": "true" }
+-    },
+-    [...iconNode.map((child) => h(...child)), ...slots.default ? [slots.default()] : []]
+-  );
+-};
++const Icon = defineComponent((props, { slots, attrs }) => {
++  return () => {
++    const merged = { ...attrs, ...props }
++    const {
++      name,
++      iconNode,
++      absoluteStrokeWidth,
++      "absolute-stroke-width": absoluteStrokeWidthKebabCase,
++      strokeWidth,
++      "stroke-width": strokeWidthKebabCase,
++      size = defaultAttributes.width,
++      color = defaultAttributes.stroke,
++      ...rest
++    } = merged
++    return h(
++      "svg",
++      {
++        ...defaultAttributes,
++        ...rest,
++        width: size,
++        height: size,
++        stroke: color,
++        "stroke-width": isEmptyString(absoluteStrokeWidth) || isEmptyString(absoluteStrokeWidthKebabCase) || absoluteStrokeWidth === true || absoluteStrokeWidthKebabCase === true ? Number(strokeWidth || strokeWidthKebabCase || defaultAttributes["stroke-width"]) * 24 / Number(size) : strokeWidth || strokeWidthKebabCase || defaultAttributes["stroke-width"],
++        class: mergeClasses(
++          "lucide",
++          rest.class,
++          ...name ? [`lucide-${toKebabCase(toPascalCase(name))}-icon`, `lucide-${toKebabCase(name)}`] : ["lucide-icon"]
++        ),
++        ...!slots.default && !hasA11yProp(rest) && { "aria-hidden": "true" }
++      },
++      [...iconNode.map((child) => h(...child)), ...slots.default ? [slots.default()] : []]
++    );
++  };
++});
+ 
+ export { Icon as default };
+ //# sourceMappingURL=Icon.js.map
+diff --git a/node_modules/lucide-vue-next/dist/esm/createLucideIcon.js b/node_modules/lucide-vue-next/dist/esm/createLucideIcon.js
+index 74cb3ce..82ff327 100644
+--- a/node_modules/lucide-vue-next/dist/esm/createLucideIcon.js
++++ b/node_modules/lucide-vue-next/dist/esm/createLucideIcon.js
+@@ -5,19 +5,21 @@
+  * See the LICENSE file in the root directory of this source tree.
+  */
+ 
+-import { h } from 'vue';
++import { defineComponent, h } from 'vue';
+ import Icon from './Icon.js';
+ 
+-const createLucideIcon = (iconName, iconNode) => (props, { slots, attrs }) => h(
+-  Icon,
+-  {
+-    ...attrs,
+-    ...props,
+-    iconNode,
+-    name: iconName
+-  },
+-  slots
+-);
++const createLucideIcon = (iconName, iconNode) => defineComponent((props, { slots, attrs }) => {
++  return () => h(
++    Icon,
++    {
++      ...attrs,
++      ...props,
++      iconNode,
++      name: iconName
++    },
++    slots
++  );
++});
+ 
+ export { createLucideIcon as default };
+ //# sourceMappingURL=createLucideIcon.js.map

@@ -45,7 +45,7 @@ class BaseService(Generic[ModelType]):
         if not include_deleted:
             query = query.where(self.model.deleted_at.is_(None))
         result = await db.execute(query)
-        return result.scalar()
+        return result.scalar() or 0
 
     async def create(self, db: AsyncSession, obj_in: dict) -> ModelType:
         """Create new record."""

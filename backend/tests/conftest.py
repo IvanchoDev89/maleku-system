@@ -19,10 +19,11 @@ from app.models import User, UserRole
 
 
 # Use real PostgreSQL for tests (models use PostgreSQL-specific types).
-# Override with TEST_DATABASE_URL env var in CI.
+# Override with TEST_DATABASE_URL env var (e.g. in CI).
+# Default matches docker-compose.test.yml (port 5433).
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
-    "postgresql+asyncpg://postgres@127.0.0.1:5432/costaricatravel_test",
+    "postgresql+asyncpg://postgres:postgres@127.0.0.1:5433/costaricatravel_test",
 )
 
 

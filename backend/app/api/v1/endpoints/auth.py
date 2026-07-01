@@ -4,14 +4,11 @@ import re
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Response, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field, EmailStr, field_validator
 from sqlalchemy import select
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
 from app.core.database import get_async_session
 from app.core.config import settings
 from app.core.security import (
@@ -35,10 +32,10 @@ from app.core.logging import get_logger
 from app.core.token_blacklist import token_blacklist
 
 logger = get_logger(__name__)
-router = APIRouter()
+router = APIRouter(tags=["Auth"])
 user_service = BaseService(User)
 security = HTTPBearer()
-limiter = Limiter(key_func=get_remote_address, enabled=settings.ENVIRONMENT != "test")
+from app.core.rate_limiter import limiter
 
 
 def _validate_password_strength(v: str) -> str:
@@ -148,6 +145,7 @@ class UserProfileResponse(BaseModel):
 async def register(
     user_in: RegisterRequest,
     request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_async_session),
 ):
     """Register new user with enhanced security."""
@@ -230,6 +228,7 @@ class VendorRegisterRequest(BaseModel):
 async def register_vendor(
     user_in: VendorRegisterRequest,
     request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_async_session),
 ):
     """Register a new vendor account (user + vendor profile)."""
@@ -313,6 +312,7 @@ async def register_vendor(
 @limiter.limit("5/minute")
 async def login(
     request: Request,
+    response: Response,
     login_in: LoginRequest,
     db: AsyncSession = Depends(get_async_session),
 ):
@@ -401,6 +401,7 @@ async def login(
 async def refresh_token(
     refresh_in: RefreshRequest,
     request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_async_session),
 ):
     """Refresh access token using refresh token with rotation."""
@@ -451,7 +452,9 @@ async def refresh_token(
 @router.post("/logout", response_model=MessageResponse)
 @limiter.limit("10/minute")
 async def logout(
-    request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)
+    request: Request,
+    response: Response,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     """Logout - invalidate token (add to blacklist)."""
     token = credentials.credentials
@@ -474,6 +477,7 @@ async def logout(
 @limiter.limit("3/minute")  # Rate limiting: 3 forgot password requests por minuto
 async def forgot_password(
     request: Request,
+    response: Response,
     forgot_in: ForgotPasswordRequest,
     db: AsyncSession = Depends(get_async_session),
 ):
@@ -528,35 +532,18 @@ async def forgot_password(
 
 @router.get("/me", response_model=UserProfileResponse)
 async def get_me(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Get current user profile."""
-    token = credentials.credentials
-    payload = decode_token(token)
-
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        )
-
-    user_id = payload.get("sub")
-    user = await user_service.get(db, id=UUID(user_id))
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
     return {
-        "id": str(user.id),
-        "email": user.email,
-        "full_name": user.full_name,
-        "phone": user.phone,
-        "role": normalize_role(user.role),
-        "is_active": user.is_active,
-        "is_verified": user.is_verified,
-        "last_login": user.last_login.isoformat() if user.last_login else None,
+        "id": str(current_user.id),
+        "email": current_user.email,
+        "full_name": current_user.full_name,
+        "phone": current_user.phone,
+        "role": normalize_role(current_user.role),
+        "is_active": current_user.is_active,
+        "is_verified": current_user.is_verified,
+        "last_login": current_user.last_login.isoformat() if current_user.last_login else None,
     }
 
 
@@ -565,6 +552,7 @@ async def get_me(
 async def reset_password(
     reset_in: ResetPasswordRequest,
     request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_async_session),
 ):
     """Reset password using token."""
@@ -620,6 +608,7 @@ async def reset_password(
 async def verify_email(
     verify_in: VerifyEmailRequest,
     request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_async_session),
 ):
     """Verify email using token."""
@@ -671,6 +660,7 @@ async def verify_email(
 @limiter.limit("3/hour")
 async def resend_verification(
     request: Request,
+    response: Response,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session),
 ):

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
 import type { BlogPost } from '~/types'
 
 definePageMeta({
@@ -12,6 +11,8 @@ const toast = useToast()
 
 const posts = ref<BlogPost[]>([])
 const loading = ref(true)
+const filterStatus = ref<string>('all')
+const searchQuery = ref('')
 
 const showConfirm = ref(false)
 const confirmTitle = ref('')
@@ -44,13 +45,11 @@ async function executeConfirmAction() {
 }
 
 const statusOptions = [
+  { value: 'all', label: 'Todos los estados' },
   { value: 'published', label: 'Published' },
   { value: 'draft', label: 'Draft' },
-  { value: 'scheduled', label: 'Scheduled' },
+  { value: 'archived', label: 'Archived' },
 ]
-
-const filterStatus = ref<string>('all')
-const searchQuery = ref('')
 
 const filteredPosts = computed(() => {
   return posts.value.filter(p => {
@@ -63,9 +62,16 @@ const filteredPosts = computed(() => {
 const statusColors: Record<string, string> = {
   published: 'bg-green-100 text-green-800',
   draft: 'bg-gray-100 text-gray-800',
-  scheduled: 'bg-blue-100 text-blue-800',
-  archived: 'bg-red-100 text-red-800'
+  archived: 'bg-red-100 text-red-800',
 }
+
+const columns = [
+  { key: 'title', label: 'Título', sortable: true },
+  { key: 'status', label: 'Estado', align: 'center' as const, width: '100px' },
+  { key: 'views', label: 'Vistas', align: 'center' as const, width: '80px', hiddenOnMobile: true },
+  { key: 'date', label: 'Fecha', hiddenOnMobile: true },
+  { key: 'actions', label: 'Acciones', align: 'right' as const },
+]
 
 const loadPosts = async () => {
   loading.value = true
@@ -83,8 +89,8 @@ const loadPosts = async () => {
 const confirmDeletePost = (id: string) => {
   pendingDeleteId = id
   openConfirm(
-    'Delete Post',
-    'Are you sure you want to delete this post?',
+    'Eliminar Artículo',
+    '¿Estás seguro de eliminar este artículo?',
     executeDeletePost
   )
 }
@@ -108,65 +114,68 @@ onMounted(loadPosts)
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-gray-900">Blog Posts</h1>
-      <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Blog Posts</h1>
+      <NuxtLink
+        to="/superadmin/content/pages/new"
+        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium inline-flex items-center gap-2"
+      >
         + New Post
-      </button>
+      </NuxtLink>
     </div>
 
-    <div class="bg-white rounded-lg shadow p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
       <div class="flex gap-4">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search posts..."
-          class="flex-1 px-4 py-2 border rounded-lg"
+        <UiInput
+          :model-value="searchQuery"
+          placeholder="Buscar artículos..."
+          class="flex-1"
+          @update:model-value="searchQuery = $event"
         />
-        <UiSelect v-model="filterStatus" :options="statusOptions" placeholder="All Status" />
+        <UiSelect v-model="filterStatus" :options="statusOptions" />
       </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-      <table class="min-w-full">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Author</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Views</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-          </tr>
-        </thead>
-        <tbody v-if="loading" class="divide-y divide-gray-200">
-          <tr>
-            <td colspan="6" class="px-6 py-12 text-center text-gray-500">Cargando...</td>
-          </tr>
-        </tbody>
-        <tbody v-else class="divide-y divide-gray-200">
-          <tr v-for="post in filteredPosts" :key="post.id">
-            <td class="px-6 py-4">
-              <div class="font-medium text-gray-900">{{ post.title }}</div>
-              <div class="text-sm text-gray-500">/{{ post.slug }}</div>
-            </td>
-            <td class="px-6 py-4 text-sm text-gray-900">{{ post.author }}</td>
-            <td class="px-6 py-4">
-              <span :class="['px-2 py-1 text-xs rounded-full', statusColors[post.status]]">
-                {{ post.status }}
-              </span>
-            </td>
-            <td class="px-6 py-4 text-sm text-gray-900">{{ post.views }}</td>
-            <td class="px-6 py-4 text-sm text-gray-500">
-              {{ post.published_at || post.created_at }}
-            </td>
-            <td class="px-6 py-4 text-right space-x-2">
-              <button class="text-blue-600 hover:text-blue-900 text-sm">Edit</button>
-              <button @click="confirmDeletePost(post.id)" class="text-red-600 hover:text-red-900 text-sm">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <UiTable
+      :columns="columns"
+      :rows="filteredPosts"
+      :loading="loading"
+      empty-title="No hay artículos"
+      empty-description="Crea tu primer artículo para empezar"
+    >
+      <template #cell-title="{ row }">
+        <NuxtLink :to="`/blog/${row.slug}`" class="font-medium text-gray-900 dark:text-white hover:text-primary-600">
+          {{ row.title }}
+        </NuxtLink>
+        <div class="text-sm text-gray-500">{{ row.author }} • /{{ row.slug }}</div>
+      </template>
+      <template #cell-status="{ row }">
+        <span :class="['px-2 py-1 text-xs rounded-full font-medium', statusColors[row.status] || 'bg-gray-100 text-gray-800']">
+          {{ row.status }}
+        </span>
+      </template>
+      <template #cell-views="{ row }">
+        <span class="text-gray-600">{{ (row as any).views || 0 }}</span>
+      </template>
+      <template #cell-date="{ row }">
+        <span class="text-gray-500">{{ row.published_at || row.created_at }}</span>
+      </template>
+      <template #cell-actions="{ row }">
+        <div class="flex justify-end gap-2">
+          <NuxtLink
+            :to="`/blog/${row.slug}`"
+            class="text-primary-600 hover:text-primary-900 dark:hover:text-primary-400 text-sm"
+          >
+            Editar
+          </NuxtLink>
+          <button
+            @click.stop="confirmDeletePost(row.id)"
+            class="text-red-600 hover:text-red-900 dark:hover:text-red-400 text-sm"
+          >
+            Eliminar
+          </button>
+        </div>
+      </template>
+    </UiTable>
 
     <UiConfirmDialog
       v-model="showConfirm"

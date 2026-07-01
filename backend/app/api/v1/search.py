@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from typing import Optional
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
 from app.core.utils import escape_like_pattern
 from app.models import Property, Tour, Destination, BlogPost, BlogPostStatus
 from app.models.tour import TourCategory
@@ -118,7 +119,9 @@ class TextSearchResponse(BaseModel):
     summary="Full-text search properties",
     description="Searches properties using PostgreSQL full-text search with optional filters by type, category, region, and price range.",
 )
+@limiter.limit("30/minute")
 async def search_properties(
+    request: Request,
     q: str = Query(..., min_length=1, max_length=200),
     db: AsyncSession = Depends(get_db),
     property_type: Optional[str] = None,
@@ -170,7 +173,9 @@ async def search_properties(
     summary="Get map data",
     description="Returns properties and tours with coordinates for map display. Supports filters by type, category, region, and price range with pagination.",
 )
+@limiter.limit("30/minute")
 async def get_map_data(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     property_type: str | None = None,
     category: str | None = None,
@@ -206,7 +211,7 @@ async def get_map_data(
         prop_query = prop_query.where(Property.base_price <= max_price)
 
     count_prop = select(func.count()).select_from(prop_query.subquery())
-    total_properties = (await db.execute(count_prop)).scalar()
+    total_properties = (await db.execute(count_prop)).scalar() or 0
 
     offset = (page - 1) * page_size
     prop_query = (
@@ -226,7 +231,7 @@ async def get_map_data(
         tour_query = tour_query.where(Tour.price <= max_price)
 
     count_tour = select(func.count()).select_from(tour_query.subquery())
-    total_tours = (await db.execute(count_tour)).scalar()
+    total_tours = (await db.execute(count_tour)).scalar() or 0
 
     tour_query = (
         tour_query.order_by(Tour.created_at.desc()).offset(offset).limit(page_size)
@@ -295,7 +300,11 @@ async def get_map_data(
     summary="Get map counts",
     description="Returns aggregate counts for map markers: total properties/tours, grouped by region and category.",
 )
-async def get_map_counts(db: AsyncSession = Depends(get_db)) -> dict:
+@limiter.limit("30/minute")
+async def get_map_counts(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
     """Get counts for map markers and stats"""
 
     # Count properties by region
@@ -344,7 +353,9 @@ async def get_map_counts(db: AsyncSession = Depends(get_db)) -> dict:
     summary="Global search",
     description="Searches properties, tours, destinations, and blog in parallel using ILIKE pattern matching on names/titles.",
 )
+@limiter.limit("30/minute")
 async def global_search(
+    request: Request,
     q: str = Query(..., min_length=1, max_length=200),
     db: AsyncSession = Depends(get_db),
     limit: int = Query(10, ge=1, le=50),

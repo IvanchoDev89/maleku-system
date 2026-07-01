@@ -118,10 +118,11 @@ export function useDashboard(revenuePeriod: Ref<string>) {
       const failures = results.filter(r => r.status === 'rejected')
       if (failures.length > 0) {
         console.warn(`${failures.length} dashboard API call(s) failed, partial data shown`)
+        try { useToast().add(`No se pudieron cargar ${failures.length} sección(es) del dashboard`, 'warning') } catch {}
       }
     } catch (error) {
       console.error('Error loading dashboard:', error)
-      useToast().add('Error al cargar el dashboard. Algunos datos pueden no estar disponibles.', 'warning')
+      try { useToast().add('Error al cargar el dashboard. Algunos datos pueden no estar disponibles.', 'warning') } catch {}
     } finally {
       loading.value = false
     }
@@ -132,7 +133,7 @@ export function useDashboard(revenuePeriod: Ref<string>) {
       await api.post(`/superadmin/dashboard/alerts/${alertId}/dismiss`)
     } catch (error) {
       console.error('Error dismissing alert:', error)
-      useToast().add('Error al descartar alerta', 'error')
+      try { useToast().add('Error al descartar alerta', 'error') } catch {}
     }
     alerts.value = alerts.value.filter(a => a.id !== alertId)
   }

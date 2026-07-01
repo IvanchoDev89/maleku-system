@@ -76,10 +76,10 @@
 
               <!-- View Toggle (placeholder for map view) -->
               <div class="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm border border-gray-200">
-                <button class="px-3 py-1.5 rounded-md bg-primary-50 text-primary-700 font-medium text-sm">
+                <button title="Vista cuadrícula" class="px-3 py-1.5 rounded-md bg-primary-50 text-primary-700 font-medium text-sm">
                   <Grid3X3 class="w-4 h-4" />
                 </button>
-                <button class="px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 font-medium text-sm">
+                <button title="Vista mapa" class="px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 font-medium text-sm">
                   <Map class="w-4 h-4" />
                 </button>
               </div>

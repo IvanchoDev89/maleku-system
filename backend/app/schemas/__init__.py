@@ -373,6 +373,9 @@ class PropertyUpdate(BaseModel):
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
     seo_keywords: Optional[List[str]] = None
+    is_featured: Optional[bool] = None
+    is_active: Optional[bool] = None
+    is_verified: Optional[bool] = None
 
     @field_validator("name", "description", "address")
     @classmethod
@@ -464,7 +467,24 @@ class TourUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: Optional[str] = None
     description: Optional[str] = None
+    category: Optional[str] = None
+    difficulty: Optional[str] = None
     location: Optional[str] = None
+    duration_hours: Optional[float] = None
+    duration_text: Optional[str] = None
+    meeting_point: Optional[str] = None
+    max_group_size: Optional[int] = None
+    min_age: Optional[int] = None
+    price: Optional[float] = None
+    currency: Optional[str] = None
+    included: Optional[List[str]] = None
+    not_included: Optional[List[str]] = None
+    itinerary: Optional[List[dict]] = None
+    images: Optional[List[str]] = None
+    cover_image: Optional[str] = None
+    schedule_days: Optional[List[str]] = None
+    is_featured: Optional[bool] = None
+    is_active: Optional[bool] = None
 
     @field_validator("name", "description", "location")
     @classmethod
@@ -483,7 +503,7 @@ class TourResponse(TourBase):
     duration_hours: float
     duration_text: Optional[str] = None
     difficulty: str
-    location: str
+    location: Optional[str] = None
     meeting_point: Optional[str] = None
     price: float
     currency: str = "USD"
@@ -513,7 +533,7 @@ class TourListResponse(BaseModel):
     category: str
     difficulty: str
     duration_hours: float
-    location: str
+    location: Optional[str] = None
     price: float
     rating: Optional[float] = None
     cover_image: Optional[str] = None
@@ -629,6 +649,13 @@ class BlogPostUpdate(BaseModel):
     title: Optional[str] = None
     excerpt: Optional[str] = None
     content: Optional[str] = None
+    featured_image: Optional[str] = None
+    category: Optional[str] = None
+    tags: Optional[List[str]] = None
+    status: Optional[str] = None
+    published_at: Optional[datetime] = None
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
 
     @field_validator("title", "content")
     @classmethod

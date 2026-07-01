@@ -161,7 +161,7 @@
               v-for="period in ['7', '30', '90']"
               :key="period"
               @click="revenuePeriod = period"
-              :class="revenuePeriod === period ? 'bg-primary-600 text-white' : 'bg-primary-50 text-primary-700 hover:bg-primary-100'"
+              :class="revenuePeriod === period ? 'bg-primary-600 text-white shadow-sm' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'"
               class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
             >
               {{ period === '7' ? '7D' : period === '30' ? '30D' : '90D' }}

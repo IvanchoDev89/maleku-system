@@ -4,7 +4,7 @@ Pricing API - Precios Dinámicos
 
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
@@ -15,7 +15,7 @@ from app.core.security import require_role
 from app.models import User, UserRole, PricingRule
 from app.schemas import pricing as pricing_schema
 
-router = APIRouter()
+router = APIRouter(tags=["Pricing"])
 
 
 class DeleteResponse(BaseModel):
@@ -100,7 +100,7 @@ async def get_pricing_rule(
     return {**rule.__dict__, "final_price": round(final_price, 2)}
 
 
-@router.post("", response_model=pricing_schema.PricingRuleResponse)
+@router.post("", response_model=pricing_schema.PricingRuleResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("10/minute")
 async def create_pricing_rule(
     request: Request,
@@ -194,7 +194,9 @@ async def delete_pricing_rule(
 
 
 @router.get("/calculate", response_model=dict)
+@limiter.limit("30/minute")
 async def calculate_dynamic_price(
+    request: Request,
     service_type: str,
     service_id: uuid.UUID,
     date: datetime,

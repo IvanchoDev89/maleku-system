@@ -220,6 +220,7 @@ async def get_blog_post_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
 @router.post(
     "",
     response_model=BlogPostResponse,
+    status_code=status.HTTP_201_CREATED,
     summary="Create blog post",
     description="Creates a new blog post as DRAFT. SUPER_ADMIN or VENDOR role required. Rate limited to 30/minute.",
 )

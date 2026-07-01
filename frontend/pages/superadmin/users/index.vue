@@ -3,12 +3,12 @@
     <!-- Header -->
     <div class="flex justify-between items-center">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">{{ $t('superadmin.users.title') }}</h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $t('superadmin.users.title') }}</h1>
         <p class="text-gray-500 mt-1">{{ $t('superadmin.users.subtitle') }}</p>
       </div>
       <NuxtLink
         to="/superadmin/users/create"
-        class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
       >
         <Plus class="w-4 h-4" />
         <span>{{ $t('superadmin.users.newUser') }}</span>
@@ -19,169 +19,122 @@
     <UiCard padding="xs">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
-          <div class="relative">
-            <input
-              v-model="filters.search"
-              type="text"
-              placeholder="Nombre o email..."
-              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-              @input="debouncedSearch"
-            >
-            <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          </div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Buscar</label>
+          <UiInput
+            :model-value="filters.search"
+            placeholder="Nombre o email..."
+            @update:model-value="filters.search = $event; debouncedSearch()"
+          />
         </div>
-
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rol</label>
           <UiSelect v-model="filters.role" :options="roleOptions" placeholder="Todos los roles" @update:model-value="loadUsers" />
         </div>
-
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado</label>
           <UiSelect v-model="filters.is_active" :options="activeOptions" placeholder="Todos" @update:model-value="loadUsers" />
         </div>
-
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Verificado</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Verificado</label>
           <UiSelect v-model="filters.is_verified" :options="verifiedOptions" placeholder="Todos" @update:model-value="loadUsers" />
         </div>
       </div>
     </UiCard>
 
     <!-- Users Table -->
-    <UiCard padding="none" class="overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último acceso</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actividad</th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200">
-            <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm">
-                    {{ getInitials(user.full_name) }}
-                  </div>
-                  <div class="ml-3">
-                    <div class="text-sm font-medium text-gray-900">{{ user.full_name }}</div>
-                    <div class="text-sm text-gray-500">{{ user.email }}</div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span
-                  class="px-2 py-1 text-xs font-semibold rounded-full"
-                  :class="getRoleBadgeClass(user.role)"
-                >
-                  {{ formatRole(user.role) }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span
-                  class="px-2 py-1 text-xs font-semibold rounded-full"
-                  :class="user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                >
-                  {{ user.is_active ? $t('superadmin.users.status.active') : $t('superadmin.users.status.inactive') }}
-                </span>
-                <span
-                  v-if="!user.is_verified"
-                  class="ml-1 px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"
-                >
-                  {{ $t('superadmin.users.status.unverified') }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ user.last_login ? formatTimeAgo(user.last_login) : $t('superadmin.users.never') }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <div class="flex gap-2">
-                  <span v-if="user.booking_count > 0" class="text-blue-600">
-                    {{ user.booking_count }} reservas
-                  </span>
-                  <span v-if="user.vendor_count > 0" class="text-purple-600">
-                    {{ user.vendor_count }} vendor
-                  </span>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="flex items-center justify-end gap-2">
-                  <button
-                    @click="confirmImpersonateUser(user)"
-                    class="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-                    :title="$t('superadmin.users.impersonate')"
-                  >
-                    <UserCircle class="w-5 h-5" />
-                  </button>
-                  <NuxtLink
-                    :to="`/superadmin/users/${user.id}`"
-                    class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
-                    :title="$t('superadmin.users.view')"
-                  >
-                    <Eye class="w-5 h-5" />
-                  </NuxtLink>
-                  <button
-                    @click="confirmToggleUserStatus(user)"
-                    class="p-2 rounded-lg transition-colors"
-                    :class="user.is_active ? 'text-red-600 hover:text-red-900 hover:bg-red-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'"
-                    :title="user.is_active ? $t('superadmin.users.block') : $t('superadmin.users.activate')"
-                  >
-                    <component :is="user.is_active ? Lock : LockOpen" class="w-5 h-5" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Loading State -->
-      <div v-if="loading" class="flex items-center justify-center py-12">
-        <UiSpinner size="md" color="primary" />
-      </div>
-
-      <!-- Empty State -->
-      <div v-else-if="users.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
-        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-          <UserCircle class="w-8 h-8 text-gray-400" />
+    <UiTable
+      :columns="columns"
+      :rows="users"
+      :loading="loading"
+      empty-title="No hay usuarios"
+      :empty-description="$t('superadmin.users.noUsersDescription')"
+    >
+      <template #cell-user="{ row }">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-sm shrink-0">
+            {{ getInitials(row.full_name) }}
+          </div>
+          <div class="min-w-0">
+            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ row.full_name }}</div>
+            <div class="text-sm text-gray-500 truncate">{{ row.email }}</div>
+          </div>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-1">{{ $t('superadmin.users.noUsers') }}</h3>
-        <p class="text-gray-500 text-sm">{{ $t('superadmin.users.noUsersDescription') }}</p>
-      </div>
-
-      <!-- Pagination -->
-      <div v-else class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-        <div class="text-sm text-gray-500">
-          {{ $t('superadmin.users.showing', { count: users.length, total: totalCount }) }}
-        </div>
-        <div class="flex gap-2">
-          <button
-            @click="currentPage--"
-            :disabled="currentPage === 1"
-            class="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-          >
-            ← {{ $t('common.prev') }}
-          </button>
-          <span class="px-3 py-1 text-sm text-gray-600">
-            {{ $t('superadmin.users.page', { page: currentPage }) }}
+      </template>
+      <template #cell-role="{ row }">
+        <span class="px-2 py-1 text-xs font-semibold rounded-full" :class="getRoleBadgeClass(row.role)">
+          {{ formatRole(row.role) }}
+        </span>
+      </template>
+      <template #cell-status="{ row }">
+        <div class="flex gap-1">
+          <span class="px-2 py-1 text-xs font-semibold rounded-full" :class="row.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+            {{ row.is_active ? $t('superadmin.users.status.active') : $t('superadmin.users.status.inactive') }}
           </span>
+          <span v-if="!row.is_verified" class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+            {{ $t('superadmin.users.status.unverified') }}
+          </span>
+        </div>
+      </template>
+      <template #cell-last_login="{ row }">
+        <span class="text-sm text-gray-500">{{ row.last_login ? formatTimeAgo(row.last_login) : $t('superadmin.users.never') }}</span>
+      </template>
+      <template #cell-activity="{ row }">
+        <div class="flex gap-2 text-sm">
+          <span v-if="row.booking_count > 0" class="text-blue-600 font-medium">{{ row.booking_count }} reservas</span>
+          <span v-if="row.vendor_count > 0" class="text-purple-600 font-medium">{{ row.vendor_count }} vendor</span>
+        </div>
+      </template>
+      <template #cell-actions="{ row }">
+        <div class="flex items-center justify-end gap-1">
           <button
-            @click="currentPage++"
-            :disabled="users.length < pageSize"
-            class="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            @click.stop="confirmImpersonateUser(row)"
+            class="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            :title="$t('superadmin.users.impersonate')"
           >
-            {{ $t('common.next') }} →
+            <UserCircle class="w-5 h-5" />
+          </button>
+          <NuxtLink
+            :to="`/superadmin/users/${row.id}`"
+            class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+            :title="$t('superadmin.users.view')"
+          >
+            <Eye class="w-5 h-5" />
+          </NuxtLink>
+          <button
+            @click.stop="confirmToggleUserStatus(row)"
+            class="p-2 rounded-lg transition-colors"
+            :class="row.is_active ? 'text-red-600 hover:text-red-900 hover:bg-red-50 dark:hover:bg-red-900/30' : 'text-green-600 hover:text-green-900 hover:bg-green-50 dark:hover:bg-green-900/30'"
+            :title="row.is_active ? $t('superadmin.users.block') : $t('superadmin.users.activate')"
+          >
+            <component :is="row.is_active ? Lock : LockOpen" class="w-5 h-5" />
           </button>
         </div>
-      </div>
-    </UiCard>
+      </template>
+      <template #footer>
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-gray-500">
+            {{ $t('superadmin.users.showing', { count: users.length, total: totalCount }) }}
+          </div>
+          <div class="flex gap-2 items-center">
+            <button
+              @click="currentPage--"
+              :disabled="currentPage === 1"
+              class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-300"
+            >
+              ← {{ $t('common.prev') }}
+            </button>
+            <span class="text-sm text-gray-600 dark:text-gray-400">{{ $t('superadmin.users.page', { page: currentPage }) }}</span>
+            <button
+              @click="currentPage++"
+              :disabled="users.length < pageSize"
+              class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-300"
+            >
+              {{ $t('common.next') }} →
+            </button>
+          </div>
+        </div>
+      </template>
+    </UiTable>
 
     <UiConfirmDialog
       v-model="showConfirm"
@@ -196,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { Search, Filter, Download, Plus, MoreVertical, Edit, Trash2, Eye, CheckCircle, XCircle, UserCircle, Lock, LockOpen } from 'lucide-vue-next'
+import { Search, Plus, Eye, UserCircle, Lock, LockOpen } from 'lucide-vue-next'
 
 definePageMeta({
   layout: 'superadmin',
@@ -242,6 +195,15 @@ async function executeConfirmAction() {
 
 const toast = useToast()
 
+const columns = [
+  { key: 'user', label: 'Usuario', sortable: true },
+  { key: 'role', label: 'Rol', align: 'center' as const, width: '120px' },
+  { key: 'status', label: 'Estado', align: 'center' as const, width: '140px' },
+  { key: 'last_login', label: 'Último acceso', hiddenOnMobile: true },
+  { key: 'activity', label: 'Actividad', hiddenOnMobile: true },
+  { key: 'actions', label: 'Acciones', align: 'right' as const },
+]
+
 const roleOptions = [
   { value: 'super_admin', label: 'Super Admin' },
   { value: 'admin', label: 'Admin' },
@@ -269,6 +231,7 @@ const filters = ref({
 })
 
 let searchTimeout: NodeJS.Timeout
+onUnmounted(() => clearTimeout(searchTimeout))
 
 const debouncedSearch = () => {
   clearTimeout(searchTimeout)
@@ -294,7 +257,6 @@ const loadUsers = async () => {
     const response = await api.get(`/superadmin/users?${params}`)
     users.value = response
 
-    // Load count
     const countResponse = await api.get(`/superadmin/users/count?${params}`)
     totalCount.value = countResponse.count
   } catch (error) {
@@ -323,12 +285,12 @@ const formatRole = (role: string) => {
 
 const getRoleBadgeClass = (role: string) => {
   const classes: Record<string, string> = {
-    super_admin: 'bg-amber-100 text-amber-800',
-    admin: 'bg-purple-100 text-purple-800',
-    agent: 'bg-blue-100 text-blue-800',
-    customer_service: 'bg-primary-100 text-primary-800',
-    vendor: 'bg-orange-100 text-orange-800',
-    client: 'bg-gray-100 text-gray-800',
+    super_admin: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300',
+    admin: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+    agent: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+    customer_service: 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-300',
+    vendor: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
+    client: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
   }
   return classes[role] || 'bg-gray-100 text-gray-800'
 }
@@ -354,15 +316,15 @@ const confirmImpersonateUser = (user: any) => {
 }
 
 const executeImpersonateUser = async (user: any) => {
-  const response = await api.post(`/superadmin/users/${user.id}/impersonate`)
-  sessionStorage.setItem('impersonation_token', response.impersonation_token)
-  sessionStorage.setItem('original_user', JSON.stringify(useAuthStore().user))
-
-  const auth = useAuthStore()
-  auth.token = response.impersonation_token
-  auth.user = response.target_user
-
-  navigateTo('/')
+  try {
+    const response = await api.post(`/superadmin/users/${user.id}/impersonate`)
+    const auth = useAuthStore()
+    auth.token = response.impersonation_token
+    auth.user = response.target_user
+    navigateTo('/')
+  } catch (error: any) {
+    toast.error(error?.data?.detail || error?.message || 'Error al impersonar usuario')
+  }
 }
 
 const confirmToggleUserStatus = (user: any) => {
@@ -377,7 +339,7 @@ const confirmToggleUserStatus = (user: any) => {
 
 const executeToggleUserStatus = async (user: any) => {
   if (user.is_active) {
-    await api.post(`/superadmin/users/${user.id}/block`, {}, { params: { reason: 'Blocked by Super Admin' } })
+    await api.post(`/superadmin/users/${user.id}/block`, { reason: 'Blocked by Super Admin' })
   } else {
     await api.post(`/superadmin/users/${user.id}/unblock`)
   }

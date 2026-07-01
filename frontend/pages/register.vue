@@ -114,8 +114,8 @@ function validate() {
   errors.password = ''
   errors.passwordConfirm = ''
 
-  if (form.password.length < 6) {
-    errors.password = 'La contraseña debe tener al menos 6 caracteres'
+  if (form.password.length < 8) {
+    errors.password = 'La contraseña debe tener al menos 8 caracteres'
     valid = false
   }
 

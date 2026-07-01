@@ -126,8 +126,9 @@ const toggleActive = async (dest: any) => {
 const editDestination = (dest: any) => {
   navigateTo(`/admin/destinations/${dest.id}`)
 }
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
+onUnmounted(() => clearTimeout(searchTimeout!))
 
-let searchTimeout = null
 const debouncedSearch = () => {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => fetchDestinations(), 300)

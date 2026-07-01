@@ -1,13 +1,18 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
-from app.core.security import get_current_user, require_role
-from app.models import User, UserRole, Vendor, Property, Tour, Booking, BookingStatus
+from app.core.security import get_current_user, require_role, get_current_user_optional
+from app.models import User, UserRole, Vendor, Property, Tour, Booking, BookingStatus, Review
+from app.models import Vehicle, Boat, Transportation
 from app.schemas import VendorResponse, VendorUpdate, VendorPublicResponse
+from app.schemas.landing import VendorLandingResponse, LandingPropertyItem, LandingTourItem
+from app.schemas.landing import LandingVehicleItem, LandingBoatItem, LandingTransportItem
+from app.schemas.landing import LandingReview, LandingStats, LandingRanking
 from app.services.cache_service import cache
 from app.services.vendor_service import VendorService
 
@@ -117,6 +122,196 @@ async def get_vendor_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.get(
+    "/slug/{slug}/landing",
+    response_model=VendorLandingResponse,
+    summary="Get vendor landing page data",
+    description="Returns all data needed for the public vendor/agency landing page: vendor info, services, reviews, stats, and ranking.",
+)
+async def get_vendor_landing(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
+):
+    result = await db.execute(
+        select(Vendor).options(
+            joinedload(Vendor.properties),
+            joinedload(Vendor.tours),
+        ).where(Vendor.business_slug == slug)
+    )
+    vendor = result.scalar_one_or_none()
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+
+    TOP_N = 5
+
+    # Properties
+    prop_query = (
+        select(Property)
+        .where(Property.vendor_id == vendor.id, Property.is_active == True)
+        .order_by(Property.rating.desc())
+    )
+    prop_result = await db.execute(prop_query)
+    all_properties = prop_result.scalars().all()
+    properties = [LandingPropertyItem.model_validate(p) for p in all_properties[:TOP_N]]
+    properties_has_more = len(all_properties) > TOP_N
+
+    # Tours
+    tour_query = (
+        select(Tour)
+        .where(Tour.vendor_id == vendor.id, Tour.is_active == True)
+        .order_by(Tour.rating.desc())
+    )
+    tour_result = await db.execute(tour_query)
+    all_tours = tour_result.scalars().all()
+    tours = [LandingTourItem.model_validate(t) for t in all_tours[:TOP_N]]
+    tours_has_more = len(all_tours) > TOP_N
+
+    # Vehicles
+    veh_result = await db.execute(
+        select(Vehicle).where(Vehicle.vendor_id == vendor.id, Vehicle.is_active == True)
+        .order_by(Vehicle.rating.desc())
+    )
+    all_vehicles = veh_result.scalars().all()
+    vehicles = [LandingVehicleItem.model_validate(v) for v in all_vehicles[:TOP_N]]
+    vehicles_has_more = len(all_vehicles) > TOP_N
+
+    # Boats
+    boat_result = await db.execute(
+        select(Boat).where(Boat.vendor_id == vendor.id, Boat.is_active == True)
+        .order_by(Boat.rating.desc())
+    )
+    all_boats = boat_result.scalars().all()
+    boats = [LandingBoatItem.model_validate(b) for b in all_boats[:TOP_N]]
+    boats_has_more = len(all_boats) > TOP_N
+
+    # Transportation
+    trans_result = await db.execute(
+        select(Transportation).where(Transportation.vendor_id == vendor.id, Transportation.is_active == True)
+        .order_by(Transportation.rating.desc())
+    )
+    all_trans = trans_result.scalars().all()
+    transportation = [LandingTransportItem.model_validate(t) for t in all_trans[:TOP_N]]
+    transportation_has_more = len(all_trans) > TOP_N
+
+    # Reviews — get reviews for this vendor's properties and tours
+    prop_ids = [p.id for p in all_properties]
+    tour_ids = [t.id for t in all_tours]
+    review_conditions = []
+    if prop_ids:
+        review_conditions.append(Review.property_id.in_(prop_ids))
+    if tour_ids:
+        review_conditions.append(Review.tour_id.in_(tour_ids))
+    reviews = []
+    reviews_total = 0
+    reviews_avg = 0.0
+    if review_conditions:
+        review_query = (
+            select(Review)
+            .options(joinedload(Review.user))
+            .where(
+                or_(*review_conditions),
+                Review.is_approved == True,
+                Review.deleted_at == None,
+            )
+            .order_by(Review.created_at.desc())
+        )
+        review_result = await db.execute(review_query)
+        all_reviews = review_result.scalars().all()
+        reviews_total = len(all_reviews)
+        if reviews_total > 0:
+            reviews_avg = sum(r.rating for r in all_reviews) / reviews_total
+        for r in all_reviews[:10]:
+            lr = LandingReview.model_validate(r)
+            lr.user_name = r.user.full_name if r.user else "Anonymous"
+            reviews.append(lr)
+
+    # Booking stats
+    booking_result = await db.execute(
+        select(func.count(Booking.id)).where(
+            Booking.vendor_id == vendor.id
+        )
+    )
+    total_bookings = booking_result.scalar() or 0
+
+    # Ranking
+    rank_result = await db.execute(
+        select(func.count(Vendor.id)).where(
+            Vendor.is_active == True,
+            Vendor.rating > vendor.rating,
+        )
+    )
+    higher_ranked = rank_result.scalar() or 0
+    total_active = await db.execute(
+        select(func.count(Vendor.id)).where(Vendor.is_active == True)
+    )
+    total_active_count = total_active.scalar() or 0
+
+    stats = LandingStats(
+        total_properties=len(all_properties),
+        total_tours=len(all_tours),
+        total_vehicles=len(all_vehicles),
+        total_boats=len(all_boats),
+        total_transportation=len(all_trans),
+        total_reviews=vendor.total_reviews or 0,
+        total_bookings=total_bookings,
+        member_since=vendor.created_at,
+    )
+
+    ranking = LandingRanking(
+        position=higher_ranked + 1,
+        total_vendors=total_active_count,
+    )
+
+    can_review = False
+    eligible_booking_ids: list[str] = []
+    if current_user and current_user.id != vendor.user_id:
+        eligible = await db.execute(
+            select(Booking).where(
+                Booking.user_id == current_user.id,
+                Booking.vendor_id == vendor.id,
+                Booking.status == BookingStatus.COMPLETED,
+                ~Booking.id.in_(select(Review.booking_id).where(Review.booking_id.isnot(None))),
+            )
+        )
+        eligible_bookings = eligible.scalars().all()
+        can_review = len(eligible_bookings) > 0
+        eligible_booking_ids = [str(b.id) for b in eligible_bookings]
+
+    return VendorLandingResponse(
+        id=vendor.id,
+        business_name=vendor.business_name,
+        business_slug=vendor.business_slug,
+        business_type=vendor.business_type,
+        description=vendor.description,
+        logo_url=vendor.logo_url,
+        cover_image=vendor.cover_image,
+        phone=vendor.phone,
+        email=vendor.email,
+        address=vendor.address,
+        rating=vendor.rating,
+        total_reviews=vendor.total_reviews or 0,
+        is_verified=vendor.is_verified,
+        properties=properties,
+        properties_has_more=properties_has_more,
+        tours=tours,
+        tours_has_more=tours_has_more,
+        vehicles=vehicles,
+        vehicles_has_more=vehicles_has_more,
+        boats=boats,
+        boats_has_more=boats_has_more,
+        transportation=transportation,
+        transportation_has_more=transportation_has_more,
+        reviews=reviews,
+        reviews_total=reviews_total,
+        reviews_average_rating=round(reviews_avg, 1),
+        stats=stats,
+        ranking=ranking,
+        can_review=can_review,
+        eligible_booking_ids=eligible_booking_ids,
+    )
+
+
+@router.get(
     "/me/profile",
     response_model=VendorResponse,
     summary="Get my vendor profile",
@@ -221,12 +416,12 @@ async def get_my_analytics(
     prop_result = await db.execute(
         select(func.count()).where(Property.vendor_id == vendor.id)
     )
-    total_properties = prop_result.scalar()
+    total_properties = prop_result.scalar() or 0
 
     tour_result = await db.execute(
         select(func.count()).where(Tour.vendor_id == vendor.id)
     )
-    total_tours = tour_result.scalar()
+    total_tours = tour_result.scalar() or 0
 
     # Get bookings (still need full rows for aggregation)
     booking_result = await db.execute(

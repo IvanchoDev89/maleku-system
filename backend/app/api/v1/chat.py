@@ -16,7 +16,7 @@ from app.models import User, UserRole, Vendor, Conversation, Message, ChatServic
 from app.schemas import chat as chat_schema
 from pydantic import BaseModel
 
-router = APIRouter()
+router = APIRouter(tags=["Chat"])
 
 
 class DeleteResponse(BaseModel):
@@ -128,7 +128,7 @@ async def list_conversations(
     return conversations
 
 
-@router.post("", response_model=chat_schema.ConversationResponse)
+@router.post("", response_model=chat_schema.ConversationResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("30/minute")
 async def create_conversation(
     conv_data: chat_schema.ConversationCreate,

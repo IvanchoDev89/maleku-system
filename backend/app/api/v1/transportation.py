@@ -4,7 +4,7 @@ Transportation API - Transporte Privado
 
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,7 +16,7 @@ from app.models import Transportation, TransportServiceType
 from app.schemas import transportation as transportation_schema
 from pydantic import BaseModel
 
-router = APIRouter()
+router = APIRouter(tags=["Transportation"])
 
 
 class DeleteResponse(BaseModel):
@@ -162,7 +162,7 @@ async def get_transportation(
     return transport
 
 
-@router.post("", response_model=transportation_schema.TransportationResponse)
+@router.post("", response_model=transportation_schema.TransportationResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("10/minute")
 async def create_transportation(
     request: Request,

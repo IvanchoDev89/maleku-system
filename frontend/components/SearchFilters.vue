@@ -97,6 +97,7 @@ const filterLabelMap = computed(() => {
     <!-- Mobile Filter Button -->
     <button
       @click="isMobileOpen = true"
+      title="Filtros"
       class="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-primary-600 text-white rounded-full shadow-floating flex items-center justify-center gap-2 hover:bg-primary-700 transition-colors"
     >
       <SlidersHorizontal class="w-6 h-6" />
@@ -134,7 +135,7 @@ const filterLabelMap = computed(() => {
               class="inline-flex items-center gap-1 px-3 py-1 bg-primary-50 text-primary-700 text-sm rounded-full"
             >
               {{ filterLabelMap[value as string] || value }}
-              <button @click="clearSingle(key as keyof FiltersType)" class="hover:text-primary-900">
+              <button @click="clearSingle(key as keyof FiltersType)" title="Quitar filtro" class="hover:text-primary-900">
                 <X class="w-3 h-3" />
               </button>
             </span>

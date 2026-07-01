@@ -4,7 +4,7 @@ Vehicles API - Rent a Car
 
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,7 +16,7 @@ from app.models import User, UserRole, Vendor, Vehicle, VehicleType
 from app.schemas import vehicle as vehicle_schema
 from pydantic import BaseModel
 
-router = APIRouter()
+router = APIRouter(tags=["Vehicles"])
 
 
 class DeleteResponse(BaseModel):
@@ -157,7 +157,7 @@ async def get_vehicle(
     return vehicle
 
 
-@router.post("", response_model=vehicle_schema.VehicleResponse)
+@router.post("", response_model=vehicle_schema.VehicleResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("10/minute")
 async def create_vehicle(
     request: Request,

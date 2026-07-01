@@ -85,7 +85,7 @@
             <p class="font-medium text-white text-xs truncate">{{ user?.full_name }}</p>
             <p class="text-[10px] text-primary-300 capitalize truncate">{{ user?.role?.replace('_', ' ') }}</p>
           </div>
-          <button @click="logout" class="p-2 text-primary-300/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all shrink-0" :title="sidebarCollapsed ? 'Cerrar sesión' : ''">
+          <button @click="logout" class="p-2 text-primary-300/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all shrink-0" title="Cerrar sesión">
             <LogOut class="w-4 h-4" />
           </button>
         </div>
@@ -135,13 +135,15 @@
             <!-- Global Search -->
             <div class="hidden md:block relative">
               <input
+                ref="searchInputRef"
                 v-model="searchQuery"
                 @keyup.enter="handleSearch"
                 type="text"
-                placeholder="Buscar..."
-                class="pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 w-48 lg:w-64 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-white"
+                placeholder="Buscar... (⌘K)"
+                class="pl-10 pr-10 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 w-48 lg:w-64 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-white"
               />
               <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <kbd class="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] text-gray-400 bg-gray-200 dark:bg-gray-700 rounded font-mono">⌘K</kbd>
             </div>
 
             <!-- Quick Actions Dropdown -->
@@ -187,7 +189,7 @@
             </button>
 
             <!-- Notifications -->
-            <button class="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative">
+            <button title="Notificaciones" class="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative">
               <Bell class="w-5 h-5" />
               <span v-if="notificationCount > 0" class="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></span>
             </button>
@@ -330,6 +332,7 @@ import {
   ChevronRight,
   Sun,
   Moon,
+  Globe,
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -360,7 +363,7 @@ const blockIPsLoading = ref(false)
 const clearCacheLoading = ref(false)
 
 const pendingVendorCount = ref(0)
-const { count: notificationCount, startPolling } = useNotifications()
+const { count: notificationCount, startPolling, stopPolling } = useNotifications()
 const apiConnected = ref(true)
 
 const checkApiHealth = async () => {
@@ -373,13 +376,31 @@ const checkApiHealth = async () => {
   }
 }
 
+let healthInterval: ReturnType<typeof setInterval> | null = null
+
 // Restore sidebar state from localStorage
 onMounted(() => {
   const saved = localStorage.getItem('superadmin_sidebar_collapsed')
   if (saved) sidebarCollapsed.value = saved === 'true'
   startPolling()
   checkApiHealth()
-  setInterval(checkApiHealth, 30000)
+  healthInterval = setInterval(checkApiHealth, 30000)
+
+  const handler = (e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault()
+      searchInputRef.value?.focus()
+    }
+  }
+  document.addEventListener('keydown', handler)
+  onUnmounted(() => document.removeEventListener('keydown', handler))
+})
+
+onUnmounted(() => {
+  if (healthInterval) {
+    clearInterval(healthInterval)
+    healthInterval = null
+  }
 })
 
 watch(sidebarCollapsed, (val) => {
@@ -400,6 +421,8 @@ const toggleEmergencyMenu = async () => {
   }
   showEmergencyMenu.value = !showEmergencyMenu.value
 }
+
+const searchInputRef = ref<HTMLInputElement | null>(null)
 
 const handleSearch = () => {
   if (searchQuery.value.trim()) {
@@ -434,6 +457,8 @@ const breadcrumbs = computed(() => {
     fleet: 'Flota',
     vehicles: 'Vehículos',
     boats: 'Botes',
+    transportation: 'Transporte',
+    flights: 'Vuelos',
     content: 'Contenido',
     destinations: 'Destinos',
     reviews: 'Reviews',
@@ -449,6 +474,7 @@ const breadcrumbs = computed(() => {
     blog: 'Blog',
     pages: 'Páginas',
     media: 'Multimedia',
+    seo: 'SEO',
     refunds: 'Reembolsos',
   }
 
@@ -476,7 +502,10 @@ const pageTitle = computed(() => {
     '/superadmin/fleet': 'Flota',
     '/superadmin/fleet/vehicles': 'Vehículos',
     '/superadmin/fleet/boats': 'Botes',
+    '/superadmin/fleet/transportation': 'Transporte',
+    '/superadmin/fleet/flights': 'Vuelos',
     '/superadmin/content': 'Contenido',
+    '/superadmin/content/seo': 'SEO Global',
     '/superadmin/destinations': 'Destinos',
     '/superadmin/reviews': 'Reviews',
     '/superadmin/analytics': 'Analytics',
@@ -526,6 +555,7 @@ const navGroups = computed<NavGroup[]>(() => [
       { icon: Calendar, label: 'Reservas', path: '/superadmin/bookings', badge: null },
       { icon: Car, label: 'Flota', path: '/superadmin/fleet', badge: null },
       { icon: FileText, label: 'Contenido', path: '/superadmin/content', badge: null },
+      { icon: Globe, label: 'SEO', path: '/superadmin/content/seo', badge: null },
       { icon: MapPin, label: 'Destinos', path: '/superadmin/destinations', badge: null },
       { icon: Star, label: 'Reviews', path: '/superadmin/reviews', badge: null },
     ],
@@ -548,6 +578,7 @@ const navGroups = computed<NavGroup[]>(() => [
 ])
 
 const logout = () => {
+  stopPolling()
   auth.logout()
   router.push('/login')
 }

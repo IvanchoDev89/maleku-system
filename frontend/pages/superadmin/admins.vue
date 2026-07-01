@@ -525,9 +525,6 @@ const confirmImpersonateUser = (user: any) => {
 const executeImpersonateUser = async (user: any) => {
   try {
     const response = await api.post(`/superadmin/users/${user.id}/impersonate`)
-    sessionStorage.setItem('impersonation_token', response.impersonation_token)
-    sessionStorage.setItem('original_user', JSON.stringify(useAuthStore().user))
-
     const auth = useAuthStore()
     auth.token = response.impersonation_token
     auth.user = response.target_user

@@ -291,6 +291,7 @@ async def get_property_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
 @router.post(
     "",
     response_model=PropertyResponse,
+    status_code=status.HTTP_201_CREATED,
     summary="Create property",
     description="Creates a new property listing. Vendor or SUPER_ADMIN role required.",
 )

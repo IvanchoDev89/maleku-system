@@ -71,7 +71,7 @@ class PlannerLeadResponse(BaseModel):
     updated_at: str
 
 
-@router.post("/leads", status_code=201)
+@router.post("/leads", status_code=201, response_model=dict)
 @limiter.limit("5/minute")
 async def create_planner_lead(
     data: PlannerLeadCreate,

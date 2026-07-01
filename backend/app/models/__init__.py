@@ -37,6 +37,9 @@ from app.models.destination import Destination
 from app.models.chat import Conversation, Message, ChatServiceType, MessageType
 from app.models.vehicle import Vehicle, VehicleType, TransmissionType, FuelType
 from app.models.boat import Boat as BoatEquipment, BoatType
+
+# Alias for backward compatibility
+Boat = BoatEquipment
 from app.models.flight import Flight, RouteType
 from app.models.transportation import (
     Transportation,
@@ -45,6 +48,7 @@ from app.models.transportation import (
     PricingType,
     DayType,
 )
+from app.models.content import StaticPage, SEOSettings, MediaFile
 from app.models.pricing import PricingRule
 from app.models.newsletter import NewsletterSubscriber
 from app.models.planner import PlannerLead
@@ -103,6 +107,12 @@ __all__ = [
     "BlogPost",
     "Review",
     "Destination",
+    "Boat",
+    "BoatEquipment",
+    # Content Models
+    "StaticPage",
+    "SEOSettings",
+    "MediaFile",
     "Conversation",
     "Message",
     "Vehicle",

@@ -18,7 +18,7 @@ from app.core.pagination import paginate_flat
 from app.models import Review, User
 from app.schemas import PaginationParams, PaginatedResponse
 
-router = APIRouter()
+router = APIRouter(tags=["SuperAdmin - Reviews"])
 
 
 class ReviewListItem(BaseModel):
@@ -112,6 +112,7 @@ async def list_reviews(
 
 @router.put(
     "/{review_id}",
+    response_model=dict,
     summary="Update review moderation",
     description="Approve or reject a review.",
 )
@@ -134,7 +135,10 @@ async def update_review(
 
 
 @router.delete(
-    "/{review_id}", summary="Soft delete review", description="Soft-deletes a review."
+    "/{review_id}",
+    response_model=dict,
+    summary="Soft delete review",
+    description="Soft-deletes a review.",
 )
 async def delete_review(
     review_id: UUID,

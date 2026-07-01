@@ -1,4 +1,8 @@
 <script setup lang="ts">
+definePageMeta({
+  middleware: ['auth']
+})
+
 useSeo({
   title: 'Checkout',
   description: 'Completa tu reserva de viaje en Costa Rica de forma segura.'
@@ -22,7 +26,7 @@ const tourId = computed(() => String(route.query.tourId || ''))
 const tourDate = computed(() => String(route.query.tourDate || ''))
 
 const handleBookingComplete = (bookingData: any) => {
-  navigateTo(`/checkout/success?booking=${encodeURIComponent(bookingData.bookingId)}`)
+  navigateTo(`/confirmacion?booking=${encodeURIComponent(bookingData.bookingId)}`)
 }
 
 const handleCancel = () => {

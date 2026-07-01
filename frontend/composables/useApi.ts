@@ -1,3 +1,29 @@
+const _cache = new Map<string, { data: any; expires: number }>()
+const CACHE_TTL = 30000
+const MAX_CACHE_SIZE = 100
+
+const _cleanCache = () => {
+  const now = Date.now()
+  if (_cache.size >= MAX_CACHE_SIZE) {
+    for (const [key, val] of _cache) {
+      if (val.expires <= now) _cache.delete(key)
+    }
+  }
+}
+if (import.meta.client) {
+  setInterval(_cleanCache, 60000)
+}
+
+export const invalidateCache = (pattern?: string) => {
+  if (!pattern) {
+    _cache.clear()
+    return
+  }
+  for (const key of _cache.keys()) {
+    if (key.startsWith(pattern)) _cache.delete(key)
+  }
+}
+
 export const useApi = () => {
   const config = useRuntimeConfig()
   const baseURL = config.public.apiBase as string || 'http://localhost:8000/api/v1'
@@ -7,9 +33,6 @@ export const useApi = () => {
   if (import.meta.env.PROD && baseURL.startsWith('http://')) {
     throw new Error('API base must use HTTPS in production (got ' + baseURL + ')')
   }
-
-  const cache = new Map<string, { data: any; expires: number }>()
-  const CACHE_TTL = 30000
 
   const getCacheKey = (endpoint: string, params?: Record<string, any>) =>
     `${endpoint}?${JSON.stringify(params || {})}`
@@ -54,7 +77,7 @@ export const useApi = () => {
 
     if (options.method === undefined || options.method === 'GET') {
       const cacheKey = getCacheKey(endpoint, options.params)
-      const cached = cache.get(cacheKey)
+      const cached = _cache.get(cacheKey)
       if (cached && cached.expires > Date.now()) {
         return cached.data as T
       }
@@ -72,7 +95,7 @@ export const useApi = () => {
       })
       if (options.method === undefined || options.method === 'GET') {
         const cacheKey = getCacheKey(endpoint, options.params)
-        cache.set(cacheKey, { data: response, expires: Date.now() + CACHE_TTL })
+        _cache.set(cacheKey, { data: response, expires: Date.now() + CACHE_TTL })
       }
       return response
     } catch (error: any) {
@@ -98,6 +121,13 @@ export const useApi = () => {
             headers['Authorization'] = `Bearer ${newToken}`
             return fetchApi<T>(endpoint, { ...options, retryCount: retryCount + 1 })
           }
+        }
+      }
+
+      if (status === 403 && import.meta.client) {
+        const auth = useAuthStore()
+        if (auth.user?.role !== 'super_admin') {
+          navigateTo('/')
         }
       }
 
@@ -180,21 +210,40 @@ export const useApi = () => {
     return upload<T>(endpoint, formData)
   }
 
+  const _invalidateWithParents = (endpoint: string) => {
+    invalidateCache(endpoint)
+    const parts = endpoint.split('/')
+    if (parts.length >= 2) {
+      const parent = parts.slice(0, -1).join('/')
+      if (parent) invalidateCache(parent)
+    }
+  }
+
   return {
+    baseURL,
+
     get: <T>(endpoint: string, params?: Record<string, any>) =>
       fetchApi<T>(endpoint, { method: 'GET', params }),
 
-    post: <T>(endpoint: string, body?: any) =>
-      fetchApi<T>(endpoint, { method: 'POST', body }),
+    post: <T>(endpoint: string, body?: any) => {
+      _invalidateWithParents(endpoint)
+      return fetchApi<T>(endpoint, { method: 'POST', body })
+    },
 
-    put: <T>(endpoint: string, body?: any) =>
-      fetchApi<T>(endpoint, { method: 'PUT', body }),
+    put: <T>(endpoint: string, body?: any) => {
+      _invalidateWithParents(endpoint)
+      return fetchApi<T>(endpoint, { method: 'PUT', body })
+    },
 
-    patch: <T>(endpoint: string, body?: any) =>
-      fetchApi<T>(endpoint, { method: 'PATCH', body }),
+    patch: <T>(endpoint: string, body?: any) => {
+      _invalidateWithParents(endpoint)
+      return fetchApi<T>(endpoint, { method: 'PATCH', body })
+    },
 
-    delete: <T>(endpoint: string) =>
-      fetchApi<T>(endpoint, { method: 'DELETE' }),
+    delete: <T>(endpoint: string) => {
+      _invalidateWithParents(endpoint)
+      return fetchApi<T>(endpoint, { method: 'DELETE' })
+    },
 
     upload: uploadFile,
     uploadMultiple: uploadFiles

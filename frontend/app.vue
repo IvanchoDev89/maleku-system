@@ -35,3 +35,27 @@ useHead({
   ]
 })
 </script>
+
+<style>
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.layout-enter-active,
+.layout-leave-active {
+  transition: opacity 0.2s ease;
+}
+.layout-enter-from,
+.layout-leave-to {
+  opacity: 0;
+}
+</style>

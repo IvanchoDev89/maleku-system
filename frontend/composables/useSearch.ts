@@ -81,8 +81,10 @@ export function useSearch() {
 
   const hasActiveFilters = computed(() => activeFiltersCount.value > 0)
 
-  // Methods
+  let searchGen = 0
+
   async function searchTours() {
+    const currentGen = ++searchGen
     loading.value = true
     error.value = null
 
@@ -104,15 +106,18 @@ export function useSearch() {
       params.set('page_size', pageSize.value.toString())
 
       const data = await api.get<TourSearchResponse>(`/tours?${params.toString()}`)
+      if (currentGen !== searchGen) return
       tours.value = data.items || []
       totalCount.value = data.total || 0
 
     } catch (err: any) {
+      if (currentGen !== searchGen) return
       error.value = err?.message || err?.data?.detail || 'Error en búsqueda'
       console.error('Search error:', err)
-      useToast().add('Search failed', 'error')
     } finally {
-      loading.value = false
+      if (currentGen === searchGen) {
+        loading.value = false
+      }
     }
   }
 

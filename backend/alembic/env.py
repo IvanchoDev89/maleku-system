@@ -28,6 +28,7 @@ import app.models.planner  # noqa: F401
 import app.models.pricing  # noqa: F401
 import app.models.room_availability  # noqa: F401
 import app.models.trip_planner  # noqa: F401
+import app.models.content  # noqa: F401
 
 config = context.config
 

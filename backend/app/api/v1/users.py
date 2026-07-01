@@ -1,16 +1,20 @@
 import uuid
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.logging import get_logger
 from app.core.rate_limiter import limiter
 from app.core.security import get_current_user, require_role
 from app.models import User, UserRole, Booking, Review
 from app.schemas import UserResponse, UserUpdate, PaginationParams, PaginatedResponse
 
-router = APIRouter()
+logger = get_logger(__name__)
+
+router = APIRouter(tags=["Users"])
 
 
 class DeleteResponse(BaseModel):
@@ -66,7 +70,7 @@ async def get_users(
 ):
     # Count total
     count_result = await db.execute(select(func.count(User.id)))
-    total = count_result.scalar()
+    total = count_result.scalar() or 0
 
     # Get users with pagination
     offset = (params.page - 1) * params.page_size
@@ -226,9 +230,24 @@ async def anonymize_user(
     user.deleted_at = datetime.now(timezone.utc)
 
     # Anonymize related data
-    await db.execute(select(Booking).where(Booking.user_id == user_id))
-    # Anonymize reviews
-    await db.execute(select(Review).where(Review.user_id == user_id))
+    await db.execute(
+        update(Booking)
+        .where(Booking.user_id == user_id)
+        .values(
+            guest_name="Anonymized",
+            guest_email="anonymized@deleted.com",
+            guest_phone=None,
+            guest_notes=None,
+        )
+    )
+    await db.execute(
+        update(Review)
+        .where(Review.user_id == user_id)
+        .values(
+            title="Anonymized review",
+            comment="This review has been anonymized.",
+        )
+    )
 
     await db.flush()
     await db.commit()

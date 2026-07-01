@@ -272,6 +272,90 @@ export interface BlogPost {
 
 export type BlogPostStatus = 'draft' | 'published' | 'archived'
 
+export interface StaticPage {
+  id: string
+  title: string
+  slug: string
+  content: string
+  template: string | null
+  meta_title: string | null
+  meta_description: string | null
+  is_active: boolean
+  show_in_footer: boolean
+  show_in_header: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface StaticPageCreate {
+  title: string
+  slug: string
+  content?: string
+  template?: string | null
+  meta_title?: string | null
+  meta_description?: string | null
+  is_active?: boolean
+  show_in_footer?: boolean
+  show_in_header?: boolean
+  sort_order?: number
+}
+
+export interface StaticPageUpdate {
+  title?: string
+  slug?: string
+  content?: string
+  template?: string | null
+  meta_title?: string | null
+  meta_description?: string | null
+  is_active?: boolean
+  show_in_footer?: boolean
+  show_in_header?: boolean
+  sort_order?: number
+}
+
+export interface SEOSettings {
+  id: string
+  site_title_template: string
+  default_meta_title: string
+  default_meta_description: string
+  default_meta_keywords: string[]
+  google_site_verification: string
+  robots_txt: string
+  sitemap_enabled: boolean
+  structured_data_enabled: boolean
+  updated_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface SEOSettingsUpdate {
+  site_title_template?: string
+  default_meta_title?: string
+  default_meta_description?: string
+  default_meta_keywords?: string[]
+  google_site_verification?: string
+  robots_txt?: string
+  sitemap_enabled?: boolean
+  structured_data_enabled?: boolean
+}
+
+export interface MediaFile {
+  id: string
+  filename: string
+  original_name: string
+  mime_type: string
+  size_bytes: number
+  size_formatted: string
+  url: string
+  thumbnail_url: string | null
+  alt_text: string | null
+  folder: string | null
+  uploaded_by: string | null
+  uploaded_at: string
+  used_in: string[]
+}
+
 export interface Vehicle {
   id: string
   name: string
@@ -446,6 +530,87 @@ export interface InboxMessage {
   is_read: boolean
   created_at: string
   vendor_id?: string
+}
+
+// Agency Landing Page
+export interface AgencyLandingService {
+  id: string
+  name: string
+  slug?: string
+  cover_image: string | null
+  price: number
+  rating: number | null
+  total_reviews: number
+  service_type: string
+  // Per-type extras
+  property_type?: string
+  category?: string
+  city?: string
+  region?: string
+  location?: string
+  duration_hours?: number
+  brand?: string
+  model?: string
+  capacity?: number
+  seats?: number
+}
+
+export interface AgencyLandingReview {
+  id: string
+  rating: number
+  title: string | null
+  comment: string | null
+  user_name: string | null
+  created_at: string
+}
+
+export interface AgencyLandingStats {
+  total_properties: number
+  total_tours: number
+  total_vehicles: number
+  total_boats: number
+  total_transportation: number
+  total_reviews: number
+  total_bookings: number
+  member_since: string | null
+}
+
+export interface AgencyLandingRanking {
+  position: number
+  total_vendors: number
+}
+
+export interface AgencyLandingData {
+  id: string
+  can_review: boolean
+  eligible_booking_ids: string[]
+  business_name: string
+  business_slug: string
+  business_type: string
+  description: string | null
+  logo_url: string | null
+  cover_image: string | null
+  phone: string | null
+  email: string | null
+  address: string | null
+  rating: number | null
+  total_reviews: number
+  is_verified: boolean
+  properties: AgencyLandingService[]
+  properties_has_more: boolean
+  tours: AgencyLandingService[]
+  tours_has_more: boolean
+  vehicles: AgencyLandingService[]
+  vehicles_has_more: boolean
+  boats: AgencyLandingService[]
+  boats_has_more: boolean
+  transportation: AgencyLandingService[]
+  transportation_has_more: boolean
+  reviews: AgencyLandingReview[]
+  reviews_total: number
+  reviews_average_rating: number
+  stats: AgencyLandingStats
+  ranking: AgencyLandingRanking
 }
 
 export interface EmailPreferences {

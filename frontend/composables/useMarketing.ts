@@ -94,6 +94,10 @@ export const useMarketing = () => {
     return asyncAction.execute(() => api.post('/marketing/vendor/campaigns', data))
   }
 
+  const vendorSendCampaign = async (campaignId: string) => {
+    return asyncAction.execute(() => api.post(`/marketing/vendor/campaigns/${campaignId}/send`, {}))
+  }
+
   const getVendorAnalytics = async (): Promise<VendorAnalytics | null> => {
     return asyncAction.execute(async () => {
       const response = await api.get<VendorAnalytics>('/marketing/vendor/analytics')
@@ -174,6 +178,7 @@ export const useMarketing = () => {
     // Vendor
     listVendorCampaigns,
     createVendorCampaign,
+    vendorSendCampaign,
     getVendorAnalytics,
 
     // Inbox

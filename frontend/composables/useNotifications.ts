@@ -4,6 +4,8 @@ export function useNotifications() {
   const loading = ref(false)
 
   const fetchCount = async () => {
+    const auth = useAuthStore()
+    if (!auth.isAuthenticated) return
     loading.value = true
     try {
       const alerts = await api.get<any[]>('/superadmin/dashboard/alerts')
@@ -18,6 +20,9 @@ export function useNotifications() {
   let pollTimer: ReturnType<typeof setInterval> | null = null
 
   const startPolling = (interval = 60000) => {
+    stopPolling()
+    const auth = useAuthStore()
+    if (!auth.isAuthenticated) return
     fetchCount()
     pollTimer = setInterval(fetchCount, interval)
   }
@@ -29,7 +34,9 @@ export function useNotifications() {
     }
   }
 
-  onUnmounted(() => stopPolling())
+  if (getCurrentInstance()) {
+    onUnmounted(() => stopPolling())
+  }
 
   return {
     count,

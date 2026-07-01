@@ -1,8 +1,3 @@
-/**
- * Super Admin Middleware
- * Restricts access to /superadmin/* routes to SUPER_ADMIN role only.
- * Logs access attempts (granted and denied) to the backend audit log.
- */
 export default defineNuxtRouteMiddleware(async (to) => {
   const auth = useAuthStore()
 
@@ -10,24 +5,18 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo('/login?redirect=' + encodeURIComponent(to.fullPath))
   }
 
-  const config = useRuntimeConfig()
-  const apiBase = (config.public.apiBase as string).replace(/\/$/, '')
-  const headers: Record<string, string> = {}
-  if (auth.token) headers.Authorization = `Bearer ${auth.token}`
-
   const reportEvent = (eventType: string, severity?: string) => {
     if (!import.meta.client) return
-    $fetch(`${apiBase}/superadmin/audit/logs`, {
-      method: 'POST',
-      headers,
-      body: {
+    try {
+      const api = useApi()
+      api.post('/superadmin/audit/logs', {
         event_type: eventType,
         path: to.fullPath,
         severity,
-      },
-    }).catch(() => {
+      }).catch(() => {})
+    } catch {
       // Best-effort: do not block navigation on logging failure
-    })
+    }
   }
 
   if (auth.user?.role !== 'super_admin') {

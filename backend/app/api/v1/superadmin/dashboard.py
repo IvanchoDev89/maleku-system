@@ -28,7 +28,7 @@ from app.models import (
     NewsletterSubscriber,
 )
 
-router = APIRouter()
+router = APIRouter(tags=["SuperAdmin - Dashboard"])
 
 
 # Response Models
@@ -204,157 +204,116 @@ async def get_dashboard_stats(
     week_start = today_start - timedelta(days=7)
     month_start = today_start.replace(day=1)
 
-    # User statistics
-    total_users_result = await db.execute(select(func.count(User.id)))
-    total_users = total_users_result.scalar() or 0
-
-    # Users by role
-    users_by_role = {}
-    for role in UserRole:
-        count_result = await db.execute(
-            select(func.count(User.id)).where(User.role == role)
+    # === Consolidated user statistics (1 query replaces 9) ===
+    user_row = (await db.execute(
+        select(
+            func.count(User.id).label("total"),
+            func.count(User.id).filter(User.role == UserRole.SUPER_ADMIN).label("super_admin"),
+            func.count(User.id).filter(User.role == UserRole.ADMIN).label("admin"),
+            func.count(User.id).filter(User.role == UserRole.VENDOR).label("vendor"),
+            func.count(User.id).filter(User.role == UserRole.CLIENT).label("client"),
+            func.count(User.id).filter(User.role == UserRole.AGENT).label("agent"),
+            func.count(User.id).filter(User.role == UserRole.CUSTOMER_SERVICE).label("customer_service"),
+            func.count(User.id).filter(User.created_at >= today_start).label("new_today"),
+            func.count(User.id).filter(User.created_at >= week_start).label("new_week"),
+            func.count(User.id).filter(User.created_at >= month_start).label("new_month"),
+            func.count(User.id).filter(User.last_login >= today_start).label("active_today"),
         )
-        users_by_role[role.value] = count_result.scalar() or 0
+    )).one()
+    total_users = user_row.total
+    users_by_role = {
+        "super_admin": user_row.super_admin,
+        "admin": user_row.admin,
+        "vendor": user_row.vendor,
+        "client": user_row.client,
+        "agent": user_row.agent,
+        "customer_service": user_row.customer_service,
+    }
+    new_users_today = user_row.new_today
+    new_users_this_week = user_row.new_week
+    new_users_this_month = user_row.new_month
+    active_users_today = user_row.active_today
 
-    # New users today/week/month
-    new_today_result = await db.execute(
-        select(func.count(User.id)).where(User.created_at >= today_start)
-    )
-    new_users_today = new_today_result.scalar() or 0
-
-    new_week_result = await db.execute(
-        select(func.count(User.id)).where(User.created_at >= week_start)
-    )
-    new_users_this_week = new_week_result.scalar() or 0
-
-    new_month_result = await db.execute(
-        select(func.count(User.id)).where(User.created_at >= month_start)
-    )
-    new_users_this_month = new_month_result.scalar() or 0
-
-    # Active users today (simplified - users who logged in)
-    active_today_result = await db.execute(
-        select(func.count(User.id)).where(User.last_login >= today_start)
-    )
-    active_users_today = active_today_result.scalar() or 0
-
-    # Vendor statistics
-    total_vendors_result = await db.execute(select(func.count(Vendor.id)))
-    total_vendors = total_vendors_result.scalar() or 0
-
-    pending_vendors_result = await db.execute(
-        select(func.count(Vendor.id)).where(Vendor.status == VendorStatus.PENDING)
-    )
-    pending_vendors = pending_vendors_result.scalar() or 0
-
-    active_vendors_result = await db.execute(
-        select(func.count(Vendor.id)).where(Vendor.status == VendorStatus.ACTIVE)
-    )
-    active_vendors = active_vendors_result.scalar() or 0
-
-    suspended_vendors_result = await db.execute(
-        select(func.count(Vendor.id)).where(Vendor.status == VendorStatus.SUSPENDED)
-    )
-    suspended_vendors = suspended_vendors_result.scalar() or 0
-
-    # Booking statistics
-    total_bookings_result = await db.execute(select(func.count(Booking.id)))
-    total_bookings = total_bookings_result.scalar() or 0
-
-    # Revenue calculations
-    total_revenue_result = await db.execute(
-        select(func.coalesce(func.sum(Booking.total_amount), 0))
-    )
-    total_revenue = float(total_revenue_result.scalar() or 0)
-    net_revenue = total_revenue * 0.90  # Assuming 10% commission
-
-    # Bookings today/week/month
-    bookings_today_result = await db.execute(
-        select(func.count(Booking.id)).where(Booking.created_at >= today_start)
-    )
-    bookings_today = bookings_today_result.scalar() or 0
-
-    bookings_week_result = await db.execute(
-        select(func.count(Booking.id)).where(Booking.created_at >= week_start)
-    )
-    bookings_this_week = bookings_week_result.scalar() or 0
-
-    bookings_month_result = await db.execute(
-        select(func.count(Booking.id)).where(Booking.created_at >= month_start)
-    )
-    bookings_this_month = bookings_month_result.scalar() or 0
-
-    # Revenue today/month
-    revenue_today_result = await db.execute(
-        select(func.coalesce(func.sum(Booking.total_amount), 0)).where(
-            Booking.created_at >= today_start
+    # === Consolidated vendor statistics (1 query replaces 4) ===
+    vendor_row = (await db.execute(
+        select(
+            func.count(Vendor.id).label("total"),
+            func.count(Vendor.id).filter(Vendor.status == VendorStatus.PENDING).label("pending"),
+            func.count(Vendor.id).filter(Vendor.status == VendorStatus.ACTIVE).label("active"),
+            func.count(Vendor.id).filter(Vendor.status == VendorStatus.SUSPENDED).label("suspended"),
         )
-    )
-    revenue_today = float(revenue_today_result.scalar() or 0)
+    )).one()
+    total_vendors = vendor_row.total
+    pending_vendors = vendor_row.pending
+    active_vendors = vendor_row.active
+    suspended_vendors = vendor_row.suspended
 
-    revenue_month_result = await db.execute(
-        select(func.coalesce(func.sum(Booking.total_amount), 0)).where(
-            Booking.created_at >= month_start
+    # === Consolidated booking + revenue statistics (1 query replaces 7) ===
+    booking_row = (await db.execute(
+        select(
+            func.count(Booking.id).label("total"),
+            func.count(Booking.id).filter(Booking.created_at >= today_start).label("today"),
+            func.count(Booking.id).filter(Booking.created_at >= week_start).label("week"),
+            func.count(Booking.id).filter(Booking.created_at >= month_start).label("month"),
+            func.coalesce(func.sum(Booking.total_amount), 0).label("revenue_total"),
+            func.coalesce(
+                func.sum(Booking.total_amount).filter(Booking.created_at >= today_start), 0
+            ).label("revenue_today"),
+            func.coalesce(
+                func.sum(Booking.total_amount).filter(Booking.created_at >= month_start), 0
+            ).label("revenue_month"),
         )
-    )
-    revenue_this_month = float(revenue_month_result.scalar() or 0)
+    )).one()
+    total_bookings = booking_row.total
+    bookings_today = booking_row.today
+    bookings_this_week = booking_row.week
+    bookings_this_month = booking_row.month
+    total_revenue = float(booking_row.revenue_total)
+    revenue_today = float(booking_row.revenue_today)
+    revenue_this_month = float(booking_row.revenue_month)
+    net_revenue = total_revenue * 0.90
 
-    # Content statistics
-    total_properties_result = await db.execute(select(func.count(Property.id)))
-    total_properties = total_properties_result.scalar() or 0
-
-    total_tours_result = await db.execute(select(func.count(Tour.id)))
-    total_tours = total_tours_result.scalar() or 0
-
-    total_reviews_result = await db.execute(select(func.count(Review.id)))
-    total_reviews = total_reviews_result.scalar() or 0
-
-    average_rating_result = await db.execute(
-        select(func.coalesce(func.avg(Review.rating), 0))
-    )
-    average_rating = float(average_rating_result.scalar() or 0)
-
-    total_blog_posts_result = await db.execute(select(func.count(BlogPost.id)))
-    total_blog_posts = total_blog_posts_result.scalar() or 0
-
-    published_blog_posts_result = await db.execute(
-        select(func.count(BlogPost.id)).where(
-            BlogPost.status == BlogPostStatus.PUBLISHED
+    # === Consolidated content statistics (1 query replaces 8) ===
+    content_row = (await db.execute(
+        select(
+            func.count(Property.id).label("properties"),
+            func.count(Tour.id).label("tours"),
+            func.count(Review.id).label("reviews"),
+            func.coalesce(func.avg(Review.rating), 0).label("avg_rating"),
+            func.count(BlogPost.id).label("blog_posts"),
+            func.count(BlogPost.id).filter(BlogPost.status == BlogPostStatus.PUBLISHED).label("published_posts"),
+            func.count(Destination.id).label("destinations"),
         )
-    )
-    published_blog_posts = published_blog_posts_result.scalar() or 0
+    )).one()
+    total_properties = content_row.properties
+    total_tours = content_row.tours
+    total_reviews = content_row.reviews
+    average_rating = float(content_row.avg_rating)
+    total_blog_posts = content_row.blog_posts
+    published_blog_posts = content_row.published_posts
+    total_destinations = content_row.destinations
 
-    total_destinations_result = await db.execute(select(func.count(Destination.id)))
-    total_destinations = total_destinations_result.scalar() or 0
-
-    # Newsletter statistics
-    newsletter_total_result = await db.execute(
-        select(func.count(NewsletterSubscriber.id)).where(
-            NewsletterSubscriber.is_active
+    # === Consolidated newsletter statistics (2 queries replace 7) ===
+    ns_row = (await db.execute(
+        select(
+            func.count(NewsletterSubscriber.id).label("total"),
+            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.is_active).label("active"),
+            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.is_confirmed).label("confirmed"),
+            func.count(NewsletterSubscriber.id).filter(
+                NewsletterSubscriber.created_at >= today_start, NewsletterSubscriber.is_active
+            ).label("new_today"),
+            func.count(NewsletterSubscriber.id).filter(
+                NewsletterSubscriber.created_at >= week_start, NewsletterSubscriber.is_active
+            ).label("new_week"),
+            func.count(NewsletterSubscriber.id).filter(
+                NewsletterSubscriber.created_at >= month_start, NewsletterSubscriber.is_active
+            ).label("new_month"),
         )
-    )
-    newsletter_subscribers = newsletter_total_result.scalar() or 0
-
-    newsletter_today_result = await db.execute(
-        select(func.count(NewsletterSubscriber.id))
-        .where(NewsletterSubscriber.created_at >= today_start)
-        .where(NewsletterSubscriber.is_active)
-    )
-    newsletter_subscribers_today = newsletter_today_result.scalar() or 0
-
-    newsletter_week_result = await db.execute(
-        select(func.count(NewsletterSubscriber.id))
-        .where(NewsletterSubscriber.created_at >= week_start)
-        .where(NewsletterSubscriber.is_active)
-    )
-    newsletter_subscribers_this_week = newsletter_week_result.scalar() or 0
-
-    newsletter_month_result = await db.execute(
-        select(func.count(NewsletterSubscriber.id))
-        .where(NewsletterSubscriber.created_at >= month_start)
-        .where(NewsletterSubscriber.is_active)
-    )
-    newsletter_subscribers_this_month = newsletter_month_result.scalar() or 0
+    )).one()
+    newsletter_subscribers = ns_row.active
+    newsletter_subscribers_today = ns_row.new_today
+    newsletter_subscribers_this_week = ns_row.new_week
+    newsletter_subscribers_this_month = ns_row.new_month
 
     # System health (would integrate with actual monitoring in production)
     system_health = {
@@ -514,6 +473,20 @@ async def get_system_alerts(
     return alerts
 
 
+@router.post("/alerts/{alert_id}/dismiss")
+async def dismiss_alert(
+    alert_id: str,
+    current_user: User = Depends(require_superadmin()),
+):
+    """
+    Dismiss a system alert.
+    Alerts are ephemeral and regenerated on each request,
+    so this simply acknowledges the dismissal. The alert
+    will reappear if the underlying condition persists.
+    """
+    return {"status": "dismissed", "alert_id": alert_id}
+
+
 @router.get("/revenue-trend", response_model=RevenueTrendResponse)
 async def get_revenue_trend(
     days: int = Query(30, ge=7, le=365),
@@ -571,49 +544,23 @@ async def get_newsletter_stats(
     week_start = today_start - timedelta(days=7)
     month_start = today_start.replace(day=1)
 
-    # Total subscribers
-    total_result = await db.execute(select(func.count(NewsletterSubscriber.id)))
-    total = total_result.scalar() or 0
-
-    # Active subscribers
-    active_result = await db.execute(
-        select(func.count(NewsletterSubscriber.id)).where(
-            NewsletterSubscriber.is_active
+    # Consolidated counts (1 query replaces 6)
+    ns_row = (await db.execute(
+        select(
+            func.count(NewsletterSubscriber.id).label("total"),
+            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.is_active).label("active"),
+            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.is_confirmed).label("confirmed"),
+            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.created_at >= today_start).label("new_today"),
+            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.created_at >= week_start).label("new_week"),
+            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.created_at >= month_start).label("new_month"),
         )
-    )
-    active = active_result.scalar() or 0
-
-    # Confirmed subscribers
-    confirmed_result = await db.execute(
-        select(func.count(NewsletterSubscriber.id)).where(
-            NewsletterSubscriber.is_confirmed
-        )
-    )
-    confirmed = confirmed_result.scalar() or 0
-
-    # New today
-    new_today_result = await db.execute(
-        select(func.count(NewsletterSubscriber.id)).where(
-            NewsletterSubscriber.created_at >= today_start
-        )
-    )
-    new_today = new_today_result.scalar() or 0
-
-    # New this week
-    new_week_result = await db.execute(
-        select(func.count(NewsletterSubscriber.id)).where(
-            NewsletterSubscriber.created_at >= week_start
-        )
-    )
-    new_week = new_week_result.scalar() or 0
-
-    # New this month
-    new_month_result = await db.execute(
-        select(func.count(NewsletterSubscriber.id)).where(
-            NewsletterSubscriber.created_at >= month_start
-        )
-    )
-    new_month = new_month_result.scalar() or 0
+    )).one()
+    total = ns_row.total
+    active = ns_row.active
+    confirmed = ns_row.confirmed
+    new_today = ns_row.new_today
+    new_week = ns_row.new_week
+    new_month = ns_row.new_month
 
     # By source
     sources_result = await db.execute(

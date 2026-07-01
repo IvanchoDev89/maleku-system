@@ -278,6 +278,7 @@ const loadUsers = async () => {
 }
 
 let searchTimeout: ReturnType<typeof setTimeout>
+onUnmounted(() => clearTimeout(searchTimeout))
 const debouncedSearch = () => {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => { page.value = 1; loadUsers() }, 300)

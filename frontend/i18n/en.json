@@ -386,7 +386,9 @@
     "filter": "Filter",
     "noResults": "No results found",
     "seeAll": "See all",
-    "back": "Back"
+    "back": "Back",
+    "prev": "Previous",
+    "next": "Next"
   },
   "footer": {
     "brand": "Costa Rica Travel",

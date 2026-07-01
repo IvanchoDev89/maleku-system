@@ -113,9 +113,9 @@ const loadPricePreview = async () => {
   }
 }
 
-watch([checkIn, checkOut, guests], () => {
+watch([checkIn, checkOut, guests], async () => {
   if (checkIn.value && checkOut.value && selectedRoom.value) {
-    checkAvailability()
+    await checkAvailability()
   } else {
     availabilityResult.value = null
     pricePreview.value = null
@@ -124,15 +124,15 @@ watch([checkIn, checkOut, guests], () => {
 
 // === Booking ===
 const goToCheckout = () => {
-  if (!selectedRoom.value || !checkIn.value || !checkOut.value) return
+  if (!selectedRoom.value || !checkIn.value || !checkOut.value || !property.value) return
   const params = new URLSearchParams({
     roomId: selectedRoom.value.id,
-    propertyId: property.value!.id,
+    propertyId: property.value.id,
     checkIn: checkIn.value,
     checkOut: checkOut.value,
     guests: String(guests.value),
     total: String(pricePreview.value?.total || 0),
-    experience: property.value!.name,
+    experience: property.value.name,
     roomName: selectedRoom.value.name,
   })
   router.push(`/checkout?${params.toString()}`)
@@ -253,6 +253,7 @@ useSeo({
           <button
             v-if="allImages.length > 1"
             @click="goToPrevImage"
+            title="Imagen anterior"
             class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors opacity-0 group-hover:opacity-100"
           >
             <ChevronLeft class="w-5 h-5 text-gray-700" />
@@ -260,6 +261,7 @@ useSeo({
           <button
             v-if="allImages.length > 1"
             @click="goToNextImage"
+            title="Imagen siguiente"
             class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors opacity-0 group-hover:opacity-100"
           >
             <ChevronRight class="w-5 h-5 text-gray-700" />

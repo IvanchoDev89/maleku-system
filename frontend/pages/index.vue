@@ -324,10 +324,15 @@ const config = useRuntimeConfig()
 
 const { scrollProgress } = useScrollProgress()
 
-const { data: landingData } = useFetch(
+const { data: landingData, error: landingError } = useFetch(
   () => `${config.public.apiBase}/landing/content`,
   { key: 'landing-content', default: () => null }
 )
+
+if (landingError.value) {
+  console.warn('Landing content API failed, using fallback data')
+  try { useToast().add('No se pudieron cargar datos dinámicos de la página principal', 'warning') } catch {}
+}
 
 const activeDestinations = computed(() => {
   if (landingData.value?.destinations?.length) {

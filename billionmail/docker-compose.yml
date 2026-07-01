@@ -11,7 +11,7 @@ services:
         - TZ=America/Costa_Rica
         - POSTGRES_DB=billionmail
         - POSTGRES_USER=billionmail
-        - POSTGRES_PASSWORD=billionmail_secure_pass_2024
+        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-billionmail_secure_pass_2024}
       restart: always
       ports:
         - "127.0.0.1:25432:5432"
@@ -32,7 +32,7 @@ services:
         - "127.0.0.1:26379:6379"
       environment:
         - TZ=America/Costa_Rica
-        - REDISPASS=redis_secure_pass_2024
+        - REDISPASS=${REDIS_PASSWORD:-redis_secure_pass_2024}
       sysctls:
         - net.core.somaxconn=4096
       networks:
@@ -47,7 +47,7 @@ services:
         - redis-billionmail
       environment:
         - TZ=America/Costa_Rica
-        - REDISPASS=redis_secure_pass_2024
+        - REDISPASS=${REDIS_PASSWORD:-redis_secure_pass_2024}
         - RETENTION_DAYS=7
       volumes:
         - ./conf/rspamd/local.d:/etc/rspamd/local.d
@@ -82,10 +82,10 @@ services:
       environment:
         - DBNAME=billionmail
         - DBUSER=billionmail
-        - DBPASS=billionmail_secure_pass_2024
+        - DBPASS=${POSTGRES_PASSWORD:-billionmail_secure_pass_2024}
         - TZ=America/Costa_Rica
         - BILLIONMAIL_HOSTNAME=mail.costaricatravel.dev
-        - REDISPASS=redis_secure_pass_2024
+        - REDISPASS=${REDIS_PASSWORD:-redis_secure_pass_2024}
         - RETENTION_DAYS=7
       ports:
         - "1143:143"
@@ -124,8 +124,8 @@ services:
         - TZ=America/Costa_Rica
         - DBNAME=billionmail
         - DBUSER=billionmail
-        - DBPASS=billionmail_secure_pass_2024
-        - REDISPASS=redis_secure_pass_2024
+        - DBPASS=${POSTGRES_PASSWORD:-billionmail_secure_pass_2024}
+        - REDISPASS=${REDIS_PASSWORD:-redis_secure_pass_2024}
         - BILLIONMAIL_HOSTNAME=mail.costaricatravel.dev
         - RETENTION_DAYS=7
       cap_add:
@@ -159,7 +159,7 @@ services:
         - ROUNDCUBEMAIL_DB_HOST=pgsql
         - ROUNDCUBEMAIL_DB_NAME=billionmail
         - ROUNDCUBEMAIL_DB_USER=billionmail
-        - ROUNDCUBEMAIL_DB_PASSWORD=billionmail_secure_pass_2024
+        - ROUNDCUBEMAIL_DB_PASSWORD=${POSTGRES_PASSWORD:-billionmail_secure_pass_2024}
         - ROUNDCUBEMAIL_DEFAULT_HOST=dovecot
         - ROUNDCUBEMAIL_DEFAULT_PORT=143
         - ROUNDCUBEMAIL_SMTP_SERVER=postfix

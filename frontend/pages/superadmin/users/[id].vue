@@ -29,6 +29,7 @@ const goBack = () => router.push('/superadmin/users')
 
 const blockUser = async () => {
   try {
+    if (!user.value) return
     const action = user.value.is_active ? 'block' : 'unblock'
     await api.post(`/superadmin/users/${userId}/${action}`)
     user.value.is_active = !user.value.is_active
@@ -40,6 +41,7 @@ const blockUser = async () => {
 
 const impersonateUser = async () => {
   try {
+    if (!user.value) return
     await api.post(`/superadmin/users/${userId}/impersonate`)
     toast.info(`Impersonando usuario ${user.value.email}`)
   } catch (e: any) {

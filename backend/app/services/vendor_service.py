@@ -5,7 +5,7 @@ Vendor service for shared business logic across public, admin, and superadmin ro
 from uuid import UUID
 from typing import Optional
 from fastapi import HTTPException, status
-from sqlalchemy import select, func, case
+from sqlalchemy import select, func, case, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -66,11 +66,18 @@ class VendorService:
         )
         b_row = b_result.one()
 
+        prop_subq = select(Property.id).where(Property.vendor_id == vendor_id)
+        tour_subq = select(Tour.id).where(Tour.vendor_id == vendor_id)
         r_result = await db.execute(
             select(
                 func.avg(Review.rating).label("avg_rating"),
                 func.count(Review.id).label("total_reviews"),
-            ).where(Review.vendor_id == vendor_id)
+            ).where(
+                or_(
+                    Review.property_id.in_(prop_subq),
+                    Review.tour_id.in_(tour_subq),
+                )
+            )
         )
         r_row = r_result.one()
 

@@ -5,29 +5,26 @@
       <p class="text-gray-500 text-sm mt-1">Ingresa para continuar</p>
     </div>
 
-    <form @submit.prevent="handleLogin" class="space-y-5">
+    <form @submit.prevent="handleSubmit" class="space-y-5">
       <UiInput
-        ref="emailRef"
-        v-model="form.email"
+        v-model="email"
         type="email"
         label="Correo electrónico"
         placeholder="tu@email.com"
         required
         :error="errors.email"
-        @update:model-value="errors.email = ''"
       />
 
       <div class="space-y-1">
         <label class="block text-sm font-medium text-gray-700">Contraseña</label>
         <div class="relative">
           <input
-            v-model="form.password"
+            v-model="password"
             :type="showPassword ? 'text' : 'password'"
             class="w-full px-4 py-2.5 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
             :class="errors.password ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'"
             placeholder="••••••••"
             required
-            @input="errors.password = ''"
           />
           <button
             type="button"
@@ -44,14 +41,7 @@
       </div>
 
       <div class="flex items-center justify-between text-sm">
-        <label class="flex items-center gap-2 text-gray-600 hover:text-gray-800 cursor-pointer">
-          <input
-            v-model="rememberMe"
-            type="checkbox"
-            class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-          />
-          Recordarme
-        </label>
+        <UiCheckbox v-model="rememberMe" label="Recordarme" />
         <a
           href="#"
           @click.prevent="handleForgotPassword"
@@ -61,11 +51,9 @@
         </a>
       </div>
 
-      <div v-if="error" class="p-3 rounded-xl flex items-start gap-3" :class="errorVariant === 'error' ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'" role="alert">
-        <AlertCircle v-if="errorVariant === 'error'" class="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
-        <Clock v-else class="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-        <p :class="errorVariant === 'error' ? 'text-red-700' : 'text-amber-700'" class="text-sm">{{ error }}</p>
-      </div>
+      <UiAlert v-if="error" :variant="errorVariant" dismissible @dismiss="error = ''">
+        {{ error }}
+      </UiAlert>
 
       <UiButton
         type="submit"
@@ -100,35 +88,24 @@
 </template>
 
 <script setup lang="ts">
-import { Eye, EyeOff, AlertCircle, Clock } from 'lucide-vue-next'
+import { Eye, EyeOff } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
-const config = useRuntimeConfig()
-const apiBase = config.public.apiBase
 
-definePageMeta({
-  layout: 'auth'
-})
+definePageMeta({ layout: 'auth' })
 
-const emailRef = ref<HTMLInputElement | null>(null)
+const email = ref('')
+const password = ref('')
 const showPassword = ref(false)
 const rememberMe = ref(false)
-
-const form = reactive({
-  email: '',
-  password: ''
-})
-
-const errors = reactive({
-  email: '',
-  password: ''
-})
-
 const loading = ref(false)
 const error = ref('')
 const errorVariant = ref<'error' | 'warning'>('error')
-let retryCountdown = ref(0)
+
+const errors = reactive({ email: '', password: '' })
+
+let retryCountdown = 0
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
 function getDefaultRedirect(role: string): string {
@@ -140,28 +117,28 @@ function getDefaultRedirect(role: string): string {
   }
 }
 
+function isSafeRedirect(redirect: string): boolean {
+  try {
+    const url = new URL(redirect, window.location.origin)
+    return url.origin === window.location.origin
+  } catch {
+    return redirect.startsWith('/')
+  }
+}
+
 function getRedirectUrl(role: string): string {
-  return (route.query.redirect as string) || getDefaultRedirect(role)
+  const redirect = route.query.redirect as string
+  if (redirect && isSafeRedirect(redirect)) return redirect
+  return getDefaultRedirect(role)
 }
 
 function validate(): boolean {
   let valid = true
   errors.email = ''
   errors.password = ''
-
-  if (!form.email) {
-    errors.email = 'El correo electrónico es requerido'
-    valid = false
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-    errors.email = 'Ingresa un correo electrónico válido'
-    valid = false
-  }
-
-  if (!form.password) {
-    errors.password = 'La contraseña es requerida'
-    valid = false
-  }
-
+  if (!email.value) { errors.email = 'El correo es requerido'; valid = false }
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) { errors.email = 'Correo inválido'; valid = false }
+  if (!password.value) { errors.password = 'La contraseña es requerida'; valid = false }
   return valid
 }
 
@@ -171,72 +148,48 @@ function handleForgotPassword() {
 }
 
 function startRetryCountdown(seconds: number) {
-  retryCountdown.value = seconds
+  retryCountdown = seconds
   countdownTimer = setInterval(() => {
-    retryCountdown.value--
-    if (retryCountdown.value <= 0) {
+    retryCountdown--
+    if (retryCountdown <= 0) {
       if (countdownTimer) clearInterval(countdownTimer)
       error.value = ''
     }
   }, 1000)
 }
 
-onMounted(() => {
+onMounted(async () => {
   const auth = useAuthStore()
-
-  // Restore session from localStorage if "remember me" was checked
   const stored = localStorage.getItem('remembered_session')
   if (stored) {
     try {
       const session = JSON.parse(stored)
-      if (session.token && session.user) {
-        auth.token = session.token
-        auth.refreshTokenValue = session.refreshToken
+      if (session.refreshToken && session.user) {
         auth.user = session.user
-        auth.isAuthenticated = true
-        sessionStorage.setItem('token', session.token)
-        sessionStorage.setItem('refreshToken', session.refreshToken)
-        sessionStorage.setItem('user', JSON.stringify(session.user))
-        router.push(getRedirectUrl(session.user.role))
-        return
+        auth.refreshTokenValue = session.refreshToken
+        const refreshed = await auth.refreshToken()
+        if (refreshed) { router.push(getRedirectUrl(session.user.role)); return }
       }
-    } catch {
-      localStorage.removeItem('remembered_session')
-    }
+    } catch { localStorage.removeItem('remembered_session') }
   }
-
   if (auth.isAuthenticated && auth.token && auth.user) {
     router.push(getRedirectUrl(auth.user.role))
   }
-
-  // Auto-focus email field
-  nextTick(() => {
-    const input = document.querySelector<HTMLInputElement>('input[type="email"]')
-    input?.focus()
-  })
+  nextTick(() => document.querySelector<HTMLInputElement>('input[type="email"]')?.focus())
 })
 
-onUnmounted(() => {
-  if (countdownTimer) clearInterval(countdownTimer)
-})
+onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 
-const handleLogin = async () => {
+async function handleSubmit() {
   if (!validate()) return
-
   loading.value = true
   error.value = ''
-
   try {
     const auth = useAuthStore()
-    const result = await auth.login(form.email, form.password)
-
+    const result = await auth.login(email.value, password.value)
     if (result.success) {
       if (rememberMe.value && result.user) {
-        localStorage.setItem('remembered_session', JSON.stringify({
-          token: auth.token,
-          refreshToken: auth.refreshTokenValue,
-          user: result.user
-        }))
+        localStorage.setItem('remembered_session', JSON.stringify({ refreshToken: auth.refreshTokenValue, user: result.user }))
       } else {
         localStorage.removeItem('remembered_session')
       }
@@ -244,25 +197,24 @@ const handleLogin = async () => {
     } else {
       const e = (result.error || '').toLowerCase()
       if (e.includes('rate limit') || e.includes('too many')) {
-        error.value = 'Demasiados intentos. Espera 60 segundos antes de intentar de nuevo.'
+        error.value = 'Demasiados intentos. Espera 60 segundos.'
         errorVariant.value = 'warning'
         startRetryCountdown(60)
       } else if (e.includes('invalid') || e.includes('credentials')) {
-        error.value = 'Correo electrónico o contraseña incorrectos.'
+        error.value = 'Correo o contraseña incorrectos.'
         errorVariant.value = 'error'
       } else if (e.includes('locked') || e.includes('blocked') || e.includes('inactive')) {
-        error.value = 'Tu cuenta ha sido bloqueada. Contacta al administrador.'
+        error.value = 'Cuenta bloqueada. Contacta al administrador.'
         errorVariant.value = 'error'
       } else {
-        error.value = result.error || 'Error inesperado al iniciar sesión. Intenta de nuevo.'
+        error.value = result.error || 'Error inesperado.'
         errorVariant.value = 'error'
       }
     }
-  } catch (e) {
-    error.value = 'Error inesperado al iniciar sesión. Intenta de nuevo.'
+  } catch {
+    error.value = 'Error inesperado. Intenta de nuevo.'
     errorVariant.value = 'error'
   }
-
   loading.value = false
 }
 </script>

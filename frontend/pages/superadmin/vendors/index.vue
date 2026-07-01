@@ -3,26 +3,24 @@
     <!-- Header -->
     <div class="flex justify-between items-center">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Gestión de Proveedores</h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Gestión de Proveedores</h1>
         <p class="text-gray-500 mt-1">Aprobación, moderación y análisis de vendors</p>
       </div>
       <div class="flex gap-3">
         <button
           @click="showAnalytics = true"
-          class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+          class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm font-medium"
         >
           <BarChart3 class="w-4 h-4" />
           <span>{{ $t('superadmin.vendors.analytics') }}</span>
         </button>
         <NuxtLink
           to="/superadmin/vendors/pending"
-          class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
+          class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2 text-sm font-medium"
         >
           <Clock class="w-4 h-4" />
           <span>{{ $t('superadmin.vendors.pending') }}</span>
-          <span v-if="pendingCount > 0" class="px-2 py-0.5 bg-white/20 rounded-full text-sm">
-            {{ pendingCount }}
-          </span>
+          <span v-if="pendingCount > 0" class="px-2 py-0.5 bg-white/20 rounded-full text-sm">{{ pendingCount }}</span>
         </NuxtLink>
       </div>
     </div>
@@ -30,23 +28,23 @@
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
       <UiCard padding="xs">
-        <p class="text-sm text-gray-500">Total Vendors</p>
-        <p class="text-2xl font-bold text-gray-900">{{ stats.total }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Total Vendors</p>
+        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.total }}</p>
       </UiCard>
       <UiCard padding="xs">
-        <p class="text-sm text-gray-500">Pendientes</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Pendientes</p>
         <p class="text-2xl font-bold text-amber-600">{{ stats.pending }}</p>
       </UiCard>
       <UiCard padding="xs">
-        <p class="text-sm text-gray-500">Activos</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Activos</p>
         <p class="text-2xl font-bold text-green-600">{{ stats.active }}</p>
       </UiCard>
       <UiCard padding="xs">
-        <p class="text-sm text-gray-500">Suspendidos</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Suspendidos</p>
         <p class="text-2xl font-bold text-red-600">{{ stats.suspended }}</p>
       </UiCard>
       <UiCard padding="xs">
-        <p class="text-sm text-gray-500">Destacados</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Destacados</p>
         <p class="text-2xl font-bold text-purple-600">{{ stats.featured }}</p>
       </UiCard>
     </div>
@@ -55,237 +53,197 @@
     <UiCard padding="xs">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
-          <div class="relative">
-            <input
-              v-model="filters.search"
-              type="text"
-              placeholder="Nombre o email..."
-              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
-              @input="debouncedSearch"
-            >
-            <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          </div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Buscar</label>
+          <UiInput
+            :model-value="filters.search"
+            placeholder="Nombre o email..."
+            @update:model-value="filters.search = $event; debouncedSearch()"
+          />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado</label>
           <UiSelect v-model="filters.status" :options="statusOptions" placeholder="Todos" @update:model-value="page = 1; loadVendors()" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
           <UiSelect v-model="filters.type" :options="typeOptions" placeholder="Todos" @update:model-value="page = 1; loadVendors()" />
         </div>
-        <div class="flex items-end">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input
-              v-model="filters.featured_only"
-              type="checkbox"
-              class="w-4 h-4 text-slate-900 rounded border-gray-300"
-              @change="loadVendors"
-            >
-            <span class="text-sm text-gray-700">Solo destacados</span>
-          </label>
+        <div class="flex items-end pb-1">
+          <UiCheckbox
+            :model-value="filters.featured_only"
+            label="Solo destacados"
+            @update:model-value="filters.featured_only = $event; loadVendors()"
+          />
         </div>
       </div>
     </UiCard>
 
     <!-- Vendors Table -->
-    <UiCard padding="none" class="overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vendor</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reservas</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ingresos</th>
-              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200">
-            <tr v-for="vendor in vendors" :key="vendor.id" class="hover:bg-gray-50">
-              <td class="px-4 py-4">
-                <div class="flex items-center">
-                  <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600">
-                    <Store class="w-5 h-5" />
-                  </div>
-                  <div class="ml-3">
-                    <div class="flex items-center gap-2">
-                      <p class="text-sm font-medium text-gray-900">{{ vendor.business_name }}</p>
-                      <span v-if="vendor.is_featured" class="px-1.5 py-0.5 bg-purple-100 text-purple-700 text-xs rounded flex items-center gap-1">
-                        <Star class="w-3 h-3" />
-                        {{ $t('superadmin.vendors.featured') }}
-                      </span>
-                    </div>
-                    <p class="text-xs text-gray-500">{{ vendor.business_type }} • {{ vendor.owner_name }}</p>
-                  </div>
-                </div>
-              </td>
-              <td class="px-4 py-4">
-                <UiBadge :variant="statusVariant(vendor.status)">
-                  {{ formatStatus(vendor.status) }}
-                </UiBadge>
-              </td>
-              <td class="px-4 py-4">
-                <div class="flex items-center gap-1">
-                  <Star class="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                  <span class="text-sm font-medium">{{ vendor.rating.toFixed(1) }}</span>
-                </div>
-              </td>
-              <td class="px-4 py-4 text-sm text-gray-600">
-                {{ vendor.total_bookings }}
-              </td>
-              <td class="px-4 py-4 text-sm text-gray-600">
-                ${{ formatNumber(vendor.total_revenue || 0) }}
-              </td>
-              <td class="px-4 py-4 text-right">
-                <div class="flex items-center justify-end gap-2">
-                  <button
-                    v-if="vendor.status === 'pending'"
-                    @click="confirmApproveVendor(vendor)"
-                    class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                    :title="$t('superadmin.vendors.approve')"
-                  >
-                    <CheckCircle class="w-5 h-5" />
-                  </button>
-                  <button
-                    v-if="vendor.status === 'active'"
-                    @click="confirmToggleFeatured(vendor)"
-                    class="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                    :title="vendor.is_featured ? $t('superadmin.vendors.unfeature') : $t('superadmin.vendors.feature')"
-                  >
-                    <component :is="vendor.is_featured ? HeartOff : Star" class="w-5 h-5" />
-                  </button>
-                  <NuxtLink
-                    :to="`/superadmin/vendors/${vendor.id}`"
-                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    :title="$t('superadmin.vendors.view')"
-                  >
-                    <Eye class="w-5 h-5" />
-                  </NuxtLink>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <!-- Pagination -->
-      <div v-if="total > pageSize" class="flex items-center justify-between p-4 border-t border-gray-100">
-        <p class="text-sm text-gray-500">
-          Mostrando {{ (page - 1) * pageSize + 1 }}-{{ Math.min(page * pageSize, total) }} de {{ total }}
-        </p>
-        <div class="flex gap-1">
-          <button
-            :disabled="page <= 1"
-            class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            @click="changePage(page - 1)"
-          >Anterior</button>
-          <button
-            v-for="p in totalPages"
-            :key="p"
-            :class="['px-3 py-1.5 text-sm rounded-lg transition-colors', p === page ? 'bg-primary-600 text-white' : 'border border-gray-200 hover:bg-gray-50']"
-            @click="changePage(p)"
-          >{{ p }}</button>
-          <button
-            :disabled="page >= totalPages"
-            class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            @click="changePage(page + 1)"
-          >Siguiente</button>
+    <UiTable
+      :columns="columns"
+      :rows="vendors"
+      :loading="loading"
+      empty-title="No hay proveedores"
+      :empty-description="$t('superadmin.vendors.noVendorsDescription')"
+    >
+      <template #cell-vendor="{ row }">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-600 dark:text-primary-300 shrink-0">
+            <Store class="w-5 h-5" />
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ row.business_name }}</p>
+              <span v-if="row.is_featured" class="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-xs rounded flex items-center gap-1 shrink-0">
+                <Star class="w-3 h-3" />
+                {{ $t('superadmin.vendors.featured') }}
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 truncate">{{ row.business_type }} • {{ row.owner_name }}</p>
+          </div>
         </div>
-      </div>
-
-      <!-- Loading State -->
-      <div v-if="loading" class="flex items-center justify-center py-12">
-        <UiSpinner size="md" color="primary" />
-      </div>
-
-      <!-- Empty State -->
-      <div v-else-if="vendors.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
-        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-          <Store class="w-8 h-8 text-gray-400" />
+      </template>
+      <template #cell-status="{ row }">
+        <UiBadge :variant="statusVariant(row.status)">
+          {{ formatStatus(row.status) }}
+        </UiBadge>
+      </template>
+      <template #cell-rating="{ row }">
+        <div class="flex items-center gap-1">
+          <Star class="w-4 h-4 text-yellow-400 fill-yellow-400" />
+          <span class="text-sm font-medium text-gray-900 dark:text-white">{{ row.rating?.toFixed(1) || '—' }}</span>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-1">{{ $t('superadmin.vendors.noVendors') }}</h3>
-        <p class="text-gray-500 text-sm">{{ $t('superadmin.vendors.noVendorsDescription') }}</p>
-      </div>
-    </UiCard>
+      </template>
+      <template #cell-bookings="{ row }">
+        <span class="text-gray-600 dark:text-gray-400">{{ row.total_bookings }}</span>
+      </template>
+      <template #cell-revenue="{ row }">
+        <span class="text-gray-600 dark:text-gray-400 font-medium">${{ formatNumber(row.total_revenue || 0) }}</span>
+      </template>
+      <template #cell-actions="{ row }">
+        <div class="flex items-center justify-end gap-2">
+          <button
+            v-if="row.status === 'pending'"
+            @click.stop="confirmApproveVendor(row)"
+            class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
+            :title="$t('superadmin.vendors.approve')"
+          >
+            <CheckCircle class="w-5 h-5" />
+          </button>
+          <button
+            v-if="row.status === 'active'"
+            @click.stop="confirmToggleFeatured(row)"
+            class="p-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg transition-colors"
+            :title="row.is_featured ? $t('superadmin.vendors.unfeature') : $t('superadmin.vendors.feature')"
+          >
+            <component :is="row.is_featured ? HeartOff : Star" class="w-5 h-5" />
+          </button>
+          <NuxtLink
+            :to="`/superadmin/vendors/${row.id}`"
+            class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+            :title="$t('superadmin.vendors.view')"
+          >
+            <Eye class="w-5 h-5" />
+          </NuxtLink>
+        </div>
+      </template>
+      <template #footer>
+        <div v-if="total > pageSize" class="flex items-center justify-between">
+          <p class="text-sm text-gray-500">
+            Mostrando {{ (page - 1) * pageSize + 1 }}-{{ Math.min(page * pageSize, total) }} de {{ total }}
+          </p>
+          <div class="flex gap-1">
+            <button
+              :disabled="page <= 1"
+              class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-300"
+              @click="changePage(page - 1)"
+            >Anterior</button>
+            <button
+              v-for="p in totalPages"
+              :key="p"
+              :class="['px-3 py-1.5 text-sm rounded-lg transition-colors', p === page ? 'bg-primary-600 text-white' : 'border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300']"
+              @click="changePage(p)"
+            >{{ p }}</button>
+            <button
+              :disabled="page >= totalPages"
+              class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-300"
+              @click="changePage(page + 1)"
+            >Siguiente</button>
+          </div>
+        </div>
+      </template>
+    </UiTable>
 
     <!-- Analytics Modal -->
     <UiModal v-if="showAnalytics" :model-value="showAnalytics" title="Analytics de Vendors" max-width="max-w-5xl" @update:model-value="showAnalytics = false">
       <div class="space-y-6">
-          <!-- Summary Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="bg-slate-50 rounded-xl p-4">
-              <p class="text-sm text-gray-500">Total Vendors</p>
-              <p class="text-2xl font-bold">{{ analytics.total_vendors }}</p>
-            </div>
-            <div class="bg-green-50 rounded-xl p-4">
-              <p class="text-sm text-gray-500">Activos</p>
-              <p class="text-2xl font-bold text-green-600">{{ analytics.active_vendors }}</p>
-            </div>
-            <div class="bg-amber-50 rounded-xl p-4">
-              <p class="text-sm text-gray-500">Pendientes</p>
-              <p class="text-2xl font-bold text-amber-600">{{ analytics.pending_approval }}</p>
-            </div>
-            <div class="bg-red-50 rounded-xl p-4">
-              <p class="text-sm text-gray-500">Suspendidos</p>
-              <p class="text-2xl font-bold text-red-600">{{ analytics.suspended_vendors }}</p>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="bg-slate-50 dark:bg-gray-800 rounded-xl p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Vendors</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ analytics.total_vendors }}</p>
           </div>
+          <div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Activos</p>
+            <p class="text-2xl font-bold text-green-600">{{ analytics.active_vendors }}</p>
+          </div>
+          <div class="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Pendientes</p>
+            <p class="text-2xl font-bold text-amber-600">{{ analytics.pending_approval }}</p>
+          </div>
+          <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Suspendidos</p>
+            <p class="text-2xl font-bold text-red-600">{{ analytics.suspended_vendors }}</p>
+          </div>
+        </div>
 
-          <!-- Top Performers -->
-          <div v-if="analytics.top_performers?.length > 0">
-            <h3 class="font-bold text-gray-900 mb-4">Top Performers</h3>
-            <div class="space-y-3">
+        <div v-if="analytics.top_performers?.length > 0">
+          <h3 class="font-bold text-gray-900 dark:text-white mb-4">Top Performers</h3>
+          <div class="space-y-3">
+            <div
+              v-for="(v, index) in analytics.top_performers.slice(0, 5)"
+              :key="v.vendor_id"
+              class="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl"
+            >
               <div
-                v-for="(vendor, index) in analytics.top_performers.slice(0, 5)"
-                :key="vendor.vendor_id"
-                class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl"
+                class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                :class="index === 0 ? 'bg-yellow-400 text-black' : index === 1 ? 'bg-gray-300 text-black' : index === 2 ? 'bg-amber-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'"
               >
-                <div
-                  class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                  :class="index === 0 ? 'bg-yellow-400 text-black' : index === 1 ? 'bg-gray-300 text-black' : index === 2 ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-600'"
-                >
-                  {{ index + 1 }}
-                </div>
-                <div class="flex-1">
-                  <p class="font-medium">{{ vendor.vendor_id }}</p>
-                  <p class="text-sm text-gray-500">{{ vendor.total_bookings }} reservas</p>
-                </div>
-                <div class="text-right">
-                  <p class="font-bold text-green-600">${{ formatNumber(vendor.total_revenue) }}</p>
-                  <p class="text-sm text-yellow-600 flex items-center gap-1">
-            <Star class="w-3 h-3 fill-yellow-400 text-yellow-400" />
-            {{ vendor.average_rating.toFixed(1) }}
-          </p>
-                </div>
+                {{ index + 1 }}
               </div>
-            </div>
-          </div>
-
-          <!-- Recent Registrations -->
-          <div v-if="analytics.recent_registrations?.length > 0">
-            <h3 class="font-bold text-gray-900 mb-4">Registros Recientes</h3>
-            <div class="space-y-2">
-              <div
-                v-for="vendor in analytics.recent_registrations"
-                :key="vendor.id"
-                class="flex justify-between items-center p-3 border border-gray-200 rounded-lg"
-              >
-                <div>
-                  <p class="font-medium">{{ vendor.business_name }}</p>
-                  <p class="text-sm text-gray-500">{{ vendor.owner_name }}</p>
-                </div>
-                <UiBadge :variant="statusVariant(vendor.status)">
-                  {{ formatStatus(vendor.status) }}
-                </UiBadge>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-gray-900 dark:text-white truncate">{{ v.vendor_id }}</p>
+                <p class="text-sm text-gray-500">{{ v.total_bookings }} reservas</p>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="font-bold text-green-600">${{ formatNumber(v.total_revenue) }}</p>
+                <p class="text-sm text-yellow-600 flex items-center gap-1 justify-end">
+                  <Star class="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  {{ v.average_rating?.toFixed(1) || '—' }}
+                </p>
               </div>
             </div>
           </div>
         </div>
+
+        <div v-if="analytics.recent_registrations?.length > 0">
+          <h3 class="font-bold text-gray-900 dark:text-white mb-4">Registros Recientes</h3>
+          <div class="space-y-2">
+            <div
+              v-for="v in analytics.recent_registrations"
+              :key="v.id"
+              class="flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
+            >
+              <div>
+                <p class="font-medium text-gray-900 dark:text-white">{{ v.business_name }}</p>
+                <p class="text-sm text-gray-500">{{ v.owner_name }}</p>
+              </div>
+              <UiBadge :variant="statusVariant(v.status)">{{ formatStatus(v.status) }}</UiBadge>
+            </div>
+          </div>
+        </div>
+      </div>
     </UiModal>
 
-    <!-- Confirm Dialog -->
     <UiConfirmDialog
       v-model="showConfirm"
       :title="confirmTitle"
@@ -327,6 +285,15 @@ const page = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
+
+const columns = [
+  { key: 'vendor', label: 'Vendor' },
+  { key: 'status', label: 'Estado', align: 'center' as const, width: '100px' },
+  { key: 'rating', label: 'Rating', align: 'center' as const, width: '90px', hiddenOnMobile: true },
+  { key: 'bookings', label: 'Reservas', align: 'center' as const, width: '90px', hiddenOnMobile: true },
+  { key: 'revenue', label: 'Ingresos', align: 'right' as const, width: '120px', hiddenOnMobile: true },
+  { key: 'actions', label: 'Acciones', align: 'right' as const },
+]
 
 const filters = ref({
   search: '',
@@ -430,7 +397,6 @@ const loadStats = async () => {
     }
     pendingCount.value = response.pending_approval
     if (filters.value.search || filters.value.status !== 'all' || filters.value.type || filters.value.featured_only) {
-      // Keep current total from filtered loadVendors
     } else if (total.value < response.total_vendors) {
       total.value = response.total_vendors
     }

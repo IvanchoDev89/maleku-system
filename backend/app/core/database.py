@@ -1,7 +1,6 @@
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import settings
 
@@ -46,7 +45,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         try:
             yield session
             await session.commit()
-        except SQLAlchemyError:
+        except Exception:
             await session.rollback()
             raise
 

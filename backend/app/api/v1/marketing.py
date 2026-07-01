@@ -27,7 +27,7 @@ from app.models.marketing import (
 )
 from app.services.billionmail import MarketingService
 
-router = APIRouter()
+router = APIRouter(tags=["Marketing"])
 
 
 # ============ Dependencies ============
@@ -555,6 +555,46 @@ async def get_vendor_analytics(
         "engagement_rate": round(
             (stats.clicks or 0) / (stats.recipients or 1) * 100, 2
         ),
+    }
+
+
+@router.post("/vendor/campaigns/{campaign_id}/send", response_model=SendCampaignResponse)
+@limiter.limit("5/minute")
+async def send_vendor_campaign(
+    request: Request,
+    campaign_id: UUID,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.VENDOR)),
+    vendor=Depends(get_current_vendor),
+):
+    """
+    Send a campaign immediately (Vendor)
+    """
+    # Verify campaign belongs to this vendor
+    result = await db.execute(
+        select(EmailCampaign).where(
+            EmailCampaign.id == campaign_id,
+            EmailCampaign.vendor_id == vendor.id,
+        )
+    )
+    campaign = result.scalar_one_or_none()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    service = MarketingService(db)
+    send_result = await service.send_campaign(str(campaign_id))
+
+    if not send_result["success"]:
+        raise HTTPException(
+            status_code=400, detail=send_result.get("error", "Failed to send campaign")
+        )
+
+    return {
+        "message": "Campaign sent successfully",
+        "total": send_result["total"],
+        "sent": send_result["sent"],
+        "failed": send_result["failed"],
     }
 
 

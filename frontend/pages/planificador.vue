@@ -1342,11 +1342,24 @@ const saveLead = async () => {
       }))
     }
 
-    await $fetch(`${apiBase}/planner/leads`, {
-      method: 'POST',
-      body,
-      headers: { 'Content-Type': 'application/json' }
-    })
+    await Promise.allSettled([
+      $fetch(`${apiBase}/planner/leads`, {
+        method: 'POST',
+        body,
+        headers: { 'Content-Type': 'application/json' }
+      }),
+      $fetch(`${apiBase}/trip-planner/plans`, {
+        method: 'POST',
+        body: {
+          name: `Viaje a Costa Rica - ${form.destinations.slice(0, 3).join(', ')}`,
+          travelers: form.travelers,
+          budget_min: Math.max(0, form.budget - 500),
+          budget_max: form.budget + 500,
+          notes: form.notes || `Plan generado por el planificador. Estilo: ${form.style}, Temporada: ${form.season}, Transporte: ${form.transport}`
+        },
+        headers: { 'Content-Type': 'application/json' }
+      })
+    ])
 
     toast.success('✅ Itinerario guardado exitosamente')
   } catch (e: any) {

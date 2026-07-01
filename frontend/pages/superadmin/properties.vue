@@ -210,6 +210,7 @@ const filters = ref({
 })
 
 let searchTimeout: NodeJS.Timeout
+onUnmounted(() => clearTimeout(searchTimeout))
 
 const statusOptions = [
   { value: 'all', label: 'Todas' },

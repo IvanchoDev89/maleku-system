@@ -90,7 +90,7 @@ class CRUDBase(Generic[ModelType]):
         # Count total before pagination
         count_query = select(func.count()).select_from(query.subquery())
         total_result = await db.execute(count_query)
-        total = total_result.scalar()
+        total = total_result.scalar() or 0
 
         # Apply ordering
         if order_by and hasattr(self.model, order_by):

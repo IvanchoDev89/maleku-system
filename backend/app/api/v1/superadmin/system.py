@@ -15,7 +15,7 @@ from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin
 from app.models import User
 
-router = APIRouter()
+router = APIRouter(tags=["SuperAdmin - System"])
 
 
 # Response Models
@@ -150,7 +150,7 @@ async def get_database_stats(
     connections_result = await db.execute(
         text("SELECT count(*) as count FROM pg_stat_activity")
     )
-    connections = connections_result.scalar()
+    connections = connections_result.scalar() or 0
 
     return {
         "total_size": size_row.size if size_row else "unknown",
@@ -343,9 +343,9 @@ async def _get_db_connection_count(db: AsyncSession) -> Optional[int]:
                 "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database()"
             )
         )
-        return result.scalar()
+        return result.scalar() or 0
     except Exception:
-        return None
+        return 0
 
 
 @router.post("/maintenance-mode", response_model=dict)

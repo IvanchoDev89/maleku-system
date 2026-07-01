@@ -1,5 +1,6 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from typing import List
+from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +21,10 @@ from app.schemas import (
     PaginatedResponse,
 )
 from app.services.cache_service import cache
+from app.services.cloudinary_service import cloudinary_service
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter(tags=["Tours"])
 
@@ -194,6 +199,7 @@ async def get_tour_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
 @router.post(
     "",
     response_model=TourResponse,
+    status_code=status.HTTP_201_CREATED,
     summary="Create tour",
     description="Creates a new tour listing. Vendor or SUPER_ADMIN role required.",
 )
@@ -425,4 +431,66 @@ async def get_my_tours(
 async def get_categories(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Tour.category).where(Tour.is_active).distinct())
     categories = [r[0] for r in result.all() if r[0]]
-    return {"categories": categories}
+    return categories
+
+
+@router.post(
+    "/{tour_id}/gallery",
+    response_model=dict,
+    summary="Upload tour gallery images",
+    description="Upload multiple images to the tour's gallery. Accepted formats: jpg, jpeg, png, gif, webp. Max 10MB each.",
+)
+@limiter.limit("5/minute")
+async def upload_tour_gallery(
+    request: Request,
+    tour_id: uuid.UUID,
+    files: List[UploadFile] = File(...),
+    current_user: User = Depends(require_permission("tours", "update")),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.services.cloudinary_service import CloudinaryError
+
+    result = await db.execute(select(Tour).where(Tour.id == tour_id))
+    tour = result.scalar_one_or_none()
+    if not tour:
+        raise HTTPException(status_code=404, detail="Tour not found")
+
+    if current_user.role == UserRole.VENDOR and tour.vendor_id:
+        v_result = await db.execute(
+            select(Vendor).where(Vendor.user_id == current_user.id)
+        )
+        vendor = v_result.scalar_one_or_none()
+        if not vendor or tour.vendor_id != vendor.id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+
+    current_images = list(tour.images or [])
+    uploaded = []
+
+    for file in files:
+        if not file.filename:
+            continue
+        ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+        if ext not in {"jpg", "jpeg", "png", "gif", "webp"}:
+            continue
+        contents = await file.read()
+        if len(contents) > 10 * 1024 * 1024:
+            continue
+
+        try:
+            upload_result = await cloudinary_service.upload_image(
+                file_content=contents,
+                folder="tours",
+                filename=file.filename,
+            )
+            image_url = upload_result.get("secure_url") or upload_result.get("url")
+            if image_url:
+                current_images.append(image_url)
+                uploaded.append(image_url)
+        except CloudinaryError as e:
+            logger.error(f"Failed to upload tour image: {e}")
+
+    tour.images = current_images
+    db.add(tour)
+    await db.commit()
+
+    return {"uploaded": uploaded, "total_images": len(current_images)}

@@ -1,26 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-
 definePageMeta({
   layout: 'superadmin',
   middleware: ['superadmin'],
 })
-
-interface MediaFile {
-  id: string
-  filename: string
-  original_name: string
-  mime_type: string
-  size_bytes: number
-  size_formatted: string
-  url: string
-  thumbnail_url: string | null
-  alt_text: string
-  folder: string
-  uploaded_by: string
-  uploaded_at: string
-  used_in: string[]
-}
 
 const api = useApi()
 const toast = useToast()
@@ -31,15 +13,16 @@ const error = ref('')
 const files = ref<MediaFile[]>([])
 const currentFolder = ref('all')
 const fileInput = ref<HTMLInputElement | null>(null)
+const confirmDeleteId = ref<string | null>(null)
 
 const folders = computed(() => {
-  const folderSet = new Set(files.value.map(f => f.folder))
+  const folderSet = new Set(files.value.map(f => f.folder || 'general'))
   return ['all', ...Array.from(folderSet).sort()]
 })
 
 const filteredFiles = computed(() => {
   if (currentFolder.value === 'all') return files.value
-  return files.value.filter(f => f.folder === currentFolder.value)
+  return files.value.filter(f => (f.folder || 'general') === currentFolder.value)
 })
 
 const totalSize = computed(() => {
@@ -52,9 +35,7 @@ const totalSize = computed(() => {
   return `${size.toFixed(1)} ${units[i]}`
 })
 
-const triggerUpload = () => {
-  fileInput.value?.click()
-}
+const triggerUpload = () => fileInput.value?.click()
 
 const handleFileSelected = async (event: Event) => {
   const input = event.target as HTMLInputElement
@@ -75,17 +56,25 @@ const handleFileSelected = async (event: Event) => {
 }
 
 const deleteFile = async (file: MediaFile) => {
+  if (confirmDeleteId.value !== file.id) {
+    confirmDeleteId.value = file.id
+    setTimeout(() => { confirmDeleteId.value = null }, 3000)
+    return
+  }
   try {
     await api.delete(`/superadmin/content/media/${file.id}`)
     files.value = files.value.filter(f => f.id !== file.id)
     toast.success('Archivo eliminado')
   } catch (e: any) {
     toast.error(e?.data?.detail || 'Error al eliminar archivo')
+  } finally {
+    confirmDeleteId.value = null
   }
 }
 
 const loadFiles = async () => {
   loading.value = true
+  error.value = ''
   try {
     const data = await api.get<MediaFile[]>('/superadmin/content/media')
     files.value = data
@@ -100,19 +89,11 @@ onMounted(loadFiles)
 </script>
 
 <template>
-  <div v-if="loading" class="text-center py-12">
-    <p class="text-gray-500">Cargando...</p>
-  </div>
-
-  <div v-else-if="error" class="text-center py-12">
-    <p class="text-red-500">{{ error }}</p>
-  </div>
-
-  <div v-else class="space-y-6">
+  <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Media Library</h1>
-        <p class="text-gray-500">{{ files.length }} archivos • {{ totalSize }} total</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Media Library</h1>
+        <p class="text-gray-500 text-sm">{{ files.length }} archivos • {{ totalSize }} total</p>
       </div>
       <div>
         <input
@@ -140,44 +121,70 @@ onMounted(loadFiles)
         :key="folder"
         @click="currentFolder = folder"
         :class="[
-          'px-4 py-2 rounded-lg text-sm font-medium capitalize',
+          'px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors',
           currentFolder === folder
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            ? 'bg-primary-600 text-white shadow-sm'
+            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
         ]"
       >
-        {{ folder }}
+        {{ folder === 'all' ? 'Todas' : folder }}
       </button>
     </div>
 
-    <!-- Media Grid -->
-    <div v-if="filteredFiles.length === 0" class="text-center py-12 text-gray-400">
-      No hay archivos en esta carpeta
+    <!-- Loading state -->
+    <div v-if="loading" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <UiSkeleton v-for="i in 12" :key="i" variant="image" />
     </div>
+
+    <!-- Error state -->
+    <UiAlert v-else-if="error" variant="error" dismissible @dismiss="error = ''">
+      {{ error }}
+    </UiAlert>
+
+    <!-- Empty state -->
+    <UiEmptyState
+      v-else-if="filteredFiles.length === 0"
+      title="No hay archivos"
+      :description="currentFolder === 'all' ? 'Sube tu primer archivo para comenzar' : 'Esta carpeta está vacía'"
+    >
+      <button @click="triggerUpload" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+        Subir Archivo
+      </button>
+    </UiEmptyState>
+
+    <!-- Media grid -->
     <div v-else class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
       <div
         v-for="file in filteredFiles"
         :key="file.id"
-        class="bg-white rounded-lg shadow overflow-hidden group"
+        class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden group transition-shadow hover:shadow-md"
       >
-        <div class="h-32 bg-gray-100 flex items-center justify-center">
+        <div class="h-32 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
           <img
             v-if="file.mime_type?.startsWith('image/')"
             :src="file.thumbnail_url || file.url"
             :alt="file.alt_text || file.filename"
             class="w-full h-full object-cover"
           />
-          <span v-else class="text-4xl">📄</span>
+          <svg v-else class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
         </div>
         <div class="p-3">
-          <div class="text-sm font-medium text-gray-900 truncate" :title="file.filename">{{ file.filename }}</div>
+          <div class="text-sm font-medium text-gray-900 dark:text-white truncate" :title="file.filename">{{ file.filename }}</div>
           <div class="text-xs text-gray-500 flex justify-between mt-1">
             <span>{{ file.size_formatted }}</span>
-            <span class="text-blue-600">{{ file.folder }}</span>
+            <span class="text-primary-600">{{ file.folder }}</span>
           </div>
         </div>
         <div class="px-3 pb-3 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button @click="deleteFile(file)" class="text-xs text-red-600 hover:text-red-800">Eliminar</button>
+          <button
+            @click="deleteFile(file)"
+            :class="confirmDeleteId === file.id ? 'text-red-700 font-bold' : 'text-red-600 hover:text-red-800 dark:hover:text-red-400'"
+            class="text-xs"
+          >
+            {{ confirmDeleteId === file.id ? '¿Confirmar?' : 'Eliminar' }}
+          </button>
         </div>
       </div>
     </div>

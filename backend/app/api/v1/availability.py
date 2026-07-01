@@ -22,7 +22,7 @@ from app.services.availability_service import (
     get_next_available_dates,
 )
 
-router = APIRouter()
+router = APIRouter(tags=["Availability"])
 
 
 # ============ READ MODELS ============

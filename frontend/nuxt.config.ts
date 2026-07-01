@@ -1,6 +1,10 @@
 export default defineNuxtConfig({
   devtools: { enabled: false },
 
+  experimental: {
+    appManifest: false
+  },
+
   modules: [
     '@pinia/nuxt',
     '@vueuse/nuxt',
@@ -34,6 +38,8 @@ export default defineNuxtConfig({
   },
 
   app: {
+    pageTransition: { name: 'page', mode: 'out-in' },
+    layoutTransition: { name: 'layout', mode: 'out-in' },
     head: {
       htmlAttrs: {
         dir: 'ltr'
@@ -88,27 +94,14 @@ export default defineNuxtConfig({
     },
     // SECURITY: Add security headers
     routeRules: {
+      '/checkout/success': { redirect: '/confirmacion' },
       '/**': {
         headers: {
           'X-Frame-Options': 'DENY',
           'X-Content-Type-Options': 'nosniff',
           'Referrer-Policy': 'strict-origin-when-cross-origin',
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self), payment=()',
-          'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-          'Content-Security-Policy': [
-            "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://js.stripe.com 'unsafe-eval'",
-            "worker-src blob:",
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-            "font-src 'self' https://fonts.gstatic.com data:",
-            "img-src 'self' data: https: blob:",
-            "media-src 'self' https:",
-            "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 ws://localhost:3000 ws://localhost:5173 https://api.costaricatravel.dev https://api.stripe.com https://*.sentry.io https://api.cloudinary.com https://res.cloudinary.com",
-            "frame-src 'self' https://*.stripe.com https://js.stripe.com",
-            "object-src 'none'",
-            "base-uri 'self'",
-            "form-action 'self' https://*.stripe.com https://api.stripe.com",
-          ].join('; ')
+          'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload'
         }
       }
     }
@@ -136,7 +129,7 @@ export default defineNuxtConfig({
 
   vite: {
     optimizeDeps: {
-      exclude: ['nuxt']
+      include: ['nuxt/app']
     }
   }
 })

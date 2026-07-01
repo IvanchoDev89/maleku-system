@@ -305,6 +305,7 @@ function difficultyVariant(d: string): string {
 }
 
 let searchTimeout: NodeJS.Timeout
+onUnmounted(() => clearTimeout(searchTimeout))
 function debouncedSearch() {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => { page.value = 1; loadTours() }, 400)

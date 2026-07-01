@@ -6,9 +6,6 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy import select, func, text, case
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
 from app.core.database import get_db
 from app.core.pagination import paginate_flat
 from app.core.security import require_role, require_permission, require_verified_email
@@ -44,10 +41,10 @@ from app.services.availability_service import (
 )
 from app.services.email_service import email_service, EmailError
 from app.core.logging import get_logger
+from app.core.rate_limiter import limiter
 
 router = APIRouter(tags=["Bookings"])
 logger = get_logger(__name__)
-limiter = Limiter(key_func=get_remote_address, enabled=settings.ENVIRONMENT != "test")
 
 
 def generate_confirmation_code():
@@ -138,10 +135,11 @@ async def create_property_booking(
     lock_key = _generate_room_lock_key(data.room_id, data.check_in, data.check_out)
 
     # Adquirir advisory lock (bloquea hasta que esté disponible)
-    await db.execute(
-        text("SELECT pg_advisory_xact_lock(:lock_key)"), {"lock_key": lock_key}
-    )
-    logger.debug(f"Acquired advisory lock {lock_key} for room {data.room_id}")
+    if not settings.DATABASE_URL.startswith("sqlite"):
+        await db.execute(
+            text("SELECT pg_advisory_xact_lock(:lock_key)"), {"lock_key": lock_key}
+        )
+        logger.debug(f"Acquired advisory lock {lock_key} for room {data.room_id}")
 
     # RE-VERIFICAR disponibilidad CON EL LOCK ADQUIRIDO
     # Esto previene TOCTOU: otro proceso no puede haber reservado mientras esperábamos
@@ -308,10 +306,11 @@ async def create_tour_booking(
     )
 
     # Adquirir advisory lock (bloquea hasta que esté disponible)
-    await db.execute(
-        text("SELECT pg_advisory_xact_lock(:lock_key)"), {"lock_key": tour_lock_key}
-    )
-    logger.debug(f"Acquired advisory lock {tour_lock_key} for tour {data.tour_id}")
+    if not settings.DATABASE_URL.startswith("sqlite"):
+        await db.execute(
+            text("SELECT pg_advisory_xact_lock(:lock_key)"), {"lock_key": tour_lock_key}
+        )
+        logger.debug(f"Acquired advisory lock {tour_lock_key} for tour {data.tour_id}")
 
     # RE-VERIFICAR disponibilidad CON EL LOCK ADQUIRIDO
     # Esto previene TOCTOU: otro proceso no puede haber reservado mientras esperábamos

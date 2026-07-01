@@ -276,6 +276,7 @@ const fetchBookings = async () => {
 }
 
 let searchTimeout: ReturnType<typeof setTimeout>
+onUnmounted(() => clearTimeout(searchTimeout))
 const debouncedSearch = () => {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(fetchBookings, 300)

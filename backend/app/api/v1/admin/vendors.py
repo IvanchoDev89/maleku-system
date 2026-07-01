@@ -12,7 +12,7 @@ from app.services.vendor_service import VendorService
 from pydantic import BaseModel
 from typing import Optional
 
-router = APIRouter()
+router = APIRouter(tags=["Admin - Vendors"])
 
 
 class VendorListItem(BaseModel):

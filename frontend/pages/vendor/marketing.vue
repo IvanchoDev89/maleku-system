@@ -271,7 +271,7 @@ const createCampaign = async () => {
 const sendCampaign = async (id: string) => {
   sendingId.value = id
   try {
-    await marketing.sendCampaign(id)
+    await marketing.vendorSendCampaign(id)
     $toast.success('Promoción enviada exitosamente')
     await marketing.listVendorCampaigns()
   } catch (err: any) {

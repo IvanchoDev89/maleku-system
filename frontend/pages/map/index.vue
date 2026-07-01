@@ -139,9 +139,9 @@
 
         <!-- Zoom Controls -->
         <div class="zoom-controls">
-          <button @click="zoomIn">+</button>
-          <button @click="zoomOut">-</button>
-          <button @click="fitBounds">⊡</button>
+          <button @click="zoomIn" title="Acercar">+</button>
+          <button @click="zoomOut" title="Alejar">-</button>
+          <button @click="fitBounds" title="Ajustar vista">⊡</button>
         </div>
       </div>
     </div>

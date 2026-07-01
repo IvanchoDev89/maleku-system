@@ -379,7 +379,9 @@
     "filter": "Filtrer",
     "noResults": "Aucun résultat trouvé",
     "seeAll": "Voir tout",
-    "back": "Retour"
+    "back": "Retour",
+    "prev": "Précédent",
+    "next": "Suivant"
   },
   "footer": {
     "brand": "Costa Rica Travel",

@@ -343,13 +343,13 @@
               <div class="lg:col-span-2">
                 <div class="bg-white rounded-xl border border-gray-200 p-4">
                   <div class="flex items-center justify-between mb-4">
-                    <button @click="calendarPrevMonth" class="p-1.5 hover:bg-gray-100 rounded-lg">
+                    <button @click="calendarPrevMonth" title="Mes anterior" class="p-1.5 hover:bg-gray-100 rounded-lg">
                       <ChevronLeft class="w-5 h-5 text-gray-600" />
                     </button>
                     <h4 class="font-semibold text-gray-900">
                       {{ calendarMonthName }} {{ calendarYear }}
                     </h4>
-                    <button @click="calendarNextMonth" class="p-1.5 hover:bg-gray-100 rounded-lg">
+                    <button @click="calendarNextMonth" title="Mes siguiente" class="p-1.5 hover:bg-gray-100 rounded-lg">
                       <ChevronRight class="w-5 h-5 text-gray-600" />
                     </button>
                   </div>
@@ -627,12 +627,21 @@ const setLocationFromClick = (event: MouseEvent) => {
   form.longitude = -85.5 + (x / rect.width) * 1.5
 }
 
+let _mounted = true
+onUnmounted(() => { _mounted = false })
+
 const getCurrentLocation = () => {
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition((position) => {
-      form.latitude = position.coords.latitude
-      form.longitude = position.coords.longitude
-    })
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (!_mounted) return
+        form.latitude = position.coords.latitude
+        form.longitude = position.coords.longitude
+      },
+      (err) => {
+        console.warn('Geolocation error:', err.message)
+      }
+    )
   }
 }
 

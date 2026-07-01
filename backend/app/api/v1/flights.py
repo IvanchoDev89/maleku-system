@@ -4,7 +4,7 @@ Flights API - Vuelos
 
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,7 +15,7 @@ from app.core.utils import escape_like_pattern
 from app.models import UserRole, Flight, RouteType
 from app.schemas import flight as flight_schema
 
-router = APIRouter()
+router = APIRouter(tags=["Flights"])
 
 
 @router.get("", response_model=dict)
@@ -140,7 +140,7 @@ async def get_flight(flight_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return flight
 
 
-@router.post("", response_model=flight_schema.FlightResponse)
+@router.post("", response_model=flight_schema.FlightResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("10/minute")
 async def create_flight(
     request: Request,

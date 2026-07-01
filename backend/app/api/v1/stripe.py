@@ -32,7 +32,7 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-router = APIRouter()
+router = APIRouter(tags=["Stripe"])
 
 
 def _validate_redirect_url(url: str) -> bool:
@@ -249,7 +249,7 @@ async def get_vendor_connect_link(
     # If already connected, check status
     if vendor.stripe_account_id:
         try:
-            connect_status = get_connect_account_status(vendor.stripe_account_id)
+            connect_status = await asyncio.to_thread(get_connect_account_status, vendor.stripe_account_id)
 
             if connect_status["charges_enabled"] and connect_status["payouts_enabled"]:
                 vendor.stripe_connected = True
@@ -276,7 +276,8 @@ async def get_vendor_connect_link(
     # Create new Connect account
     try:
         base_url = settings.SITE_URL or "https://costaricatravel.dev"
-        connect_data = create_vendor_connect_account(
+        connect_data = await asyncio.to_thread(
+            create_vendor_connect_account,
             vendor=vendor,
             refresh_url=f"{base_url}/vendor/stripe/refresh",
             return_url=f"{base_url}/vendor/stripe/success",

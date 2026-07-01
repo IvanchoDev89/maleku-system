@@ -14,18 +14,28 @@ const stats = ref({
 
 const loadStats = async () => {
   try {
-    const data = await api.get('/superadmin/dashboard/stats')
-    stats.value.blogPosts.total = data.total_blog_posts || 0
-    stats.value.blogPosts.published = data.published_blog_posts || 0
-    stats.value.blogPosts.drafts = (data.total_blog_posts || 0) - (data.published_blog_posts || 0)
+    const [blogData, pagesList, mediaList] = await Promise.all([
+      api.get<any[]>('/superadmin/content/blog'),
+      api.get<any[]>('/superadmin/content/pages'),
+      api.get<any[]>('/superadmin/content/media'),
+    ])
+    stats.value.blogPosts.total = blogData.length
+    stats.value.blogPosts.published = blogData.filter((p: any) => p.status === 'published').length
+    stats.value.blogPosts.drafts = blogData.filter((p: any) => p.status === 'draft').length
+    stats.value.pages.total = pagesList.length
+    stats.value.pages.active = pagesList.filter((p: any) => p.is_active).length
+    stats.value.media.images = mediaList.filter((m: any) => m.mime_type?.startsWith('image/')).length
+    stats.value.media.videos = mediaList.filter((m: any) => m.mime_type?.startsWith('video/')).length
+    const totalBytes = mediaList.reduce((sum: number, m: any) => sum + (m.size_bytes || 0), 0)
+    stats.value.media.totalSize = totalBytes < 1024 * 1024
+      ? `${(totalBytes / 1024).toFixed(1)} KB`
+      : `${(totalBytes / (1024 * 1024)).toFixed(1)} MB`
   } catch {
     // stats stay at defaults
   }
 }
 
-onMounted(() => {
-  loadStats()
-})
+onMounted(loadStats)
 </script>
 
 <template>
@@ -119,6 +129,25 @@ onMounted(() => {
               <p class="text-lg font-bold text-gray-900">{{ stats.media.totalSize }}</p>
               <p class="text-xs text-gray-500">Espacio</p>
             </div>
+          </div>
+        </div>
+      </NuxtLink>
+
+      <NuxtLink to="/superadmin/content/seo" class="block group">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-amber-200 transition-all">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+              <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <span class="text-sm text-amber-600 font-medium group-hover:underline">Gestionar →</span>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-1">SEO Global</h3>
+          <p class="text-sm text-gray-500 mb-4">Meta tags, robots.txt, sitemap</p>
+          <div class="text-sm text-gray-400">
+            Configuración SEO del sitio completo
           </div>
         </div>
       </NuxtLink>

@@ -4,21 +4,29 @@ from .audit import router as audit_router
 from .bookings import router as bookings_router
 from .content import router as content_router
 from .dashboard import router as dashboard_router
+from .destinations import router as destinations_router
+from .listings import router as listings_router
 from .permissions import router as permissions_router
+from .properties import router as properties_router
 from .reviews import router as reviews_router
 from .settings import router as settings_router
 from .system import router as system_router
+from .tours import router as tours_router
 from .users import router as users_router
 from .vendors import router as vendors_router
 
-router = APIRouter()
+router = APIRouter(tags=["SuperAdmin"])
 router.include_router(audit_router, prefix="/audit")
 router.include_router(bookings_router, prefix="/bookings")
 router.include_router(content_router)
 router.include_router(dashboard_router, prefix="/dashboard")
+router.include_router(destinations_router)
+router.include_router(listings_router)
 router.include_router(permissions_router)
+router.include_router(properties_router)
 router.include_router(reviews_router, prefix="/reviews")
 router.include_router(settings_router)
 router.include_router(system_router, prefix="/system")
+router.include_router(tours_router)
 router.include_router(users_router, prefix="/users")
 router.include_router(vendors_router)
