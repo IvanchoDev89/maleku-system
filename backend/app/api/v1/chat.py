@@ -3,18 +3,19 @@ Chat/Conversation API - WebSocket Ready
 """
 
 import uuid
-from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
-from sqlalchemy import select, desc
-from sqlalchemy.orm import selectinload
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from pydantic import BaseModel
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
 from app.core.security import get_current_user
-from app.models import User, UserRole, Vendor, Conversation, Message, ChatServiceType
+from app.models import ChatServiceType, Conversation, Message, User, UserRole, Vendor
 from app.schemas import chat as chat_schema
-from pydantic import BaseModel
 
 router = APIRouter(tags=["Chat"])
 
@@ -128,7 +129,9 @@ async def list_conversations(
     return conversations
 
 
-@router.post("", response_model=chat_schema.ConversationResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=chat_schema.ConversationResponse, status_code=status.HTTP_201_CREATED
+)
 @limiter.limit("30/minute")
 async def create_conversation(
     conv_data: chat_schema.ConversationCreate,
@@ -178,9 +181,7 @@ async def get_conversation(
     current_user: User = Depends(get_current_user),
 ):
     """Get conversation details"""
-    result = await db.execute(
-        select(Conversation).where(Conversation.id == conversation_id)
-    )
+    result = await db.execute(select(Conversation).where(Conversation.id == conversation_id))
     conversation = result.scalar_one_or_none()
 
     if not conversation:
@@ -193,9 +194,7 @@ async def get_conversation(
     return conversation
 
 
-@router.get(
-    "/{conversation_id}/messages", response_model=list[chat_schema.MessageResponse]
-)
+@router.get("/{conversation_id}/messages", response_model=list[chat_schema.MessageResponse])
 async def get_messages(
     conversation_id: uuid.UUID,
     limit: int = Query(default=50, ge=1, le=100),
@@ -204,9 +203,7 @@ async def get_messages(
     current_user: User = Depends(get_current_user),
 ):
     """Get conversation messages"""
-    result = await db.execute(
-        select(Conversation).where(Conversation.id == conversation_id)
-    )
+    result = await db.execute(select(Conversation).where(Conversation.id == conversation_id))
     conversation = result.scalar_one_or_none()
 
     if not conversation:
@@ -237,9 +234,7 @@ async def send_message(
     current_user: User = Depends(get_current_user),
 ):
     """Send a message"""
-    result = await db.execute(
-        select(Conversation).where(Conversation.id == conversation_id)
-    )
+    result = await db.execute(select(Conversation).where(Conversation.id == conversation_id))
     conversation = result.scalar_one_or_none()
 
     if not conversation:
@@ -271,7 +266,7 @@ async def send_message(
         attachments=message_data.attachments,
     )
 
-    conversation.last_message_at = datetime.now(timezone.utc)
+    conversation.last_message_at = datetime.now(UTC)
 
     db.add(message)
     await db.commit()
@@ -289,9 +284,7 @@ async def mark_read(
     current_user: User = Depends(get_current_user),
 ):
     """Mark messages as read"""
-    result = await db.execute(
-        select(Conversation).where(Conversation.id == conversation_id)
-    )
+    result = await db.execute(select(Conversation).where(Conversation.id == conversation_id))
     conversation = result.scalar_one_or_none()
 
     if not conversation:
@@ -311,7 +304,7 @@ async def mark_read(
     messages = result.scalars().all()
 
     for message in messages:
-        message.read_at = datetime.now(timezone.utc)
+        message.read_at = datetime.now(UTC)
 
     await db.commit()
 

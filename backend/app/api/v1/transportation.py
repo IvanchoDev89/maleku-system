@@ -3,18 +3,18 @@ Transportation API - Transporte Privado
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
 from app.core.security import get_current_user, require_role
-from app.models import User, UserRole, Vendor, PricingType
-from app.models import Transportation, TransportServiceType
+from app.models import PricingType, Transportation, TransportServiceType, User, UserRole, Vendor
 from app.schemas import transportation as transportation_schema
-from pydantic import BaseModel
 
 router = APIRouter(tags=["Transportation"])
 
@@ -91,9 +91,7 @@ async def list_transportation(
 
     Note: Geolocation-based search not yet implemented
     """
-    query = select(Transportation).where(
-        Transportation.is_active, Transportation.is_available
-    )
+    query = select(Transportation).where(Transportation.is_active, Transportation.is_available)
 
     if location:
         query = query.where(Transportation.locations.contains(location))
@@ -116,9 +114,7 @@ async def list_transportation(
         count_query = count_query.where(Transportation.capacity >= capacity)
 
     limit = min(limit, 100)
-    result = await db.execute(
-        query.order_by(Transportation.base_price).offset(skip).limit(limit)
-    )
+    result = await db.execute(query.order_by(Transportation.base_price).offset(skip).limit(limit))
     services = result.scalars().all()
 
     total_result = await db.execute(count_query)
@@ -132,9 +128,7 @@ async def list_transportation(
     }
 
 
-@router.get(
-    "/{transport_id}", response_model=transportation_schema.TransportationDetailResponse
-)
+@router.get("/{transport_id}", response_model=transportation_schema.TransportationDetailResponse)
 async def get_transportation(
     transport_id: uuid.UUID, db: AsyncSession = Depends(get_db)
 ) -> transportation_schema.TransportationDetailResponse:
@@ -151,9 +145,7 @@ async def get_transportation(
     Raises:
         HTTPException: If service not found
     """
-    result = await db.execute(
-        select(Transportation).where(Transportation.id == transport_id)
-    )
+    result = await db.execute(select(Transportation).where(Transportation.id == transport_id))
     transport = result.scalar_one_or_none()
 
     if not transport:
@@ -162,7 +154,11 @@ async def get_transportation(
     return transport
 
 
-@router.post("", response_model=transportation_schema.TransportationResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=transportation_schema.TransportationResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 @limiter.limit("10/minute")
 async def create_transportation(
     request: Request,
@@ -210,9 +206,7 @@ async def create_transportation(
     return transport
 
 
-@router.put(
-    "/{transport_id}", response_model=transportation_schema.TransportationResponse
-)
+@router.put("/{transport_id}", response_model=transportation_schema.TransportationResponse)
 @limiter.limit("10/minute")
 async def update_transportation(
     request: Request,
@@ -222,17 +216,13 @@ async def update_transportation(
     current_user: User = Depends(require_role(UserRole.VENDOR)),
 ) -> transportation_schema.TransportationResponse:
     """Update transportation service (Owner only)"""
-    result = await db.execute(
-        select(Transportation).where(Transportation.id == transport_id)
-    )
+    result = await db.execute(select(Transportation).where(Transportation.id == transport_id))
     transport = result.scalar_one_or_none()
 
     if not transport:
         raise HTTPException(status_code=404, detail="Transportation service not found")
 
-    vendor_result = await db.execute(
-        select(Vendor).where(Vendor.user_id == current_user.id)
-    )
+    vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     vendor = vendor_result.scalar_one_or_none()
 
     if not vendor:
@@ -267,7 +257,7 @@ async def update_transportation(
         if key in allowed_fields:
             setattr(transport, key, value)
 
-    transport.updated_at = datetime.now(timezone.utc)
+    transport.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(transport)
 
@@ -281,17 +271,13 @@ async def delete_transportation(
     current_user: User = Depends(require_role(UserRole.VENDOR)),
 ) -> dict:
     """Delete transportation service (Owner only)"""
-    result = await db.execute(
-        select(Transportation).where(Transportation.id == transport_id)
-    )
+    result = await db.execute(select(Transportation).where(Transportation.id == transport_id))
     transport = result.scalar_one_or_none()
 
     if not transport:
         raise HTTPException(status_code=404, detail="Transportation service not found")
 
-    vendor_result = await db.execute(
-        select(Vendor).where(Vendor.user_id == current_user.id)
-    )
+    vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     vendor = vendor_result.scalar_one_or_none()
 
     if not vendor:
@@ -339,9 +325,7 @@ async def calculate_price(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Calculate transportation price"""
-    result = await db.execute(
-        select(Transportation).where(Transportation.id == transport_id)
-    )
+    result = await db.execute(select(Transportation).where(Transportation.id == transport_id))
     transport = result.scalar_one_or_none()
 
     if not transport:

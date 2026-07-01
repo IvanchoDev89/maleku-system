@@ -1,12 +1,13 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func, and_, case
-from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
+from sqlalchemy import and_, case, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models import User, UserRole, Booking, BookingStatus, Vendor
+from app.models import Booking, BookingStatus, User, UserRole, Vendor
 
 router = APIRouter(tags=["Analytics"])
 
@@ -82,15 +83,13 @@ async def get_overview_stats(
         select(
             func.count(Booking.id).label("total"),
             func.coalesce(func.sum(Booking.total_amount), 0).label("total_revenue"),
-            func.sum(
-                case((Booking.status == BookingStatus.PENDING, 1), else_=0)
-            ).label("pending"),
-            func.sum(
-                case((Booking.status == BookingStatus.CONFIRMED, 1), else_=0)
-            ).label("confirmed"),
-            func.sum(
-                case((Booking.status == BookingStatus.CANCELLED, 1), else_=0)
-            ).label("cancelled"),
+            func.sum(case((Booking.status == BookingStatus.PENDING, 1), else_=0)).label("pending"),
+            func.sum(case((Booking.status == BookingStatus.CONFIRMED, 1), else_=0)).label(
+                "confirmed"
+            ),
+            func.sum(case((Booking.status == BookingStatus.CANCELLED, 1), else_=0)).label(
+                "cancelled"
+            ),
         )
     )
     stats = booking_stats.one()
@@ -119,7 +118,7 @@ async def get_revenue_stats(
         raise HTTPException(status_code=403, detail="Access denied")
 
     days = int(period)
-    start_date = datetime.now(timezone.utc) - timedelta(days=days)
+    start_date = datetime.now(UTC) - timedelta(days=days)
 
     # Single aggregated query instead of per-day loop
     day_expr = func.date_trunc("day", Booking.created_at)
@@ -226,7 +225,7 @@ async def get_user_stats(
     if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=now.weekday())
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -235,15 +234,9 @@ async def get_user_stats(
     result = await db.execute(
         select(
             func.count(User.id).label("total"),
-            func.sum(case((User.created_at >= today_start, 1), else_=0)).label(
-                "new_today"
-            ),
-            func.sum(case((User.created_at >= week_start, 1), else_=0)).label(
-                "new_week"
-            ),
-            func.sum(case((User.created_at >= month_start, 1), else_=0)).label(
-                "new_month"
-            ),
+            func.sum(case((User.created_at >= today_start, 1), else_=0)).label("new_today"),
+            func.sum(case((User.created_at >= week_start, 1), else_=0)).label("new_week"),
+            func.sum(case((User.created_at >= month_start, 1), else_=0)).label("new_month"),
             User.role,
             func.count(User.id).label("role_count"),
         ).group_by(User.role)
@@ -254,9 +247,7 @@ async def get_user_stats(
     new_today = sum(r.new_today for r in rows) if rows else 0
     new_this_week = sum(r.new_week for r in rows) if rows else 0
     new_this_month = sum(r.new_month for r in rows) if rows else 0
-    by_role = {
-        r.role.value if hasattr(r.role, "value") else r.role: r.role_count for r in rows
-    }
+    by_role = {r.role.value if hasattr(r.role, "value") else r.role: r.role_count for r in rows}
 
     return UserStatsData(
         total=total,
@@ -281,7 +272,7 @@ async def get_traffic_stats(
     results = []
 
     for i in range(days):
-        date = datetime.now(timezone.utc) - timedelta(days=days - i - 1)
+        date = datetime.now(UTC) - timedelta(days=days - i - 1)
         date_str = date.strftime("%Y-%m-%d")
 
         results.append(TrafficData(date=date_str, pageviews=0, unique_visitors=0))
@@ -307,7 +298,7 @@ async def get_booking_trends(
         raise HTTPException(status_code=403, detail="Access denied")
 
     days = int(period)
-    start_date = datetime.now(timezone.utc) - timedelta(days=days)
+    start_date = datetime.now(UTC) - timedelta(days=days)
 
     # Single aggregated query
     day_expr = func.date_trunc("day", Booking.created_at)
@@ -325,9 +316,7 @@ async def get_booking_trends(
     return [
         {
             "date": (start_date + timedelta(days=i)).strftime("%Y-%m-%d"),
-            "bookings": counts.get(
-                (start_date + timedelta(days=i)).strftime("%Y-%m-%d"), 0
-            ),
+            "bookings": counts.get((start_date + timedelta(days=i)).strftime("%Y-%m-%d"), 0),
         }
         for i in range(days)
     ]

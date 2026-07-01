@@ -3,42 +3,41 @@ import uuid
 from fastapi import (
     APIRouter,
     Depends,
-    HTTPException,
-    status,
-    UploadFile,
     File,
     Form,
+    HTTPException,
     Request,
+    UploadFile,
+    status,
 )
 from sqlalchemy import select
-from app.core.rate_limiter import limiter
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
+from app.api.v1.upload import (
+    MAX_FILE_SIZE,
+    save_upload_file,
+    upload_to_cloudinary,
+    validate_file,
+    validate_image_bytes,
+)
 from app.core.database import get_db
 from app.core.logging import get_logger
 from app.core.pagination import paginate_flat
+from app.core.rate_limiter import limiter
 from app.core.security import get_current_user, require_permission
-from app.models import User, UserRole, Vendor, Property
-from app.models.property import PropertyType, PropertyCategory
+from app.models import Property, User, UserRole, Vendor
+from app.models.property import PropertyCategory, PropertyType
 from app.schemas import (
-    PropertyResponse,
-    PropertyCreate,
-    PropertyUpdate,
-    PropertyListResponse,
-    PaginationParams,
     PaginatedResponse,
+    PaginationParams,
+    PropertyCreate,
+    PropertyListResponse,
+    PropertyResponse,
+    PropertyUpdate,
 )
 from app.services.cache_service import cache
-from app.services.cloudinary_service import cloudinary_service, CloudinaryError
-
-from app.api.v1.upload import (
-    validate_file,
-    validate_image_bytes,
-    save_upload_file,
-    upload_to_cloudinary,
-    MAX_FILE_SIZE,
-)
+from app.services.cloudinary_service import CloudinaryError, cloudinary_service
 
 logger = get_logger(__name__)
 
@@ -145,9 +144,7 @@ async def get_properties(
     )
 
     # Cache the response
-    await cache.set(
-        cache_key, response.model_dump(), ttl=CACHE_TTL_LIST, tags=["properties"]
-    )
+    await cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_LIST, tags=["properties"])
 
     return response
 
@@ -204,9 +201,7 @@ async def get_my_properties(
     description="Returns a distinct list of all regions where active properties are located.",
 )
 async def get_regions(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Property.region).where(Property.is_active).distinct()
-    )
+    result = await db.execute(select(Property.region).where(Property.is_active).distinct())
     regions = [r[0] for r in result.all() if r[0]]
     return {"regions": regions}
 
@@ -237,14 +232,10 @@ async def get_property(property_id: uuid.UUID, db: AsyncSession = Depends(get_db
     property_obj = result.scalar_one_or_none()
 
     if not property_obj:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Property not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Property not found")
 
     response = PropertyResponse.model_validate(property_obj)
-    await cache.set(
-        cache_key, response.model_dump(), ttl=CACHE_TTL_DETAIL, tags=["properties"]
-    )
+    await cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_DETAIL, tags=["properties"])
     return response
 
 
@@ -274,16 +265,12 @@ async def get_property_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
     property_obj = result.scalar_one_or_none()
 
     if not property_obj:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Property not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Property not found")
 
     response = PropertyResponse.model_validate(property_obj)
 
     # Cache the response
-    await cache.set(
-        cache_key, response.model_dump(), ttl=CACHE_TTL_DETAIL, tags=["properties"]
-    )
+    await cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_DETAIL, tags=["properties"])
 
     return response
 
@@ -317,9 +304,7 @@ async def create_property(
 
     # SECURITY: Prevent mass assignment
     property_data_filtered = {
-        k: v
-        for k, v in data.model_dump().items()
-        if k in ALLOWED_FIELDS and k != "slug"
+        k: v for k, v in data.model_dump().items() if k in ALLOWED_FIELDS and k != "slug"
     }
 
     property_obj = Property(vendor_id=vendor.id, slug=slug, **property_data_filtered)
@@ -371,15 +356,11 @@ async def update_property(
     property_obj = result.scalar_one_or_none()
 
     if not property_obj:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Property not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Property not found")
 
     # Ownership check
     if current_user.role == UserRole.VENDOR:
-        result_vendor = await db.execute(
-            select(Vendor).where(Vendor.user_id == current_user.id)
-        )
+        result_vendor = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
         vendor = result_vendor.scalar_one_or_none()
         if not vendor or property_obj.vendor_id != vendor.id:
             raise HTTPException(
@@ -433,15 +414,11 @@ async def delete_property(
     property_obj = result.scalar_one_or_none()
 
     if not property_obj:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Property not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Property not found")
 
     # Ownership check
     if current_user.role == UserRole.VENDOR:
-        result_vendor = await db.execute(
-            select(Vendor).where(Vendor.user_id == current_user.id)
-        )
+        result_vendor = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
         vendor = result_vendor.scalar_one_or_none()
         if not vendor or property_obj.vendor_id != vendor.id:
             raise HTTPException(
@@ -469,14 +446,10 @@ async def _check_property_ownership(
     property_obj = result.scalar_one_or_none()
 
     if not property_obj:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Property not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Property not found")
 
     if current_user.role != UserRole.SUPER_ADMIN:
-        result_vendor = await db.execute(
-            select(Vendor).where(Vendor.user_id == current_user.id)
-        )
+        result_vendor = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
         vendor = result_vendor.scalar_one_or_none()
         if not vendor or property_obj.vendor_id != vendor.id:
             raise HTTPException(
@@ -528,9 +501,7 @@ async def upload_property_images(
     if is_cover or not property_obj.images:
         property_obj.cover_image = url
         if property_obj.images:
-            property_obj.images = [url] + [
-                img for img in property_obj.images if img != url
-            ]
+            property_obj.images = [url] + [img for img in property_obj.images if img != url]
         else:
             property_obj.images = [url]
     else:

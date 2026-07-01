@@ -1,6 +1,6 @@
 """Mock email service (Resend) for testing."""
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 
 class MockResendResponse:

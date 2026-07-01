@@ -1,15 +1,15 @@
 import uuid
-from typing import Optional
+
 from fastapi import APIRouter, Depends, Request
-from sqlalchemy import select, desc
+from pydantic import BaseModel
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
-from app.models.planner import PlannerLead
-from app.models.base import UserRole
 from app.core.security import require_role
-from pydantic import BaseModel
+from app.models.base import UserRole
+from app.models.planner import PlannerLead
 
 router = APIRouter(tags=["Planner"])
 
@@ -17,7 +17,7 @@ router = APIRouter(tags=["Planner"])
 class ActivitySchema(BaseModel):
     time: str
     desc: str
-    detail: Optional[str] = None
+    detail: str | None = None
     cost: int = 0
 
 
@@ -31,9 +31,9 @@ class DayCostSchema(BaseModel):
 class DaySchema(BaseModel):
     title: str
     region: str
-    icon: Optional[str] = None
+    icon: str | None = None
     activities: list[ActivitySchema] = []
-    tip: Optional[str] = None
+    tip: str | None = None
     dayCost: int = 0
     costs: DayCostSchema = DayCostSchema()
 
@@ -47,10 +47,10 @@ class PlannerLeadCreate(BaseModel):
     season: str = "any"
     transport: str = "shuttle"
     accommodation: str = "mid"
-    notes: Optional[str] = None
-    estimated_cost: Optional[float] = None
-    total_days: Optional[int] = None
-    itinerary: Optional[list[DaySchema]] = None
+    notes: str | None = None
+    estimated_cost: float | None = None
+    total_days: int | None = None
+    itinerary: list[DaySchema] | None = None
 
 
 class PlannerLeadResponse(BaseModel):
@@ -63,9 +63,9 @@ class PlannerLeadResponse(BaseModel):
     season: str
     transport: str
     accommodation: str
-    notes: Optional[str] = None
-    estimated_cost: Optional[float] = None
-    total_days: Optional[int] = None
+    notes: str | None = None
+    estimated_cost: float | None = None
+    total_days: int | None = None
     status: str
     created_at: str
     updated_at: str
@@ -106,9 +106,7 @@ async def list_planner_leads(
     db: AsyncSession = Depends(get_db),
     _=Depends(require_role(UserRole.SUPER_ADMIN)),
 ):
-    result = await db.execute(
-        select(PlannerLead).order_by(desc(PlannerLead.created_at))
-    )
+    result = await db.execute(select(PlannerLead).order_by(desc(PlannerLead.created_at)))
     leads = result.scalars().all()
     return [
         {

@@ -1,7 +1,6 @@
 """Mock Stripe API for testing without live credentials."""
 
-from unittest.mock import AsyncMock, MagicMock
-from typing import Optional
+from unittest.mock import MagicMock
 
 
 class MockStripePaymentIntent:
@@ -20,7 +19,7 @@ class MockStripeCheckoutSession:
     payment_status: str = "paid"
     status: str = "complete"
     metadata: dict = {}
-    customer: Optional[str] = None
+    customer: str | None = None
     payment_intent: str = "pi_test_mock_123456789"
 
 

@@ -1,7 +1,7 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class StaticPageBase(BaseModel):
@@ -10,9 +10,9 @@ class StaticPageBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     slug: str = Field(..., min_length=1, max_length=200)
     content: str = ""
-    template: Optional[str] = None
-    meta_title: Optional[str] = Field(None, max_length=70)
-    meta_description: Optional[str] = Field(None, max_length=160)
+    template: str | None = None
+    meta_title: str | None = Field(None, max_length=70)
+    meta_description: str | None = Field(None, max_length=160)
     is_active: bool = True
     show_in_footer: bool = False
     show_in_header: bool = False
@@ -26,16 +26,16 @@ class StaticPageCreate(StaticPageBase):
 class StaticPageUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    title: Optional[str] = Field(None, min_length=1, max_length=200)
-    slug: Optional[str] = Field(None, min_length=1, max_length=200)
-    content: Optional[str] = None
-    template: Optional[str] = None
-    meta_title: Optional[str] = Field(None, max_length=70)
-    meta_description: Optional[str] = Field(None, max_length=160)
-    is_active: Optional[bool] = None
-    show_in_footer: Optional[bool] = None
-    show_in_header: Optional[bool] = None
-    sort_order: Optional[int] = None
+    title: str | None = Field(None, min_length=1, max_length=200)
+    slug: str | None = Field(None, min_length=1, max_length=200)
+    content: str | None = None
+    template: str | None = None
+    meta_title: str | None = Field(None, max_length=70)
+    meta_description: str | None = Field(None, max_length=160)
+    is_active: bool | None = None
+    show_in_footer: bool | None = None
+    show_in_header: bool | None = None
+    sort_order: int | None = None
 
 
 class StaticPageResponse(StaticPageBase):
@@ -51,9 +51,11 @@ class SEOSettingsBase(BaseModel):
 
     site_title_template: str = "{page_title} | {site_name}"
     default_meta_title: str = "Costa Rica Travel - Tours, Hotels & Vacation Packages"
-    default_meta_description: str = "Discover the best of Costa Rica with our curated tours, hotels, and vacation packages."
-    default_meta_keywords: List[str] = ["costa rica", "travel", "tours", "hotels"]
-    google_site_verification: Optional[str] = None
+    default_meta_description: str = (
+        "Discover the best of Costa Rica with our curated tours, hotels, and vacation packages."
+    )
+    default_meta_keywords: list[str] = ["costa rica", "travel", "tours", "hotels"]
+    google_site_verification: str | None = None
     robots_txt: str = "User-agent: *\nDisallow: /admin/\nDisallow: /superadmin/"
     sitemap_enabled: bool = True
     structured_data_enabled: bool = True
@@ -62,19 +64,19 @@ class SEOSettingsBase(BaseModel):
 class SEOSettingsUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    site_title_template: Optional[str] = None
-    default_meta_title: Optional[str] = None
-    default_meta_description: Optional[str] = None
-    default_meta_keywords: Optional[List[str]] = None
-    google_site_verification: Optional[str] = None
-    robots_txt: Optional[str] = None
-    sitemap_enabled: Optional[bool] = None
-    structured_data_enabled: Optional[bool] = None
+    site_title_template: str | None = None
+    default_meta_title: str | None = None
+    default_meta_description: str | None = None
+    default_meta_keywords: list[str] | None = None
+    google_site_verification: str | None = None
+    robots_txt: str | None = None
+    sitemap_enabled: bool | None = None
+    structured_data_enabled: bool | None = None
 
 
 class SEOSettingsResponse(SEOSettingsBase):
     id: UUID
-    updated_by: Optional[UUID] = None
+    updated_by: UUID | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -89,9 +91,9 @@ class MediaFileBase(BaseModel):
     mime_type: str
     size_bytes: int
     url: str
-    thumbnail_url: Optional[str] = None
-    alt_text: Optional[str] = None
-    folder: Optional[str] = None
+    thumbnail_url: str | None = None
+    alt_text: str | None = None
+    folder: str | None = None
 
 
 class MediaFileCreate(MediaFileBase):
@@ -101,8 +103,8 @@ class MediaFileCreate(MediaFileBase):
 class MediaFileResponse(MediaFileBase):
     id: UUID
     size_formatted: str = ""
-    uploaded_by: Optional[str] = None
+    uploaded_by: str | None = None
     created_at: datetime
-    used_in: List[str] = []
+    used_in: list[str] = []
 
     model_config = ConfigDict(from_attributes=True, extra="forbid")

@@ -3,15 +3,14 @@ Vendor service for shared business logic across public, admin, and superadmin ro
 """
 
 from uuid import UUID
-from typing import Optional
+
 from fastapi import HTTPException, status
-from sqlalchemy import select, func, case, or_
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Vendor, Booking, Review, Property
+from app.models import Booking, Property, Review, Vendor
 from app.services.cache_service import cache
-
 
 CACHE_TTL_DETAIL = 600
 
@@ -24,27 +23,21 @@ class VendorService:
         result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
         vendor = result.scalar_one_or_none()
         if not vendor:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
         return vendor
 
     @staticmethod
     async def get_with_user_or_404(db: AsyncSession, vendor_id: UUID) -> Vendor:
         result = await db.execute(
-            select(Vendor)
-            .options(selectinload(Vendor.user))
-            .where(Vendor.id == vendor_id)
+            select(Vendor).options(selectinload(Vendor.user)).where(Vendor.id == vendor_id)
         )
         vendor = result.scalar_one_or_none()
         if not vendor:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
         return vendor
 
     @staticmethod
-    async def invalidate_cache(vendor_id: UUID, slug: Optional[str] = None):
+    async def invalidate_cache(vendor_id: UUID, slug: str | None = None):
         await cache.delete(f"vendors:detail:{vendor_id}")
         if slug:
             await cache.delete(f"vendors:slug:{slug}")
@@ -56,12 +49,8 @@ class VendorService:
             select(
                 func.count(Booking.id).label("total"),
                 func.sum(Booking.total_amount).label("revenue"),
-                func.sum(case((Booking.status == "completed", 1), else_=0)).label(
-                    "completed"
-                ),
-                func.sum(case((Booking.status == "cancelled", 1), else_=0)).label(
-                    "cancelled"
-                ),
+                func.sum(case((Booking.status == "completed", 1), else_=0)).label("completed"),
+                func.sum(case((Booking.status == "cancelled", 1), else_=0)).label("cancelled"),
             ).where(Booking.vendor_id == vendor_id)
         )
         b_row = b_result.one()
@@ -112,9 +101,7 @@ class VendorService:
         result = await db.execute(
             select(
                 func.count().label("total"),
-                func.sum(case((Booking.status == "completed", 1), else_=0)).label(
-                    "completed"
-                ),
+                func.sum(case((Booking.status == "completed", 1), else_=0)).label("completed"),
             ).where(Booking.vendor_id == vendor.id)
         )
         row = result.one()

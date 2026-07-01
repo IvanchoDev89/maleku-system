@@ -1,21 +1,20 @@
 import asyncio
 import io
+import re
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import List, Optional
 
 import aiofiles
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Form, Request
-from pydantic import BaseModel
-import re
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from PIL import Image, UnidentifiedImageError
+from pydantic import BaseModel
 
 from app.core.logging import get_logger
 from app.core.rate_limiter import limiter
 from app.core.security import get_current_user, require_permission
 from app.models import User
-from app.services.cloudinary_service import cloudinary_service, CloudinaryError
+from app.services.cloudinary_service import CloudinaryError, cloudinary_service
 
 logger = get_logger(__name__)
 
@@ -48,8 +47,8 @@ class UploadResponse(BaseModel):
     size: int
     content_type: str
     provider: str = "local"
-    public_id: Optional[str] = None
-    responsive_urls: Optional[dict] = None
+    public_id: str | None = None
+    responsive_urls: dict | None = None
 
 
 class DeleteResponse(BaseModel):
@@ -133,9 +132,7 @@ def sanitize_path(path: str) -> Path:
     try:
         safe_path.relative_to(upload_base)
     except ValueError:
-        raise HTTPException(
-            status_code=400, detail="Invalid path: path traversal detected"
-        )
+        raise HTTPException(status_code=400, detail="Invalid path: path traversal detected")
     return safe_path
 
 
@@ -161,7 +158,7 @@ async def save_upload_file(file: UploadFile, folder: str) -> UploadResponse:
     unique_id = uuid.uuid4().hex
     unique_filename = f"{unique_id}{ext}"
 
-    date_path = Path(folder) / datetime.now(timezone.utc).strftime("%Y/%m/%d")
+    date_path = Path(folder) / datetime.now(UTC).strftime("%Y/%m/%d")
     target_dir = UPLOAD_DIR / date_path
     target_dir.mkdir(parents=True, exist_ok=True)
 
@@ -245,13 +242,13 @@ async def upload_image(
 
 @router.post(
     "/images",
-    response_model=List[UploadResponse],
+    response_model=list[UploadResponse],
     summary="Upload multiple images",
     description="Uploads up to 10 images in parallel. Each file is validated and saved independently. Max total: 10 files.",
 )
 @limiter.limit("5/minute")
 async def upload_images(
-    files: List[UploadFile] = File(...),
+    files: list[UploadFile] = File(...),
     folder: str = Form(default="general"),
     use_cloudinary: bool = Form(default=True),
     current_user: User = Depends(get_current_user),
@@ -282,7 +279,7 @@ async def upload_images(
 async def delete_image(
     file_id: str,
     path: str,
-    public_id: Optional[str] = None,
+    public_id: str | None = None,
     provider: str = "local",
     current_user: User = Depends(require_permission("content", "delete")),
 ):
@@ -303,9 +300,7 @@ async def delete_image(
                 return DeleteResponse(
                     success=True, message="Image deleted successfully", provider="local"
                 )
-            return DeleteResponse(
-                success=False, message="Image not found", provider="local"
-            )
+            return DeleteResponse(success=False, message="Image not found", provider="local")
     except (OSError, RuntimeError) as e:
         logger.error(f"Error deleting image: {e}")
         raise HTTPException(

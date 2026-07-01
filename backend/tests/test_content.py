@@ -2,9 +2,10 @@
 Unit tests for Content schemas
 """
 
-import pytest
+from datetime import UTC, datetime
 from uuid import uuid4
-from datetime import datetime, timezone
+
+import pytest
 
 
 class TestStaticPageSchemas:
@@ -24,7 +25,7 @@ class TestStaticPageSchemas:
         assert data.is_active is True
         assert data.show_in_footer is True
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         response = StaticPageResponse(
             id=uuid4(),
             title=data.title,
@@ -74,7 +75,7 @@ class TestSEOSettingsSchemas:
         assert data.sitemap_enabled is True
         assert "costa rica" in data.default_meta_keywords
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         response = SEOSettingsResponse(
             id=uuid4(),
             site_title_template=data.site_title_template,
@@ -115,7 +116,7 @@ class TestMediaFileSchemas:
         assert data.size_bytes == 2457600
         assert data.alt_text is None
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         response = MediaFileResponse(
             id=uuid4(),
             filename=data.filename,
@@ -137,7 +138,7 @@ class TestMediaFileSchemas:
 
 class TestContentImports:
     def test_content_model_import(self):
-        from app.models.content import StaticPage, SEOSettings, MediaFile
+        from app.models.content import MediaFile, SEOSettings, StaticPage
 
         assert StaticPage
         assert SEOSettings
@@ -145,14 +146,14 @@ class TestContentImports:
 
     def test_content_schemas_import(self):
         from app.schemas.content import (
-            StaticPageCreate,
-            StaticPageUpdate,
-            StaticPageResponse,
-            SEOSettingsBase,
-            SEOSettingsUpdate,
-            SEOSettingsResponse,
             MediaFileCreate,
             MediaFileResponse,
+            SEOSettingsBase,
+            SEOSettingsResponse,
+            SEOSettingsUpdate,
+            StaticPageCreate,
+            StaticPageResponse,
+            StaticPageUpdate,
         )
 
         assert StaticPageCreate

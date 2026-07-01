@@ -1,9 +1,17 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from sqlalchemy import (
-    Column, String, Boolean, DateTime, Text, Integer, ForeignKey, Index,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -26,13 +34,13 @@ class StaticPage(Base):
 
     created_at = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         nullable=False,
     )
     updated_at = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -48,11 +56,19 @@ class SEOSettings(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_title_template = Column(String(200), default="{page_title} | {site_name}", nullable=False)
-    default_meta_title = Column(String(200), default="Costa Rica Travel - Tours, Hotels & Vacation Packages", nullable=False)
-    default_meta_description = Column(Text, default="Discover the best of Costa Rica with our curated tours, hotels, and vacation packages.", nullable=False)
+    default_meta_title = Column(
+        String(200), default="Costa Rica Travel - Tours, Hotels & Vacation Packages", nullable=False
+    )
+    default_meta_description = Column(
+        Text,
+        default="Discover the best of Costa Rica with our curated tours, hotels, and vacation packages.",
+        nullable=False,
+    )
     default_meta_keywords = Column(JSONB, default=list, nullable=False)
     google_site_verification = Column(String(255), nullable=True)
-    robots_txt = Column(Text, default="User-agent: *\nDisallow: /admin/\nDisallow: /superadmin/", nullable=False)
+    robots_txt = Column(
+        Text, default="User-agent: *\nDisallow: /admin/\nDisallow: /superadmin/", nullable=False
+    )
     sitemap_enabled = Column(Boolean, default=True, nullable=False)
     structured_data_enabled = Column(Boolean, default=True, nullable=False)
 
@@ -62,13 +78,13 @@ class SEOSettings(Base):
 
     created_at = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         nullable=False,
     )
     updated_at = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -96,13 +112,13 @@ class MediaFile(Base):
 
     created_at = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         nullable=False,
     )
     updated_at = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 

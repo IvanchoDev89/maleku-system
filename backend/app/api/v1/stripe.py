@@ -3,32 +3,32 @@ Stripe API - Checkout, webhooks y gestión de pagos
 """
 
 import asyncio
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
-from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from pydantic import BaseModel, field_validator
-from uuid import UUID
-from typing import Optional
 from urllib.parse import urlparse
+from uuid import UUID
 
-from app.core.database import get_db
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, field_validator
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
+from app.core.database import get_db
+from app.core.logging import get_logger
 from app.core.rate_limiter import limiter
 from app.core.security import get_current_user
-from app.models import User, Vendor, Booking, BookingStatus, ProcessedWebhook, Property
+from app.models import Booking, BookingStatus, ProcessedWebhook, Property, User, Vendor
+from app.services.email_service import EmailError, email_service
 from app.services.stripe_service import (
+    StripeError,
+    construct_webhook_event,
     create_checkout_session,
     create_vendor_connect_account,
     get_connect_account_status,
-    construct_webhook_event,
-    handle_payment_success,
     handle_payment_failure,
+    handle_payment_success,
     refund_payment,
-    StripeError,
 )
-from app.services.email_service import email_service, EmailError
-from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -87,9 +87,7 @@ class CheckoutRequest(BaseModel):
     def validate_redirect_urls(cls, v: str) -> str:
         """Validar que las URLs de redirect sean seguras."""
         if not _validate_redirect_url(v):
-            raise ValueError(
-                f"Invalid redirect URL: {v}. Must be a valid URL on our domain."
-            )
+            raise ValueError(f"Invalid redirect URL: {v}. Must be a valid URL on our domain.")
         return v
 
 
@@ -99,18 +97,18 @@ class CheckoutResponse(BaseModel):
 
 
 class VendorConnectResponse(BaseModel):
-    account_id: Optional[str]
-    onboarding_url: Optional[str]
+    account_id: str | None
+    onboarding_url: str | None
     status: str
 
 
 class WebhookResponse(BaseModel):
     status: str
-    booking_id: Optional[str] = None
-    payment_intent_id: Optional[str] = None
-    session_id: Optional[str] = None
-    error: Optional[str] = None
-    event_id: Optional[str] = None
+    booking_id: str | None = None
+    payment_intent_id: str | None = None
+    session_id: str | None = None
+    error: str | None = None
+    event_id: str | None = None
 
 
 class StripeConfigResponse(BaseModel):
@@ -122,8 +120,8 @@ class PaymentStatusResponse(BaseModel):
     booking_id: str
     confirmation_code: str
     status: str
-    payment_intent_id: Optional[str] = None
-    payment_status: Optional[str] = None
+    payment_intent_id: str | None = None
+    payment_status: str | None = None
     total_amount: float
     currency: str
 
@@ -136,8 +134,8 @@ class RefundResponse(BaseModel):
 
 
 class RefundRequest(BaseModel):
-    amount: Optional[float] = None  # If None, full refund
-    reason: Optional[str] = None
+    amount: float | None = None  # If None, full refund
+    reason: str | None = None
 
 
 async def update_booking_payment_status(
@@ -177,15 +175,11 @@ async def create_checkout(
     booking = result.scalar_one_or_none()
 
     if not booking:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
 
     # Verify user owns this booking
     if booking.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
     # Check booking status
     if booking.status != BookingStatus.PENDING:
@@ -195,9 +189,7 @@ async def create_checkout(
         )
 
     # Get vendor
-    vendor_result = await db.execute(
-        select(Vendor).where(Vendor.id == booking.vendor_id)
-    )
+    vendor_result = await db.execute(select(Vendor).where(Vendor.id == booking.vendor_id))
     vendor = vendor_result.scalar_one_or_none()
 
     try:
@@ -215,9 +207,7 @@ async def create_checkout(
         await db.flush()
         await db.commit()
 
-        return CheckoutResponse(
-            session_id=session["session_id"], checkout_url=session["url"]
-        )
+        return CheckoutResponse(session_id=session["session_id"], checkout_url=session["url"])
 
     except StripeError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -249,7 +239,9 @@ async def get_vendor_connect_link(
     # If already connected, check status
     if vendor.stripe_account_id:
         try:
-            connect_status = await asyncio.to_thread(get_connect_account_status, vendor.stripe_account_id)
+            connect_status = await asyncio.to_thread(
+                get_connect_account_status, vendor.stripe_account_id
+            )
 
             if connect_status["charges_enabled"] and connect_status["payouts_enabled"]:
                 vendor.stripe_connected = True
@@ -319,9 +311,7 @@ async def stripe_webhook(
 
     try:
         # Verify and construct event
-        event = await asyncio.to_thread(
-            construct_webhook_event, payload, stripe_signature
-        )
+        event = await asyncio.to_thread(construct_webhook_event, payload, stripe_signature)
         event_id = event["id"]
         event_type = event["type"]
 
@@ -392,9 +382,7 @@ async def stripe_webhook(
             payment_intent_id = session.get("payment_intent")
 
             if booking_id and payment_intent_id:
-                await update_booking_payment_status(
-                    db, booking_id, payment_intent_id, "succeeded"
-                )
+                await update_booking_payment_status(db, booking_id, payment_intent_id, "succeeded")
                 logger.info(f"Checkout completed for booking {booking_id}")
 
             response_data = {
@@ -423,9 +411,7 @@ async def stripe_webhook(
         return JSONResponse({"status": "error", "message": str(e)}, status_code=200)
 
 
-async def _send_payment_confirmation_email(
-    db: AsyncSession, booking_id: str, payment_result: dict
-):
+async def _send_payment_confirmation_email(db: AsyncSession, booking_id: str, payment_result: dict):
     """Helper to send payment confirmation email"""
     try:
         result = await db.execute(
@@ -492,27 +478,19 @@ async def refund_booking(
     booking = result.scalar_one_or_none()
 
     if not booking:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
 
     # Verify vendor owns this booking (if vendor)
     if current_user.role == "vendor":
-        vendor_result = await db.execute(
-            select(Vendor).where(Vendor.user_id == current_user.id)
-        )
+        vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
         vendor = vendor_result.scalar_one_or_none()
 
         if not vendor or booking.vendor_id != vendor.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
     # Check payment status
     if not booking.stripe_payment_intent_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="No payment to refund"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No payment to refund")
 
     # Calculate refund amount
     refund_amount = data.amount if data.amount else booking.total_amount
@@ -562,9 +540,7 @@ async def get_stripe_config():
     }
 
 
-@router.get(
-    "/bookings/{booking_id}/payment-status", response_model=PaymentStatusResponse
-)
+@router.get("/bookings/{booking_id}/payment-status", response_model=PaymentStatusResponse)
 async def check_payment_status(
     booking_id: UUID,
     current_user: User = Depends(get_current_user),
@@ -578,25 +554,17 @@ async def check_payment_status(
     booking = result.scalar_one_or_none()
 
     if not booking:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
 
     # Verify user owns this booking or is vendor/admin
     if current_user.role == "client" and booking.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
     if current_user.role == "vendor":
-        vendor_result = await db.execute(
-            select(Vendor).where(Vendor.user_id == current_user.id)
-        )
+        vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
         vendor = vendor_result.scalar_one_or_none()
         if not vendor or booking.vendor_id != vendor.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
     return {
         "booking_id": str(booking.id),

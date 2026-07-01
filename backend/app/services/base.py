@@ -1,10 +1,11 @@
 """Base service class with soft delete support."""
 
-from typing import TypeVar, Generic, Type, Optional, List
+from datetime import UTC, datetime
+from typing import Generic, TypeVar
 from uuid import UUID
-from datetime import datetime, timezone
+
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, func
 
 ModelType = TypeVar("ModelType")
 
@@ -12,15 +13,13 @@ ModelType = TypeVar("ModelType")
 class BaseService(Generic[ModelType]):
     """Base service with soft delete and common CRUD operations."""
 
-    def __init__(self, model: Type[ModelType]):
+    def __init__(self, model: type[ModelType]):
         self.model = model
 
-    async def get(self, db: AsyncSession, id: UUID) -> Optional[ModelType]:
+    async def get(self, db: AsyncSession, id: UUID) -> ModelType | None:
         """Get single record by ID, excluding soft-deleted."""
         result = await db.execute(
-            select(self.model).where(
-                self.model.id == id, self.model.deleted_at.is_(None)
-            )
+            select(self.model).where(self.model.id == id, self.model.deleted_at.is_(None))
         )
         return result.scalar_one_or_none()
 
@@ -31,7 +30,7 @@ class BaseService(Generic[ModelType]):
         skip: int = 0,
         limit: int = 100,
         include_deleted: bool = False,
-    ) -> List[ModelType]:
+    ) -> list[ModelType]:
         """Get multiple records with pagination."""
         query = select(self.model)
         if not include_deleted:
@@ -55,9 +54,7 @@ class BaseService(Generic[ModelType]):
         await db.refresh(db_obj)
         return db_obj
 
-    async def update(
-        self, db: AsyncSession, db_obj: ModelType, obj_in: dict
-    ) -> ModelType:
+    async def update(self, db: AsyncSession, db_obj: ModelType, obj_in: dict) -> ModelType:
         """Update record."""
         for field, value in obj_in.items():
             setattr(db_obj, field, value)
@@ -69,9 +66,7 @@ class BaseService(Generic[ModelType]):
     async def soft_delete(self, db: AsyncSession, id: UUID) -> bool:
         """Soft delete record."""
         result = await db.execute(
-            update(self.model)
-            .where(self.model.id == id)
-            .values(deleted_at=datetime.now(timezone.utc))
+            update(self.model).where(self.model.id == id).values(deleted_at=datetime.now(UTC))
         )
         await db.commit()
         return result.rowcount > 0

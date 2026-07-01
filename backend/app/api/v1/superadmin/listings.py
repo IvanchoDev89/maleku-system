@@ -1,31 +1,30 @@
-from typing import Optional
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import select, func, desc
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin
 from app.core.utils import escape_like_pattern
-from app.models import User, Vehicle, Boat as BoatEquipment, Flight, Transportation, Vendor
-from app.models.vehicle import VehicleType as VehicleTypeEnum, TransmissionType, FuelType
-from app.models.boat import BoatType as BoatTypeEnum
-from app.models import TransportServiceType, PricingType as TransportationPricingType
+from app.models import Boat as BoatEquipment
+from app.models import Flight, Transportation, User, Vehicle, Vendor
 
 router = APIRouter(prefix="/listings", tags=["Super Admin - Listings"])
 
 
 # ==================== Vehicles ====================
 
+
 @router.get("/vehicles", response_model=dict)
 async def list_vehicles(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    vehicle_type: Optional[str] = Query(None),
-    is_active: Optional[bool] = Query(None),
-    search: Optional[str] = Query(None),
+    vehicle_type: str | None = Query(None),
+    is_active: bool | None = Query(None),
+    search: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
 ):
@@ -35,12 +34,8 @@ async def list_vehicles(
     if search:
         safe = escape_like_pattern(search)
         like = f"%{safe}%"
-        query = query.where(
-            (Vehicle.name.ilike(like)) | (Vehicle.model.ilike(like))
-        )
-        count_query = count_query.where(
-            (Vehicle.name.ilike(like)) | (Vehicle.model.ilike(like))
-        )
+        query = query.where((Vehicle.name.ilike(like)) | (Vehicle.model.ilike(like)))
+        count_query = count_query.where((Vehicle.name.ilike(like)) | (Vehicle.model.ilike(like)))
 
     if vehicle_type:
         query = query.where(Vehicle.vehicle_type == vehicle_type)
@@ -136,9 +131,24 @@ async def create_vehicle(
     if not vendor_result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Vendor not found")
 
-    allowed = {"vendor_id", "vehicle_type", "brand", "model", "year", "transmission",
-               "fuel_type", "seats", "price_per_day", "price_per_week", "price_per_month",
-               "currency", "features", "images", "location", "is_active"}
+    allowed = {
+        "vendor_id",
+        "vehicle_type",
+        "brand",
+        "model",
+        "year",
+        "transmission",
+        "fuel_type",
+        "seats",
+        "price_per_day",
+        "price_per_week",
+        "price_per_month",
+        "currency",
+        "features",
+        "images",
+        "location",
+        "is_active",
+    }
     create_data = {k: v for k, v in data.items() if k in allowed and v is not None}
 
     vehicle = Vehicle(**create_data)
@@ -184,14 +194,25 @@ async def update_vehicle(
     if not v:
         raise HTTPException(status_code=404, detail="Vehicle not found")
 
-    allowed = {"name", "model", "description", "vehicle_type", "transmission",
-               "fuel_type", "seats", "price_per_day", "currency", "images",
-               "is_active", "is_featured"}
+    allowed = {
+        "name",
+        "model",
+        "description",
+        "vehicle_type",
+        "transmission",
+        "fuel_type",
+        "seats",
+        "price_per_day",
+        "currency",
+        "images",
+        "is_active",
+        "is_featured",
+    }
     for key, val in data.items():
         if key in allowed and val is not None:
             setattr(v, key, val)
 
-    v.updated_at = datetime.now(timezone.utc)
+    v.updated_at = datetime.now(UTC)
     await db.commit()
     return {"success": True, "message": "Vehicle updated"}
 
@@ -215,13 +236,14 @@ async def delete_vehicle(
 
 # ==================== Boats ====================
 
+
 @router.get("/boats", response_model=dict)
 async def list_boats(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    boat_type: Optional[str] = Query(None),
-    is_active: Optional[bool] = Query(None),
-    search: Optional[str] = Query(None),
+    boat_type: str | None = Query(None),
+    is_active: bool | None = Query(None),
+    search: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
 ):
@@ -327,10 +349,26 @@ async def create_boat(
     if not vendor_result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Vendor not found")
 
-    allowed = {"vendor_id", "equipment_type", "brand", "model", "year", "capacity",
-               "length_foot", "features", "images", "price_per_hour", "price_per_day",
-               "price_per_week", "currency", "requires_license", "license_notes",
-               "location", "operating_area", "is_active"}
+    allowed = {
+        "vendor_id",
+        "equipment_type",
+        "brand",
+        "model",
+        "year",
+        "capacity",
+        "length_foot",
+        "features",
+        "images",
+        "price_per_hour",
+        "price_per_day",
+        "price_per_week",
+        "currency",
+        "requires_license",
+        "license_notes",
+        "location",
+        "operating_area",
+        "is_active",
+    }
     create_data = {k: v for k, v in data.items() if k in allowed and v is not None}
 
     boat = BoatEquipment(**create_data)
@@ -376,14 +414,24 @@ async def update_boat(
     if not b:
         raise HTTPException(status_code=404, detail="Boat not found")
 
-    allowed = {"name", "description", "boat_type", "capacity", "length",
-               "price_per_hour", "price_per_day", "currency", "images",
-               "is_active", "is_featured"}
+    allowed = {
+        "name",
+        "description",
+        "boat_type",
+        "capacity",
+        "length",
+        "price_per_hour",
+        "price_per_day",
+        "currency",
+        "images",
+        "is_active",
+        "is_featured",
+    }
     for key, val in data.items():
         if key in allowed and val is not None:
             setattr(b, key, val)
 
-    b.updated_at = datetime.now(timezone.utc)
+    b.updated_at = datetime.now(UTC)
     await db.commit()
     return {"success": True, "message": "Boat updated"}
 
@@ -407,11 +455,12 @@ async def delete_boat(
 
 # ==================== Flights ====================
 
+
 @router.get("/flights", response_model=dict)
 async def list_flights(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    is_active: Optional[bool] = Query(None),
+    is_active: bool | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
 ):
@@ -500,14 +549,23 @@ async def update_flight(
     if not f:
         raise HTTPException(status_code=404, detail="Flight not found")
 
-    allowed = {"airline", "flight_number", "origin", "destination",
-               "departure_time", "arrival_time", "route_type",
-               "price", "currency", "is_active"}
+    allowed = {
+        "airline",
+        "flight_number",
+        "origin",
+        "destination",
+        "departure_time",
+        "arrival_time",
+        "route_type",
+        "price",
+        "currency",
+        "is_active",
+    }
     for key, val in data.items():
         if key in allowed and val is not None:
             setattr(f, key, val)
 
-    f.updated_at = datetime.now(timezone.utc)
+    f.updated_at = datetime.now(UTC)
     await db.commit()
     return {"success": True, "message": "Flight updated"}
 
@@ -520,9 +578,18 @@ async def create_flight(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
 ):
-    allowed = {"airline", "flight_number", "origin", "destination",
-               "departure_time", "arrival_time", "route_type",
-               "price", "currency", "is_active"}
+    allowed = {
+        "airline",
+        "flight_number",
+        "origin",
+        "destination",
+        "departure_time",
+        "arrival_time",
+        "route_type",
+        "price",
+        "currency",
+        "is_active",
+    }
     create_data = {k: v for k, v in data.items() if k in allowed and v is not None}
 
     flight = Flight(**create_data)
@@ -555,12 +622,13 @@ async def delete_flight(
 
 # ==================== Transportation ====================
 
+
 @router.get("/transportation", response_model=dict)
 async def list_transportation(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    service_type: Optional[str] = Query(None),
-    is_active: Optional[bool] = Query(None),
+    service_type: str | None = Query(None),
+    is_active: bool | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
 ):
@@ -656,9 +724,20 @@ async def create_transportation(
     if not vendor_result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Vendor not found")
 
-    allowed = {"vendor_id", "name", "description", "service_type", "vehicle_type",
-               "origin", "destination", "price", "currency", "pricing_type",
-               "schedule", "is_active"}
+    allowed = {
+        "vendor_id",
+        "name",
+        "description",
+        "service_type",
+        "vehicle_type",
+        "origin",
+        "destination",
+        "price",
+        "currency",
+        "pricing_type",
+        "schedule",
+        "is_active",
+    }
     create_data = {k: v for k, v in data.items() if k in allowed and v is not None}
 
     transport = Transportation(**create_data)
@@ -704,14 +783,24 @@ async def update_transportation(
     if not t:
         raise HTTPException(status_code=404, detail="Transportation not found")
 
-    allowed = {"name", "description", "service_type", "vehicle_type",
-               "origin", "destination", "price", "currency",
-               "pricing_type", "schedule", "is_active"}
+    allowed = {
+        "name",
+        "description",
+        "service_type",
+        "vehicle_type",
+        "origin",
+        "destination",
+        "price",
+        "currency",
+        "pricing_type",
+        "schedule",
+        "is_active",
+    }
     for key, val in data.items():
         if key in allowed and val is not None:
             setattr(t, key, val)
 
-    t.updated_at = datetime.now(timezone.utc)
+    t.updated_at = datetime.now(UTC)
     await db.commit()
     return {"success": True, "message": "Transportation updated"}
 

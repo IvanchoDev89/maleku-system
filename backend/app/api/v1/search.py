@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends, Query, Request
-from sqlalchemy import select, and_, func
-from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
-from typing import Optional
+from sqlalchemy import and_, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
 from app.core.utils import escape_like_pattern
-from app.models import Property, Tour, Destination, BlogPost, BlogPostStatus
+from app.models import BlogPost, BlogPostStatus, Destination, Property, Tour
 from app.models.tour import TourCategory
 from app.services.search_service import SearchService
 
@@ -19,18 +18,18 @@ class MapPropertyItem(BaseModel):
     name: str
     slug: str
     property_type: str
-    category: Optional[str] = None
-    region: Optional[str] = None
-    city: Optional[str] = None
-    address: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    cover_image: Optional[str] = None
+    category: str | None = None
+    region: str | None = None
+    city: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    cover_image: str | None = None
     images: list[str] = []
     base_price: float = 0
     weekend_price: float = 0
-    rating: Optional[float] = None
-    total_reviews: Optional[int] = None
+    rating: float | None = None
+    total_reviews: int | None = None
     min_guests: int = 1
     max_guests: int = 10
     amenities: list[str] = []
@@ -40,17 +39,17 @@ class MapTourItem(BaseModel):
     id: str
     name: str
     slug: str
-    category: Optional[str] = None
-    difficulty: Optional[str] = None
-    location: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    cover_image: Optional[str] = None
+    category: str | None = None
+    difficulty: str | None = None
+    location: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    cover_image: str | None = None
     images: list[str] = []
     price: float = 0
     duration_hours: float = 0
-    rating: Optional[float] = None
-    total_reviews: Optional[int] = None
+    rating: float | None = None
+    total_reviews: int | None = None
     max_group_size: int = 20
 
 
@@ -77,11 +76,11 @@ class MapCountsResponse(BaseModel):
 
 class SearchResultItem(BaseModel):
     id: str
-    name: Optional[str] = None
-    title: Optional[str] = None
+    name: str | None = None
+    title: str | None = None
     slug: str
     type: str
-    image: Optional[str] = None
+    image: str | None = None
 
 
 class SearchResponse(BaseModel):
@@ -95,14 +94,14 @@ class TextSearchItem(BaseModel):
     id: str
     name: str
     slug: str
-    property_type: Optional[str] = None
-    category: Optional[str] = None
-    region: Optional[str] = None
-    city: Optional[str] = None
-    cover_image: Optional[str] = None
+    property_type: str | None = None
+    category: str | None = None
+    region: str | None = None
+    city: str | None = None
+    cover_image: str | None = None
     base_price: float = 0
-    rating: Optional[float] = None
-    total_reviews: Optional[int] = None
+    rating: float | None = None
+    total_reviews: int | None = None
     match_type: str = "text"
     rank: float = 0.0
 
@@ -124,11 +123,11 @@ async def search_properties(
     request: Request,
     q: str = Query(..., min_length=1, max_length=200),
     db: AsyncSession = Depends(get_db),
-    property_type: Optional[str] = None,
-    category: Optional[str] = None,
-    region: Optional[str] = None,
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
+    property_type: str | None = None,
+    category: str | None = None,
+    region: str | None = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
     limit: int = Query(20, ge=1, le=100),
 ):
     q = q.strip()[:200]
@@ -214,9 +213,7 @@ async def get_map_data(
     total_properties = (await db.execute(count_prop)).scalar() or 0
 
     offset = (page - 1) * page_size
-    prop_query = (
-        prop_query.order_by(Property.created_at.desc()).offset(offset).limit(page_size)
-    )
+    prop_query = prop_query.order_by(Property.created_at.desc()).offset(offset).limit(page_size)
     prop_result = await db.execute(prop_query)
     properties = prop_result.scalars().all()
 
@@ -233,9 +230,7 @@ async def get_map_data(
     count_tour = select(func.count()).select_from(tour_query.subquery())
     total_tours = (await db.execute(count_tour)).scalar() or 0
 
-    tour_query = (
-        tour_query.order_by(Tour.created_at.desc()).offset(offset).limit(page_size)
-    )
+    tour_query = tour_query.order_by(Tour.created_at.desc()).offset(offset).limit(page_size)
     tour_result = await db.execute(tour_query)
     tours = tour_result.scalars().all()
 
@@ -309,9 +304,7 @@ async def get_map_counts(
 
     # Count properties by region
     prop_result = await db.execute(
-        select(Property.region, func.count())
-        .where(Property.is_active)
-        .group_by(Property.region)
+        select(Property.region, func.count()).where(Property.is_active).group_by(Property.region)
     )
 
     regions = {}
@@ -321,9 +314,7 @@ async def get_map_counts(
 
     # Count tours by category
     tour_result = await db.execute(
-        select(Tour.category, func.count())
-        .where(Tour.is_active)
-        .group_by(Tour.category)
+        select(Tour.category, func.count()).where(Tour.is_active).group_by(Tour.category)
     )
 
     categories = {}
@@ -335,9 +326,7 @@ async def get_map_counts(
     total_properties = await db.execute(
         select(func.count()).select_from(Property).where(Property.is_active)
     )
-    total_tours = await db.execute(
-        select(func.count()).select_from(Tour).where(Tour.is_active)
-    )
+    total_tours = await db.execute(select(func.count()).select_from(Tour).where(Tour.is_active))
 
     return {
         "total_properties": total_properties.scalar() or 0,
@@ -386,10 +375,7 @@ async def global_search(
 
     async def _search_tours():
         result = await db.execute(
-            select(Tour)
-            .where(Tour.is_active)
-            .where(Tour.name.ilike(pattern))
-            .limit(limit)
+            select(Tour).where(Tour.is_active).where(Tour.name.ilike(pattern)).limit(limit)
         )
         return [
             {

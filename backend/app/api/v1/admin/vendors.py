@@ -1,6 +1,8 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from sqlalchemy import select, func, or_
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -9,8 +11,6 @@ from app.core.security import require_role
 from app.core.utils import escape_like_pattern
 from app.models import User, UserRole, Vendor
 from app.services.vendor_service import VendorService
-from pydantic import BaseModel
-from typing import Optional
 
 router = APIRouter(tags=["Admin - Vendors"])
 
@@ -20,16 +20,16 @@ class VendorListItem(BaseModel):
     business_name: str
     business_slug: str
     business_type: str
-    description: Optional[str] = None
-    logo_url: Optional[str] = None
-    cover_image: Optional[str] = None
-    address: Optional[str] = None
-    rating: Optional[float] = None
-    total_reviews: Optional[int] = None
+    description: str | None = None
+    logo_url: str | None = None
+    cover_image: str | None = None
+    address: str | None = None
+    rating: float | None = None
+    total_reviews: int | None = None
     is_verified: bool
     is_active: bool
-    created_at: Optional[str] = None
-    owner_name: Optional[str] = None
+    created_at: str | None = None
+    owner_name: str | None = None
 
 
 class VendorStatsResponse(BaseModel):
@@ -56,16 +56,16 @@ class VendorDetailResponse(BaseModel):
     business_name: str
     business_slug: str
     business_type: str
-    description: Optional[str] = None
-    logo_url: Optional[str] = None
-    cover_image: Optional[str] = None
-    address: Optional[str] = None
-    rating: Optional[float] = None
-    total_reviews: Optional[int] = None
+    description: str | None = None
+    logo_url: str | None = None
+    cover_image: str | None = None
+    address: str | None = None
+    rating: float | None = None
+    total_reviews: int | None = None
     is_verified: bool
     is_active: bool
-    created_at: Optional[str] = None
-    owner_name: Optional[str] = None
+    created_at: str | None = None
+    owner_name: str | None = None
 
 
 class VendorUpdateResponse(BaseModel):
@@ -182,9 +182,7 @@ async def list_vendors(
                 # commission_rate, stripe_account_id, stripe_connected excluded
                 "is_verified": vendor.is_verified,
                 "is_active": vendor.is_active,
-                "created_at": vendor.created_at.isoformat()
-                if vendor.created_at
-                else None,
+                "created_at": vendor.created_at.isoformat() if vendor.created_at else None,
                 # SECURITY: Owner info limited to name only
                 "owner_name": user.full_name if user else None,
             }
@@ -214,22 +212,16 @@ async def get_vendor_stats(
     total = total_result.scalar() or 0
 
     # Verified
-    verified_result = await db.execute(
-        select(func.count(Vendor.id)).where(Vendor.is_verified)
-    )
+    verified_result = await db.execute(select(func.count(Vendor.id)).where(Vendor.is_verified))
     verified = verified_result.scalar() or 0
 
     # Active
-    active_result = await db.execute(
-        select(func.count(Vendor.id)).where(Vendor.is_active)
-    )
+    active_result = await db.execute(select(func.count(Vendor.id)).where(Vendor.is_active))
     active = active_result.scalar() or 0
 
     # By business type
     type_result = await db.execute(
-        select(Vendor.business_type, func.count(Vendor.id)).group_by(
-            Vendor.business_type
-        )
+        select(Vendor.business_type, func.count(Vendor.id)).group_by(Vendor.business_type)
     )
     by_type = {row[0]: row[1] for row in type_result.all()}
 

@@ -9,14 +9,13 @@ os.environ["ENVIRONMENT"] = "test"
 import pytest
 import pytest_asyncio
 import sqlalchemy as sa
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.core.database import Base, get_db
-from app.core.security import get_password_hash, create_access_token
+from app.core.security import create_access_token, get_password_hash
 from app.main import app
 from app.models import User, UserRole
-
 
 # Use real PostgreSQL for tests (models use PostgreSQL-specific types).
 # Override with TEST_DATABASE_URL env var (e.g. in CI).

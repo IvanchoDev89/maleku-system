@@ -3,27 +3,26 @@ Marketing API Endpoints for BillionMail Integration
 Handles email campaigns, templates, and analytics
 """
 
-from typing import List, Optional
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc, func
-from sqlalchemy.orm import joinedload
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
-from app.core.security import require_superadmin, require_role, get_current_user
+from app.core.security import get_current_user, require_role, require_superadmin
 from app.models import User, UserRole, Vendor
 from app.models.marketing import (
-    EmailCampaign,
-    EmailTemplate,
     CampaignStatus,
     CampaignType,
-    InboxMessage,
+    EmailCampaign,
     EmailPreference,
+    EmailTemplate,
+    InboxMessage,
 )
 from app.services.billionmail import MarketingService
 
@@ -53,16 +52,12 @@ def validate_html_content(v: str) -> str:
     import re
 
     # Check for potentially dangerous tags
-    dangerous_tags = re.compile(
-        r"<\s*(script|iframe|object|embed|form|input)", re.IGNORECASE
-    )
+    dangerous_tags = re.compile(r"<\s*(script|iframe|object|embed|form|input)", re.IGNORECASE)
     event_handlers = re.compile(r"on\w+\s*=", re.IGNORECASE)
     javascript_protocol = re.compile(r"javascript:", re.IGNORECASE)
 
     if dangerous_tags.search(v):
-        raise ValueError(
-            "HTML content contains potentially dangerous tags (script, iframe, etc.)"
-        )
+        raise ValueError("HTML content contains potentially dangerous tags (script, iframe, etc.)")
     if event_handlers.search(v):
         raise ValueError("HTML content contains event handlers (onclick, etc.)")
     if javascript_protocol.search(v):
@@ -76,8 +71,8 @@ class CampaignCreate(BaseModel):
     campaign_type: str = Field(default="newsletter")
     html_content: str = Field(..., min_length=10)
     recipient_type: str = Field(default="all_users")
-    template_id: Optional[str] = None
-    scheduled_at: Optional[datetime] = None
+    template_id: str | None = None
+    scheduled_at: datetime | None = None
     from_name: str = Field(default="Costa Rica Travel")
     from_email: str = Field(default="noreply@costaricatravel.dev")
 
@@ -99,21 +94,21 @@ class CampaignResponse(BaseModel):
     open_rate: float
     click_rate: float
     created_at: datetime
-    scheduled_at: Optional[datetime]
-    sent_at: Optional[datetime]
+    scheduled_at: datetime | None
+    sent_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class CampaignDetailResponse(CampaignResponse):
-    html_content: Optional[str]
+    html_content: str | None
     from_name: str
     from_email: str
 
 
 class TemplateCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
+    description: str | None = None
     template_type: str = Field(default="newsletter")
     html_content: str = Field(..., min_length=10)
 
@@ -121,10 +116,10 @@ class TemplateCreate(BaseModel):
 class TemplateResponse(BaseModel):
     id: UUID
     name: str
-    description: Optional[str]
+    description: str | None
     template_type: str
     is_system: bool
-    preview_image: Optional[str]
+    preview_image: str | None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -145,17 +140,17 @@ class CampaignAnalytics(BaseModel):
 
 
 class SendCampaignRequest(BaseModel):
-    test_email: Optional[str] = None  # Send test first
+    test_email: str | None = None  # Send test first
 
 
 class InboxMessageCreate(BaseModel):
-    vendor_id: Optional[UUID] = None
+    vendor_id: UUID | None = None
     subject: str = Field(..., min_length=1, max_length=255)
     content: str = Field(..., min_length=1)
     message_type: str = Field(default="inquiry")
-    booking_id: Optional[UUID] = None
-    property_id: Optional[UUID] = None
-    tour_id: Optional[UUID] = None
+    booking_id: UUID | None = None
+    property_id: UUID | None = None
+    tour_id: UUID | None = None
 
 
 class InboxMessageResponse(BaseModel):
@@ -198,7 +193,7 @@ class InboxMessageItem(BaseModel):
     is_from_customer: bool
     is_read: bool
     created_at: str
-    vendor_id: Optional[str] = None
+    vendor_id: str | None = None
 
 
 class InboxResponse(BaseModel):
@@ -221,7 +216,7 @@ class EmailPreferencesResponse(BaseModel):
     booking_notifications: bool
     promotional_emails: bool
     newsletter: bool
-    email_frequency: Optional[str] = None
+    email_frequency: str | None = None
     unsubscribed_all: bool
     vendor_preferences: dict
     categories: dict
@@ -234,10 +229,10 @@ class UpdatePreferencesResponse(BaseModel):
 # ============ Super Admin Endpoints ============
 
 
-@router.get("/admin/campaigns", response_model=List[CampaignResponse])
+@router.get("/admin/campaigns", response_model=list[CampaignResponse])
 async def list_all_campaigns(
-    status: Optional[str] = Query(None),
-    campaign_type: Optional[str] = Query(None),
+    status: str | None = Query(None),
+    campaign_type: str | None = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -316,9 +311,7 @@ async def send_admin_campaign(
     result = await service.send_campaign(str(campaign_id))
 
     if not result["success"]:
-        raise HTTPException(
-            status_code=400, detail=result.get("error", "Failed to send campaign")
-        )
+        raise HTTPException(status_code=400, detail=result.get("error", "Failed to send campaign"))
 
     return {
         "message": "Campaign sent successfully",
@@ -328,9 +321,7 @@ async def send_admin_campaign(
     }
 
 
-@router.get(
-    "/admin/campaigns/{campaign_id}/analytics", response_model=CampaignAnalytics
-)
+@router.get("/admin/campaigns/{campaign_id}/analytics", response_model=CampaignAnalytics)
 async def get_campaign_analytics(
     campaign_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -348,9 +339,9 @@ async def get_campaign_analytics(
     return analytics
 
 
-@router.get("/admin/templates", response_model=List[TemplateResponse])
+@router.get("/admin/templates", response_model=list[TemplateResponse])
 async def list_templates(
-    template_type: Optional[str] = Query(None),
+    template_type: str | None = Query(None),
     include_system: bool = Query(True),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
@@ -387,9 +378,7 @@ async def create_template(
     template = EmailTemplate(
         name=data.name,
         description=data.description,
-        template_type=getattr(
-            CampaignType, data.template_type.upper(), CampaignType.NEWSLETTER
-        ),
+        template_type=getattr(CampaignType, data.template_type.upper(), CampaignType.NEWSLETTER),
         html_content=data.html_content,
         text_content=MarketingService(db).mail_service._strip_html(data.html_content),
         is_system=False,
@@ -435,9 +424,7 @@ async def get_marketing_overview(
         "campaigns": {
             "total": campaigns_stats.total or 0,
             "sent": campaigns_stats.sent or 0,
-            "draft": campaigns_stats.total - campaigns_stats.sent
-            if campaigns_stats.total
-            else 0,
+            "draft": campaigns_stats.total - campaigns_stats.sent if campaigns_stats.total else 0,
         },
         "engagement": {
             "total_recipients": campaigns_stats.total_recipients or 0,
@@ -445,15 +432,11 @@ async def get_marketing_overview(
             "total_opens": campaigns_stats.total_opens or 0,
             "total_clicks": campaigns_stats.total_clicks or 0,
             "avg_open_rate": round(
-                (campaigns_stats.total_opens or 0)
-                / (campaigns_stats.total_sent or 1)
-                * 100,
+                (campaigns_stats.total_opens or 0) / (campaigns_stats.total_sent or 1) * 100,
                 2,
             ),
             "avg_click_rate": round(
-                (campaigns_stats.total_clicks or 0)
-                / (campaigns_stats.total_sent or 1)
-                * 100,
+                (campaigns_stats.total_clicks or 0) / (campaigns_stats.total_sent or 1) * 100,
                 2,
             ),
         },
@@ -473,7 +456,7 @@ async def get_marketing_overview(
 # ============ Vendor Endpoints ============
 
 
-@router.get("/vendor/campaigns", response_model=List[CampaignResponse])
+@router.get("/vendor/campaigns", response_model=list[CampaignResponse])
 async def list_vendor_campaigns(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
@@ -552,9 +535,7 @@ async def get_vendor_analytics(
         "total_recipients": stats.recipients or 0,
         "total_opens": stats.opens or 0,
         "total_clicks": stats.clicks or 0,
-        "engagement_rate": round(
-            (stats.clicks or 0) / (stats.recipients or 1) * 100, 2
-        ),
+        "engagement_rate": round((stats.clicks or 0) / (stats.recipients or 1) * 100, 2),
     }
 
 
@@ -638,9 +619,7 @@ async def get_user_inbox(
             {
                 "id": str(m.id),
                 "subject": m.subject,
-                "content": m.content[:200] + "..."
-                if len(m.content) > 200
-                else m.content,
+                "content": m.content[:200] + "..." if len(m.content) > 200 else m.content,
                 "is_from_customer": m.is_from_customer,
                 "is_read": m.is_read,
                 "created_at": m.created_at.isoformat(),

@@ -1,18 +1,38 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
-from sqlalchemy import select, func, or_
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
-from app.core.security import get_current_user, require_role, get_current_user_optional
-from app.models import User, UserRole, Vendor, Property, Tour, Booking, BookingStatus, Review
-from app.models import Vehicle, Boat, Transportation
-from app.schemas import VendorResponse, VendorUpdate, VendorPublicResponse
-from app.schemas.landing import VendorLandingResponse, LandingPropertyItem, LandingTourItem
-from app.schemas.landing import LandingVehicleItem, LandingBoatItem, LandingTransportItem
-from app.schemas.landing import LandingReview, LandingStats, LandingRanking
+from app.core.security import get_current_user, get_current_user_optional, require_role
+from app.models import (
+    Boat,
+    Booking,
+    BookingStatus,
+    Property,
+    Review,
+    Tour,
+    Transportation,
+    User,
+    UserRole,
+    Vehicle,
+    Vendor,
+)
+from app.schemas import VendorPublicResponse, VendorResponse, VendorUpdate
+from app.schemas.landing import (
+    LandingBoatItem,
+    LandingPropertyItem,
+    LandingRanking,
+    LandingReview,
+    LandingStats,
+    LandingTourItem,
+    LandingTransportItem,
+    LandingVehicleItem,
+    VendorLandingResponse,
+)
 from app.services.cache_service import cache
 from app.services.vendor_service import VendorService
 
@@ -106,9 +126,7 @@ async def get_vendor_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
     vendor = result.scalar_one_or_none()
 
     if not vendor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
 
     response = VendorResponse.model_validate(vendor)
     await cache.set(
@@ -133,10 +151,12 @@ async def get_vendor_landing(
     current_user: User = Depends(get_current_user_optional),
 ):
     result = await db.execute(
-        select(Vendor).options(
+        select(Vendor)
+        .options(
             joinedload(Vendor.properties),
             joinedload(Vendor.tours),
-        ).where(Vendor.business_slug == slug)
+        )
+        .where(Vendor.business_slug == slug)
     )
     vendor = result.scalar_one_or_none()
     if not vendor:
@@ -168,7 +188,8 @@ async def get_vendor_landing(
 
     # Vehicles
     veh_result = await db.execute(
-        select(Vehicle).where(Vehicle.vendor_id == vendor.id, Vehicle.is_active == True)
+        select(Vehicle)
+        .where(Vehicle.vendor_id == vendor.id, Vehicle.is_active == True)
         .order_by(Vehicle.rating.desc())
     )
     all_vehicles = veh_result.scalars().all()
@@ -177,7 +198,8 @@ async def get_vendor_landing(
 
     # Boats
     boat_result = await db.execute(
-        select(Boat).where(Boat.vendor_id == vendor.id, Boat.is_active == True)
+        select(Boat)
+        .where(Boat.vendor_id == vendor.id, Boat.is_active == True)
         .order_by(Boat.rating.desc())
     )
     all_boats = boat_result.scalars().all()
@@ -186,7 +208,8 @@ async def get_vendor_landing(
 
     # Transportation
     trans_result = await db.execute(
-        select(Transportation).where(Transportation.vendor_id == vendor.id, Transportation.is_active == True)
+        select(Transportation)
+        .where(Transportation.vendor_id == vendor.id, Transportation.is_active == True)
         .order_by(Transportation.rating.desc())
     )
     all_trans = trans_result.scalars().all()
@@ -227,9 +250,7 @@ async def get_vendor_landing(
 
     # Booking stats
     booking_result = await db.execute(
-        select(func.count(Booking.id)).where(
-            Booking.vendor_id == vendor.id
-        )
+        select(func.count(Booking.id)).where(Booking.vendor_id == vendor.id)
     )
     total_bookings = booking_result.scalar() or 0
 
@@ -241,9 +262,7 @@ async def get_vendor_landing(
         )
     )
     higher_ranked = rank_result.scalar() or 0
-    total_active = await db.execute(
-        select(func.count(Vendor.id)).where(Vendor.is_active == True)
-    )
+    total_active = await db.execute(select(func.count(Vendor.id)).where(Vendor.is_active == True))
     total_active_count = total_active.scalar() or 0
 
     stats = LandingStats(
@@ -413,28 +432,20 @@ async def get_my_analytics(
         )
 
     # Get property count
-    prop_result = await db.execute(
-        select(func.count()).where(Property.vendor_id == vendor.id)
-    )
+    prop_result = await db.execute(select(func.count()).where(Property.vendor_id == vendor.id))
     total_properties = prop_result.scalar() or 0
 
-    tour_result = await db.execute(
-        select(func.count()).where(Tour.vendor_id == vendor.id)
-    )
+    tour_result = await db.execute(select(func.count()).where(Tour.vendor_id == vendor.id))
     total_tours = tour_result.scalar() or 0
 
     # Get bookings (still need full rows for aggregation)
-    booking_result = await db.execute(
-        select(Booking).where(Booking.vendor_id == vendor.id)
-    )
+    booking_result = await db.execute(select(Booking).where(Booking.vendor_id == vendor.id))
     bookings = booking_result.scalars().all()
 
     pending = sum(1 for b in bookings if b.status == BookingStatus.PENDING)
     confirmed = sum(1 for b in bookings if b.status == BookingStatus.CONFIRMED)
     completed = sum(1 for b in bookings if b.status == BookingStatus.COMPLETED)
-    total_revenue = sum(
-        b.total_amount for b in bookings if b.status == BookingStatus.COMPLETED
-    )
+    total_revenue = sum(b.total_amount for b in bookings if b.status == BookingStatus.COMPLETED)
 
     return {
         "total_properties": total_properties,

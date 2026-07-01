@@ -1,35 +1,36 @@
 """Authentication endpoints - login, register, refresh, password reset."""
 
 import re
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Response, status, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, Field, EmailStr, field_validator
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy import select
-from app.core.database import get_async_session
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
+from app.core.database import get_async_session
+from app.core.logging import get_logger
 from app.core.security import (
-    verify_password,
-    get_password_hash,
     create_access_token,
-    create_refresh_token,
-    decode_token,
-    create_verification_token,
     create_password_reset_token,
-    verify_token,
+    create_refresh_token,
+    create_verification_token,
+    decode_token,
     get_current_user,
+    get_password_hash,
+    verify_password,
+    verify_token,
 )
-from app.models.user import User
-from app.models.base import UserRole
+from app.core.token_blacklist import token_blacklist
 from app.models.audit import SecurityAction
+from app.models.base import UserRole
+from app.models.user import User
 from app.services.audit_service import AuditService
 from app.services.base import BaseService
 from app.services.email_service import email_service
-from app.core.logging import get_logger
-from app.core.token_blacklist import token_blacklist
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["Auth"])
@@ -71,7 +72,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=100)
     full_name: str = Field(..., min_length=2, max_length=255)
-    phone: Optional[str] = Field(None, max_length=20)
+    phone: str | None = Field(None, max_length=20)
 
     @field_validator("password")
     @classmethod
@@ -130,17 +131,15 @@ class UserProfileResponse(BaseModel):
     id: str
     email: str
     full_name: str
-    phone: Optional[str] = None
+    phone: str | None = None
     role: str
     is_active: bool
     is_verified: bool
-    last_login: Optional[str] = None
+    last_login: str | None = None
 
 
 # Endpoints
-@router.post(
-    "/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
 async def register(
     user_in: RegisterRequest,
@@ -209,7 +208,7 @@ class VendorRegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=100)
     full_name: str = Field(..., min_length=2, max_length=100)
-    phone: Optional[str] = None
+    phone: str | None = None
     business_name: str = Field(..., min_length=2, max_length=255)
     business_type: str = Field(..., min_length=2, max_length=50)
 
@@ -326,12 +325,10 @@ async def login(
     if not user:
         # Perform dummy verification to prevent timing attacks
         get_password_hash(login_in.password)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     # Check account locked
-    if user.locked_until and user.locked_until > datetime.now(timezone.utc):
+    if user.locked_until and user.locked_until > datetime.now(UTC):
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED,
             detail="Account temporarily locked due to failed attempts",
@@ -341,7 +338,7 @@ async def login(
         # Increment failed attempts
         user.failed_login_attempts += 1
         if user.failed_login_attempts >= 5:
-            user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=30)
+            user.locked_until = datetime.now(UTC) + timedelta(minutes=30)
             await AuditService.log_security_event(
                 db=db,
                 action=SecurityAction.ACCOUNT_LOCKED,
@@ -352,21 +349,17 @@ async def login(
             )
         await db.commit()
 
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     # Check if active
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive")
 
     # Reset failed attempts and update last login
     was_locked = user.locked_until is not None or user.failed_login_attempts > 0
     user.failed_login_attempts = 0
     user.locked_until = None
-    user.last_login = datetime.now(timezone.utc)
+    user.last_login = datetime.now(UTC)
     if was_locked:
         await AuditService.log_security_event(
             db=db,
@@ -424,7 +417,7 @@ async def refresh_token(
     try:
         await token_blacklist.blacklist_token(
             refresh_in.refresh_token,
-            datetime.fromtimestamp(payload["exp"], tz=timezone.utc),
+            datetime.fromtimestamp(payload["exp"], tz=UTC),
         )
         logger.info(f"Rotated refresh token for user {user.id}")
     except Exception as e:
@@ -464,7 +457,7 @@ async def logout(
         payload = decode_token(token)
         exp = payload.get("exp")
         if exp:
-            expires_at = datetime.fromtimestamp(exp, tz=timezone.utc)
+            expires_at = datetime.fromtimestamp(exp, tz=UTC)
             await token_blacklist.blacklist_token(token, expires_at)
             logger.info("Token added to blacklist on logout")
     except Exception as e:
@@ -484,9 +477,7 @@ async def forgot_password(
     """Request password reset email."""
     client_ip = request.client.host if request.client else "unknown"
 
-    result = await db.execute(
-        select(User).where(User.email == forgot_in.email.lower().strip())
-    )
+    result = await db.execute(select(User).where(User.email == forgot_in.email.lower().strip()))
     user = result.scalar_one_or_none()
 
     if user:
@@ -495,7 +486,7 @@ async def forgot_password(
 
         # Store in user record
         user.password_reset_token = reset_token
-        user.password_reset_expires = datetime.now(timezone.utc) + timedelta(hours=1)
+        user.password_reset_expires = datetime.now(UTC) + timedelta(hours=1)
         await db.commit()
 
         logger.info(f"Password reset requested for {user.email} from IP: {client_ip}")
@@ -568,21 +559,15 @@ async def reset_password(
 
     # Find user by email and token
     result = await db.execute(
-        select(User).where(
-            User.email == email, User.password_reset_token == reset_in.token
-        )
+        select(User).where(User.email == email, User.password_reset_token == reset_in.token)
     )
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid reset token"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid reset token")
 
     # Check token expiration
-    if user.password_reset_expires and user.password_reset_expires < datetime.now(
-        timezone.utc
-    ):
+    if user.password_reset_expires and user.password_reset_expires < datetime.now(UTC):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Reset token has expired"
         )
@@ -624,9 +609,7 @@ async def verify_email(
 
     # Find user
     result = await db.execute(
-        select(User).where(
-            User.email == email, User.email_verification_token == verify_in.token
-        )
+        select(User).where(User.email == email, User.email_verification_token == verify_in.token)
     )
     user = result.scalar_one_or_none()
 
@@ -636,10 +619,7 @@ async def verify_email(
         )
 
     # Check token expiration
-    if (
-        user.email_verification_expires
-        and user.email_verification_expires < datetime.now(timezone.utc)
-    ):
+    if user.email_verification_expires and user.email_verification_expires < datetime.now(UTC):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Verification token has expired",
@@ -681,7 +661,7 @@ async def resend_verification(
     # Generate new verification token
     verification_token = create_verification_token(user.email)
     user.email_verification_token = verification_token
-    user.email_verification_expires = datetime.now(timezone.utc) + timedelta(hours=24)
+    user.email_verification_expires = datetime.now(UTC) + timedelta(hours=24)
     await db.commit()
 
     logger.info(f"Verification email resent for {user.email} from IP: {client_ip}")

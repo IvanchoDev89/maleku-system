@@ -1,28 +1,28 @@
 import uuid
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File
+
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
+from app.core.logging import get_logger
 from app.core.pagination import paginate_flat
 from app.core.rate_limiter import limiter
 from app.core.security import require_permission
 from app.core.utils import escape_like_pattern
-from app.models import User, UserRole, Vendor, Tour
+from app.models import Tour, User, UserRole, Vendor
 from app.models.tour import TourCategory, TourDifficulty
 from app.schemas import (
-    TourResponse,
-    TourCreate,
-    TourUpdate,
-    TourListResponse,
-    PaginationParams,
     PaginatedResponse,
+    PaginationParams,
+    TourCreate,
+    TourListResponse,
+    TourResponse,
+    TourUpdate,
 )
 from app.services.cache_service import cache
 from app.services.cloudinary_service import cloudinary_service
-from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -145,9 +145,7 @@ async def get_tour(tour_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     tour = result.scalar_one_or_none()
 
     if not tour:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found")
 
     response = TourResponse.model_validate(tour)
     await cache.set(
@@ -181,9 +179,7 @@ async def get_tour_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
     tour = result.scalar_one_or_none()
 
     if not tour:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found")
 
     response = TourResponse.model_validate(tour)
     await cache.set(
@@ -245,9 +241,7 @@ async def create_tour(
         "is_active",
         "is_featured",
     }
-    tour_data_filtered = {
-        k: v for k, v in data.model_dump().items() if k in allowed_fields
-    }
+    tour_data_filtered = {k: v for k, v in data.model_dump().items() if k in allowed_fields}
 
     tour = Tour(vendor_id=vendor.id, slug=slug, **tour_data_filtered)
     db.add(tour)
@@ -278,15 +272,11 @@ async def update_tour(
     tour = result.scalar_one_or_none()
 
     if not tour:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found")
 
     # Ownership check: vendor solo puede editar sus propios tours
     if current_user.role == UserRole.VENDOR:
-        result_vendor = await db.execute(
-            select(Vendor).where(Vendor.user_id == current_user.id)
-        )
+        result_vendor = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
         vendor = result_vendor.scalar_one_or_none()
         if not vendor or tour.vendor_id != vendor.id:
             raise HTTPException(
@@ -349,15 +339,11 @@ async def delete_tour(
     tour = result.scalar_one_or_none()
 
     if not tour:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found")
 
     # Ownership check
     if current_user.role == UserRole.VENDOR:
-        result_vendor = await db.execute(
-            select(Vendor).where(Vendor.user_id == current_user.id)
-        )
+        result_vendor = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
         vendor = result_vendor.scalar_one_or_none()
         if not vendor or tour.vendor_id != vendor.id:
             raise HTTPException(
@@ -444,7 +430,7 @@ async def get_categories(db: AsyncSession = Depends(get_db)):
 async def upload_tour_gallery(
     request: Request,
     tour_id: uuid.UUID,
-    files: List[UploadFile] = File(...),
+    files: list[UploadFile] = File(...),
     current_user: User = Depends(require_permission("tours", "update")),
     db: AsyncSession = Depends(get_db),
 ):
@@ -456,9 +442,7 @@ async def upload_tour_gallery(
         raise HTTPException(status_code=404, detail="Tour not found")
 
     if current_user.role == UserRole.VENDOR and tour.vendor_id:
-        v_result = await db.execute(
-            select(Vendor).where(Vendor.user_id == current_user.id)
-        )
+        v_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
         vendor = v_result.scalar_one_or_none()
         if not vendor or tour.vendor_id != vendor.id:
             raise HTTPException(status_code=403, detail="Not authorized")

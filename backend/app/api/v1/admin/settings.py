@@ -1,10 +1,11 @@
-from datetime import datetime, timezone
-from typing import Optional, Any
+from datetime import UTC, datetime
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
-from app.core.security import require_permission
 from app.core.rate_limiter import limiter
+from app.core.security import require_permission
 from app.models import User
 
 router = APIRouter(tags=["Admin - Settings"])
@@ -20,7 +21,7 @@ class SettingDetailResponse(BaseModel):
     key: str
     value: Any
     category: str
-    description: Optional[str] = None
+    description: str | None = None
     is_public: bool = False
     updated_at: datetime
 
@@ -45,7 +46,7 @@ class SystemSetting(BaseModel):
     key: str
     value: Any
     category: str
-    description: Optional[str] = None
+    description: str | None = None
     is_public: bool = False
     updated_at: datetime
 
@@ -60,21 +61,18 @@ def validate_setting_value(key: str, value: Any) -> tuple[bool, str]:
         return True, None
 
     # Type validation
-    if key in [
-        "site_name",
-        "site_description",
-        "site_keywords",
-        "site_logo",
-        "site_favicon",
-    ]:
-        if not isinstance(value, str):
-            return False, f"{key} must be a string"
-
-    elif key in ["contact_email", "contact_address"]:
-        if not isinstance(value, str):
-            return False, f"{key} must be a string"
-
-    elif key in ["contact_phone", "contact_whatsapp"]:
+    if (
+        key
+        in [
+            "site_name",
+            "site_description",
+            "site_keywords",
+            "site_logo",
+            "site_favicon",
+        ]
+        or key in ["contact_email", "contact_address"]
+        or key in ["contact_phone", "contact_whatsapp"]
+    ):
         if not isinstance(value, str):
             return False, f"{key} must be a string"
 
@@ -469,7 +467,7 @@ def set_setting(key: str, value: Any) -> None:
             "category": DEFAULT_SETTINGS[key]["category"],
             "description": DEFAULT_SETTINGS[key]["description"],
             "is_public": DEFAULT_SETTINGS[key]["is_public"],
-            "updated_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(UTC),
         }
 
 
@@ -480,7 +478,7 @@ for key, config in DEFAULT_SETTINGS.items():
         "category": config["category"],
         "description": config["description"],
         "is_public": config["is_public"],
-        "updated_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(UTC),
     }
 
 
@@ -540,7 +538,7 @@ async def update_setting(
         "category": DEFAULT_SETTINGS[key]["category"],
         "description": DEFAULT_SETTINGS[key]["description"],
         "is_public": DEFAULT_SETTINGS[key]["is_public"],
-        "updated_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(UTC),
     }
 
     return {"message": "Setting updated", "key": key, "value": value}
@@ -573,7 +571,7 @@ async def bulk_update_settings(
                 "category": DEFAULT_SETTINGS[key]["category"],
                 "description": DEFAULT_SETTINGS[key]["description"],
                 "is_public": DEFAULT_SETTINGS[key]["is_public"],
-                "updated_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(UTC),
             }
             updated.append(key)
 

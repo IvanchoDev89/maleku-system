@@ -3,18 +3,19 @@ Boat Equipment API - Náutico
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import select, func
+from pydantic import BaseModel
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
 from app.core.security import get_current_user, require_role
 from app.core.utils import escape_like_pattern
-from app.models import User, UserRole, Vendor, BoatEquipment, BoatType
+from app.models import BoatEquipment, BoatType, User, UserRole, Vendor
 from app.schemas import boat as boat_schema
-from pydantic import BaseModel
 
 router = APIRouter(tags=["Boats"])
 
@@ -89,14 +90,10 @@ async def list_boats(
     Returns:
         Paginated list of boat equipment matching the filters
     """
-    query = select(BoatEquipment).where(
-        BoatEquipment.is_active, BoatEquipment.is_available
-    )
+    query = select(BoatEquipment).where(BoatEquipment.is_active, BoatEquipment.is_available)
 
     if location:
-        query = query.where(
-            BoatEquipment.location.ilike(f"%{escape_like_pattern(location)}%")
-        )
+        query = query.where(BoatEquipment.location.ilike(f"%{escape_like_pattern(location)}%"))
     if equipment_type:
         query = query.where(BoatEquipment.equipment_type == equipment_type)
     if capacity:
@@ -117,9 +114,7 @@ async def list_boats(
         count_query = count_query.where(BoatEquipment.capacity >= capacity)
 
     limit = min(limit, 100)
-    result = await db.execute(
-        query.order_by(BoatEquipment.price_per_day).offset(skip).limit(limit)
-    )
+    result = await db.execute(query.order_by(BoatEquipment.price_per_day).offset(skip).limit(limit))
     boats = result.scalars().all()
 
     total_result = await db.execute(count_query)
@@ -159,7 +154,9 @@ async def get_boat(
     return boat
 
 
-@router.post("", response_model=boat_schema.BoatEquipmentResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=boat_schema.BoatEquipmentResponse, status_code=status.HTTP_201_CREATED
+)
 @limiter.limit("10/minute")
 async def create_boat(
     request: Request,
@@ -200,9 +197,7 @@ async def create_boat(
         "excluded_items",
         "important_notes",
     ]
-    boat_data_filtered = {
-        k: v for k, v in boat_data.model_dump().items() if k in allowed_fields
-    }
+    boat_data_filtered = {k: v for k, v in boat_data.model_dump().items() if k in allowed_fields}
 
     boat = BoatEquipment(vendor_id=vendor.id, **boat_data_filtered)
 
@@ -229,9 +224,7 @@ async def update_boat(
     if not boat:
         raise HTTPException(status_code=404, detail="Boat equipment not found")
 
-    vendor_result = await db.execute(
-        select(Vendor).where(Vendor.user_id == current_user.id)
-    )
+    vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     vendor = vendor_result.scalar_one_or_none()
 
     if not vendor:
@@ -272,7 +265,7 @@ async def update_boat(
         if key in allowed_fields:
             setattr(boat, key, value)
 
-    boat.updated_at = datetime.now(timezone.utc)
+    boat.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(boat)
 
@@ -292,9 +285,7 @@ async def delete_boat(
     if not boat:
         raise HTTPException(status_code=404, detail="Boat equipment not found")
 
-    vendor_result = await db.execute(
-        select(Vendor).where(Vendor.user_id == current_user.id)
-    )
+    vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     vendor = vendor_result.scalar_one_or_none()
 
     if not vendor:

@@ -1,17 +1,17 @@
-from datetime import datetime, timedelta, timezone
-from typing import Optional, Any
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
 import jwt
-from jwt.exceptions import PyJWTError, ExpiredSignatureError, InvalidTokenError
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError, PyJWTError
+from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.token_blacklist import token_blacklist
 from app.models import User
-
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=11)
 security = HTTPBearer()
@@ -26,60 +26,44 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(
-    subject: str | Any, expires_delta: Optional[timedelta] = None
-) -> str:
+def create_access_token(subject: str | Any, expires_delta: timedelta | None = None) -> str:
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(
-            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-        )
+        expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode = {"exp": expire, "sub": str(subject), "type": "access"}
-    encoded_jwt = jwt.encode(
-        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-    )
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 
 def create_refresh_token(subject: str | Any) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(
-        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
-    )
+    expire = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
-    encoded_jwt = jwt.encode(
-        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-    )
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 
 def create_verification_token(email: str) -> str:
     """Create email verification token (24h expiry)."""
-    expire = datetime.now(timezone.utc) + timedelta(hours=24)
+    expire = datetime.now(UTC) + timedelta(hours=24)
     to_encode = {"exp": expire, "sub": email, "type": "verification"}
-    encoded_jwt = jwt.encode(
-        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-    )
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 
 def create_password_reset_token(email: str) -> str:
     """Create password reset token (1h expiry)."""
-    expire = datetime.now(timezone.utc) + timedelta(hours=1)
+    expire = datetime.now(UTC) + timedelta(hours=1)
     to_encode = {"exp": expire, "sub": email, "type": "password_reset"}
-    encoded_jwt = jwt.encode(
-        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-    )
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 
-def verify_token(token: str, token_type: str) -> Optional[str]:
+def verify_token(token: str, token_type: str) -> str | None:
     """Verify a specific token type and return the subject."""
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         if payload.get("type") != token_type:
             return None
         return payload.get("sub")
@@ -89,9 +73,7 @@ def verify_token(token: str, token_type: str) -> Optional[str]:
 
 def decode_token(token: str) -> dict:
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
     except (ExpiredSignatureError, InvalidTokenError, PyJWTError):
         raise HTTPException(
@@ -116,9 +98,7 @@ async def get_current_user(
     payload = decode_token(token)
 
     if payload.get("type") != "access":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
 
     user_id = payload.get("sub")
     if user_id is None:
@@ -133,19 +113,15 @@ async def get_current_user(
     user = result.scalar_one_or_none()
 
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
 
     # Check if user's tokens are blacklisted (e.g., after password change)
     issued_at = payload.get("iat")
     if issued_at and await token_blacklist.is_user_tokens_blacklisted(
-        user_id, datetime.fromtimestamp(issued_at, tz=timezone.utc)
+        user_id, datetime.fromtimestamp(issued_at, tz=UTC)
     ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked"
@@ -155,9 +131,9 @@ async def get_current_user(
 
 
 async def get_current_user_optional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security_optional),
     db: AsyncSession = Depends(get_db),
-) -> Optional[User]:
+) -> User | None:
     if credentials is None:
         return None
     try:
@@ -293,6 +269,7 @@ def require_permission(module: str, action: str):
 
         # Consultar configuración en DB (superadmin puede personalizar)
         from sqlalchemy import select
+
         from app.models import RolePermission
 
         result = await db.execute(

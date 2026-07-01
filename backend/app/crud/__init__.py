@@ -1,9 +1,10 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, func
-from sqlalchemy.orm import selectinload
-from typing import TypeVar, Generic, Type, Optional, List
+from datetime import UTC, datetime, timezone
+from typing import Generic, List, Optional, Type, TypeVar
 from uuid import UUID
-from datetime import datetime, timezone
+
+from sqlalchemy import delete, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.pagination import PaginatedResult, PaginationMetadata
 from app.schemas import PaginationParams
@@ -14,10 +15,10 @@ ModelType = TypeVar("ModelType")
 class CRUDBase(Generic[ModelType]):
     """Base CRUD with common operations"""
 
-    def __init__(self, model: Type[ModelType]):
+    def __init__(self, model: type[ModelType]):
         self.model = model
 
-    async def get(self, db: AsyncSession, id: UUID) -> Optional[ModelType]:
+    async def get(self, db: AsyncSession, id: UUID) -> ModelType | None:
         result = await db.execute(select(self.model).where(self.model.id == id))
         return result.scalar_one_or_none()
 
@@ -26,9 +27,9 @@ class CRUDBase(Generic[ModelType]):
         db: AsyncSession,
         skip: int = 0,
         limit: int = 100,
-        order_by: Optional[str] = None,
-        filters: Optional[dict] = None,
-        eager_load: Optional[List[str]] = None,
+        order_by: str | None = None,
+        filters: dict | None = None,
+        eager_load: list[str] | None = None,
     ) -> list[ModelType]:
         query = select(self.model)
 
@@ -56,9 +57,9 @@ class CRUDBase(Generic[ModelType]):
         self,
         db: AsyncSession,
         params: PaginationParams,
-        order_by: Optional[str] = None,
-        filters: Optional[dict] = None,
-        eager_load: Optional[List[str]] = None,
+        order_by: str | None = None,
+        filters: dict | None = None,
+        eager_load: list[str] | None = None,
     ) -> PaginatedResult:
         """
         Get paginated results with consistent metadata.
@@ -131,9 +132,7 @@ class CRUDBase(Generic[ModelType]):
         await db.refresh(db_obj)
         return db_obj
 
-    async def update(
-        self, db: AsyncSession, id: UUID, obj_in: dict
-    ) -> Optional[ModelType]:
+    async def update(self, db: AsyncSession, id: UUID, obj_in: dict) -> ModelType | None:
         result = await db.execute(select(self.model).where(self.model.id == id))
         db_obj = result.scalar_one_or_none()
         if not db_obj:
@@ -142,7 +141,7 @@ class CRUDBase(Generic[ModelType]):
             if hasattr(db_obj, key):
                 setattr(db_obj, key, value)
         if hasattr(db_obj, "updated_at"):
-            db_obj.updated_at = datetime.now(timezone.utc)
+            db_obj.updated_at = datetime.now(UTC)
         await db.flush()
         await db.refresh(db_obj)
         return db_obj
@@ -156,7 +155,7 @@ class CRUDBase(Generic[ModelType]):
             return False
         db_obj.is_active = False
         if hasattr(db_obj, "updated_at"):
-            db_obj.updated_at = datetime.now(timezone.utc)
+            db_obj.updated_at = datetime.now(UTC)
         await db.flush()
         return True
 
@@ -165,7 +164,7 @@ class CRUDBase(Generic[ModelType]):
         await db.flush()
         return result.rowcount > 0
 
-    async def count(self, db: AsyncSession, filters: Optional[dict] = None) -> int:
+    async def count(self, db: AsyncSession, filters: dict | None = None) -> int:
         query = select(func.count()).select_from(self.model)
         if filters:
             for key, value in filters.items():
@@ -176,7 +175,7 @@ class CRUDBase(Generic[ModelType]):
 
 
 class CRUDUser(CRUDBase):
-    async def get_by_email(self, db: AsyncSession, email: str) -> Optional[ModelType]:
+    async def get_by_email(self, db: AsyncSession, email: str) -> ModelType | None:
         result = await db.execute(select(self.model).where(self.model.email == email))
         return result.scalar_one_or_none()
 
@@ -186,7 +185,7 @@ class CRUDUser(CRUDBase):
 
 
 class CRUDSlug(CRUDBase):
-    async def get_by_slug(self, db: AsyncSession, slug: str) -> Optional[ModelType]:
+    async def get_by_slug(self, db: AsyncSession, slug: str) -> ModelType | None:
         result = await db.execute(select(self.model).where(self.model.slug == slug))
         return result.scalar_one_or_none()
 

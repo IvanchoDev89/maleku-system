@@ -2,24 +2,25 @@
 Availability API - Endpoints para consultar y gestionar disponibilidad de habitaciones y tours
 """
 
-from datetime import datetime, timedelta, timezone, date as date_type
-from typing import Optional, List
-from fastapi import APIRouter, Depends, Query, HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
-from pydantic import BaseModel
+from datetime import UTC, datetime, timedelta
+from datetime import date as date_type
 from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
 from app.core.security import require_permission
-from app.models import User, UserRole, Vendor, Room
+from app.models import Room, User, UserRole, Vendor
 from app.models.room_availability import RoomAvailability
 from app.services.availability_service import (
     check_room_availability,
-    get_room_availability_calendar,
     check_tour_availability,
     get_next_available_dates,
+    get_room_availability_calendar,
 )
 
 router = APIRouter(tags=["Availability"])
@@ -42,9 +43,9 @@ class AvailabilityCheckResponse(BaseModel):
 class CalendarDay(BaseModel):
     date: str
     available: bool
-    price_override: Optional[float] = None
-    min_stay: Optional[int] = None
-    max_stay: Optional[int] = None
+    price_override: float | None = None
+    min_stay: int | None = None
+    max_stay: int | None = None
 
 
 class AvailabilityCalendarResponse(BaseModel):
@@ -58,14 +59,14 @@ class AvailabilityCalendarResponse(BaseModel):
 class CalendarEntry(BaseModel):
     date: date_type
     is_available: bool = True
-    price_override: Optional[float] = None
-    min_stay: Optional[int] = None
-    max_stay: Optional[int] = None
-    notes: Optional[str] = None
+    price_override: float | None = None
+    min_stay: int | None = None
+    max_stay: int | None = None
+    notes: str | None = None
 
 
 class BulkCalendarUpdate(BaseModel):
-    entries: List[CalendarEntry]
+    entries: list[CalendarEntry]
 
 
 class BulkCalendarResponse(BaseModel):
@@ -104,9 +105,7 @@ async def check_availability(
             max_results=3,
         )
 
-    return AvailabilityCheckResponse(
-        available=is_available, alternative_dates=alternative_dates
-    )
+    return AvailabilityCheckResponse(available=is_available, alternative_dates=alternative_dates)
 
 
 @router.get("/rooms/{room_id}/calendar", response_model=AvailabilityCalendarResponse)
@@ -162,7 +161,7 @@ async def check_tour_availability_endpoint(
 async def get_next_available(
     room_id: UUID,
     nights: int = Query(1, ge=1, description="Number of nights needed"),
-    from_date: Optional[datetime] = None,
+    from_date: datetime | None = None,
     max_results: int = Query(5, ge=1, le=10),
     db: AsyncSession = Depends(get_db),
 ):
@@ -171,7 +170,7 @@ async def get_next_available(
     Useful for showing alternatives when requested dates are unavailable.
     """
     if from_date is None:
-        from_date = datetime.now(timezone.utc)
+        from_date = datetime.now(UTC)
 
     available_ranges = await get_next_available_dates(
         db=db,
@@ -210,13 +209,9 @@ async def bulk_update_calendar(
     if current_user.role == UserRole.VENDOR:
         from app.models import Property
 
-        prop_result = await db.execute(
-            select(Property).where(Property.id == room.property_id)
-        )
+        prop_result = await db.execute(select(Property).where(Property.id == room.property_id))
         prop = prop_result.scalar_one_or_none()
-        vendor_result = await db.execute(
-            select(Vendor).where(Vendor.user_id == current_user.id)
-        )
+        vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
         vendor = vendor_result.scalar_one_or_none()
         if not vendor or not prop or prop.vendor_id != vendor.id:
             raise HTTPException(
@@ -275,13 +270,9 @@ async def delete_calendar_entry(
     if current_user.role == UserRole.VENDOR:
         from app.models import Property
 
-        prop_result = await db.execute(
-            select(Property).where(Property.id == room.property_id)
-        )
+        prop_result = await db.execute(select(Property).where(Property.id == room.property_id))
         prop = prop_result.scalar_one_or_none()
-        vendor_result = await db.execute(
-            select(Vendor).where(Vendor.user_id == current_user.id)
-        )
+        vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
         vendor = vendor_result.scalar_one_or_none()
         if not vendor or not prop or prop.vendor_id != vendor.id:
             raise HTTPException(status_code=403, detail="Not authorized")
@@ -289,9 +280,7 @@ async def delete_calendar_entry(
     try:
         target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
     except ValueError:
-        raise HTTPException(
-            status_code=400, detail="Invalid date format. Use YYYY-MM-DD."
-        )
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
 
     await db.execute(
         delete(RoomAvailability).where(

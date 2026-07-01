@@ -3,21 +3,21 @@ Super Admin Audit & Security Logging endpoints.
 Provides access to comprehensive audit trails and security logs.
 """
 
-from datetime import datetime, timedelta, timezone
-from typing import Optional, List
-from uuid import UUID
 import json
+from datetime import UTC, datetime, timedelta
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import select, desc, func, or_
-from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
+from sqlalchemy import desc, func, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.rate_limiter import limiter
-from app.core.security import require_superadmin, get_current_user
-from app.core.utils import escape_like_pattern
 from app.core.logging import get_logger
-from app.models import User, AuditLog, SecurityLog, AuditAction, SecurityAction
+from app.core.rate_limiter import limiter
+from app.core.security import get_current_user, require_superadmin
+from app.core.utils import escape_like_pattern
+from app.models import AuditAction, AuditLog, SecurityAction, SecurityLog, User
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["SuperAdmin - Audit"])
@@ -28,18 +28,18 @@ class AuditLogItem(BaseModel):
     """Audit log entry."""
 
     id: str
-    user_id: Optional[str]
-    user_email: Optional[str]
+    user_id: str | None
+    user_email: str | None
     action: str
     entity_type: str
-    entity_id: Optional[str]
-    entity_name: Optional[str]
-    old_values: Optional[dict]
-    new_values: Optional[dict]
-    changes_summary: Optional[str]
-    ip_address: Optional[str]
-    user_agent: Optional[str]
-    request_path: Optional[str]
+    entity_id: str | None
+    entity_name: str | None
+    old_values: dict | None
+    new_values: dict | None
+    changes_summary: str | None
+    ip_address: str | None
+    user_agent: str | None
+    request_path: str | None
     created_at: datetime
 
 
@@ -47,15 +47,15 @@ class SecurityLogItem(BaseModel):
     """Security log entry."""
 
     id: str
-    user_id: Optional[str]
-    user_email: Optional[str]
+    user_id: str | None
+    user_email: str | None
     action: str
-    description: Optional[str]
+    description: str | None
     severity: str
-    details: Optional[dict]
-    ip_address: Optional[str]
-    user_agent: Optional[str]
-    session_id: Optional[str]
+    details: dict | None
+    ip_address: str | None
+    user_agent: str | None
+    session_id: str | None
     created_at: datetime
 
 
@@ -73,27 +73,19 @@ class LogSummary(BaseModel):
 class ClientEventCreate(BaseModel):
     """Client-side event reported by the frontend (route access, etc)."""
 
-    event_type: str = Field(
-        ..., max_length=100, description="e.g. superadmin_access_denied"
-    )
+    event_type: str = Field(..., max_length=100, description="e.g. superadmin_access_denied")
     path: str = Field(..., max_length=500)
-    metadata: Optional[dict] = None
-    severity: Optional[str] = Field(None, max_length=20)
+    metadata: dict | None = None
+    severity: str | None = Field(None, max_length=20)
 
 
 class ExportLogsRequest(BaseModel):
     """Request to export audit/security logs."""
 
     format: str = Field("json", description="Export format: json, csv")
-    start_date: Optional[datetime] = Field(
-        None, description="Filter logs from this date"
-    )
-    end_date: Optional[datetime] = Field(
-        None, description="Filter logs until this date"
-    )
-    log_type: str = Field(
-        "audit", description="Type of logs: 'audit' or 'security'"
-    )
+    start_date: datetime | None = Field(None, description="Filter logs from this date")
+    end_date: datetime | None = Field(None, description="Filter logs until this date")
+    log_type: str = Field("audit", description="Type of logs: 'audit' or 'security'")
 
 
 # Endpoints
@@ -115,7 +107,7 @@ async def create_client_event(
     """
     event_type = event.event_type.lower()
     action = AuditAction.VIEW
-    security_action: Optional[SecurityAction] = None
+    security_action: SecurityAction | None = None
     severity = event.severity or "info"
 
     if "denied" in event_type or "deny" in event_type:
@@ -158,21 +150,19 @@ async def create_client_event(
         db.add(security_log)
 
     await db.commit()
-    logger.info(
-        f"Client event recorded: {event_type} from {client_ip} for user {current_user.id}"
-    )
+    logger.info(f"Client event recorded: {event_type} from {client_ip} for user {current_user.id}")
     return {"status": "recorded", "event_type": event_type}
 
 
-@router.get("/logs", response_model=List[AuditLogItem])
+@router.get("/logs", response_model=list[AuditLogItem])
 async def get_audit_logs(
-    user_id: Optional[UUID] = Query(None, description="Filter by user"),
-    action: Optional[AuditAction] = Query(None, description="Filter by action type"),
-    entity_type: Optional[str] = Query(None, description="Filter by entity type"),
-    entity_id: Optional[UUID] = Query(None, description="Filter by specific entity"),
-    date_from: Optional[datetime] = Query(None, description="Start date"),
-    date_to: Optional[datetime] = Query(None, description="End date"),
-    search: Optional[str] = Query(
+    user_id: UUID | None = Query(None, description="Filter by user"),
+    action: AuditAction | None = Query(None, description="Filter by action type"),
+    entity_type: str | None = Query(None, description="Filter by entity type"),
+    entity_id: UUID | None = Query(None, description="Filter by specific entity"),
+    date_from: datetime | None = Query(None, description="Start date"),
+    date_to: datetime | None = Query(None, description="End date"),
+    search: str | None = Query(
         None, max_length=200, description="Search in summary or entity name"
     ),
     limit: int = Query(50, ge=1, le=500),
@@ -246,11 +236,11 @@ async def get_audit_logs(
 
 @router.get("/logs/count", response_model=dict)
 async def get_audit_logs_count(
-    user_id: Optional[UUID] = Query(None),
-    action: Optional[AuditAction] = Query(None),
-    entity_type: Optional[str] = Query(None),
-    date_from: Optional[datetime] = Query(None),
-    date_to: Optional[datetime] = Query(None),
+    user_id: UUID | None = Query(None),
+    action: AuditAction | None = Query(None),
+    entity_type: str | None = Query(None),
+    date_from: datetime | None = Query(None),
+    date_to: datetime | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
 ):
@@ -305,18 +295,16 @@ async def get_audit_log_detail(
     }
 
 
-@router.get("/security", response_model=List[SecurityLogItem])
+@router.get("/security", response_model=list[SecurityLogItem])
 async def get_security_logs(
-    user_id: Optional[UUID] = Query(None, description="Filter by user"),
-    action: Optional[SecurityAction] = Query(None, description="Filter by action type"),
-    severity: Optional[str] = Query(
+    user_id: UUID | None = Query(None, description="Filter by user"),
+    action: SecurityAction | None = Query(None, description="Filter by action type"),
+    severity: str | None = Query(
         None, max_length=20, description="Filter by severity: info, warning, critical"
     ),
-    ip_address: Optional[str] = Query(
-        None, max_length=45, description="Filter by IP address"
-    ),
-    date_from: Optional[datetime] = Query(None, description="Start date"),
-    date_to: Optional[datetime] = Query(None, description="End date"),
+    ip_address: str | None = Query(None, max_length=45, description="Filter by IP address"),
+    date_from: datetime | None = Query(None, description="Start date"),
+    date_to: datetime | None = Query(None, description="End date"),
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
@@ -384,7 +372,7 @@ async def get_failed_login_attempts(
     Get failed login attempts for security monitoring.
     Useful for detecting brute force attacks.
     """
-    from_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+    from_time = datetime.now(UTC) - timedelta(hours=hours)
 
     if group_by_ip:
         # Group by IP to find suspicious patterns
@@ -406,9 +394,7 @@ async def get_failed_login_attempts(
             {
                 "ip_address": str(row.ip_address) if row.ip_address else None,
                 "attempt_count": row.attempt_count,
-                "emails_attempted": list(set(row.emails_attempted))
-                if row.emails_attempted
-                else [],
+                "emails_attempted": list(set(row.emails_attempted)) if row.emails_attempted else [],
                 "last_attempt": row.last_attempt,
             }
             for row in result.all()
@@ -445,7 +431,7 @@ async def get_logs_summary(
     """
     Get summary statistics for audit and security logs.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     day_ago = now - timedelta(hours=24)
 
@@ -508,11 +494,13 @@ async def export_logs(
     on large datasets. The audit log entry is recorded, then data is
     fetched and returned inline (no temporary file).
     """
-    from app.services.audit_service import AuditService
     import csv
     import io
+
     from fastapi.responses import StreamingResponse
+
     from app.models.audit import AuditLog, SecurityLog
+    from app.services.audit_service import AuditService
 
     log_type = body.log_type
     date_from = body.start_date
@@ -564,18 +552,14 @@ async def export_logs(
         return StreamingResponse(
             csv_stream(),
             media_type="text/csv",
-            headers={
-                "Content-Disposition": f"attachment; filename={log_type}_export.csv"
-            },
+            headers={"Content-Disposition": f"attachment; filename={log_type}_export.csv"},
         )
 
     # JSON streaming
     async def json_stream():
         yield "["
         for i, row in enumerate(rows):
-            d = {
-                c.name: getattr(row, c.name, None) for c in model_cls.__table__.columns
-            }
+            d = {c.name: getattr(row, c.name, None) for c in model_cls.__table__.columns}
             for col in ("old_values", "new_values", "extra_data"):
                 if col in d and isinstance(d[col], (dict, list)):
                     d[col] = json.dumps(d[col], default=str, ensure_ascii=False)

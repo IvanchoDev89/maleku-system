@@ -4,25 +4,27 @@ Represents business vendors offering properties, tours, and services.
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from sqlalchemy import (
-    Column,
-    String,
     Boolean,
+    Column,
     DateTime,
-    ForeignKey,
-    Text,
     Float,
+    ForeignKey,
+    Index,
     Integer,
     Numeric,
-    Index,
+    String,
+    Text,
 )
+from sqlalchemy import func as sa_func
+from sqlalchemy import select as sa_select
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship, column_property
-from sqlalchemy import select as sa_select, func as sa_func
+from sqlalchemy.orm import column_property, relationship
 
-from app.models.booking import Booking
 from app.models.base import Base, VendorStatus
+from app.models.booking import Booking
 
 
 class Vendor(Base):
@@ -89,13 +91,13 @@ class Vendor(Base):
     # Timestamps
     created_at = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         nullable=False,
     )
     updated_at = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 

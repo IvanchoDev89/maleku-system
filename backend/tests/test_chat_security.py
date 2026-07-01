@@ -30,9 +30,7 @@ async def _get_vendor_profile(client, token):
 
 
 @pytest.mark.asyncio
-async def test_user_can_read_own_conversation(
-    client, sample_user_data, sample_vendor_data
-):
+async def test_user_can_read_own_conversation(client, sample_user_data, sample_vendor_data):
     """User who created a conversation can read it."""
     reg = await _register_vendor(client, sample_user_data, sample_vendor_data)
     user_token = reg["access_token"]
@@ -55,9 +53,7 @@ async def test_user_can_read_own_conversation(
 
 
 @pytest.mark.asyncio
-async def test_other_user_cannot_read_conversation(
-    client, sample_user_data, sample_vendor_data
-):
+async def test_other_user_cannot_read_conversation(client, sample_user_data, sample_vendor_data):
     """SECURITY (BOLA): a different authenticated user must NOT be able to read
     a conversation they don't participate in."""
     reg_v = await _register_vendor(client, sample_user_data, sample_vendor_data, "-v")
@@ -86,9 +82,7 @@ async def test_other_user_cannot_read_conversation(
 
 
 @pytest.mark.asyncio
-async def test_other_user_cannot_get_messages(
-    client, sample_user_data, sample_vendor_data
-):
+async def test_other_user_cannot_get_messages(client, sample_user_data, sample_vendor_data):
     """SECURITY (BOLA): a different user must NOT be able to read messages."""
     reg_v = await _register_vendor(client, sample_user_data, sample_vendor_data, "-m")
     user1_token = reg_v["access_token"]
@@ -115,9 +109,7 @@ async def test_other_user_cannot_get_messages(
 
 
 @pytest.mark.asyncio
-async def test_other_user_cannot_send_message(
-    client, sample_user_data, sample_vendor_data
-):
+async def test_other_user_cannot_send_message(client, sample_user_data, sample_vendor_data):
     """SECURITY (BOLA): a non-participant must NOT be able to post messages."""
     reg_v = await _register_vendor(client, sample_user_data, sample_vendor_data, "-s")
     user1_token = reg_v["access_token"]
@@ -145,9 +137,7 @@ async def test_other_user_cannot_send_message(
 
 
 @pytest.mark.asyncio
-async def test_other_user_cannot_mark_read(
-    client, sample_user_data, sample_vendor_data
-):
+async def test_other_user_cannot_mark_read(client, sample_user_data, sample_vendor_data):
     """SECURITY (BOLA): a non-participant must NOT be able to mark messages as read."""
     reg_v = await _register_vendor(client, sample_user_data, sample_vendor_data, "-r")
     user1_token = reg_v["access_token"]

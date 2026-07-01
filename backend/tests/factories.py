@@ -6,15 +6,14 @@ that can be passed directly to API endpoints or model constructors.
 
 from datetime import datetime, timedelta
 from uuid import uuid4
-from typing import Optional
 
 
 def user_data(
-    email: Optional[str] = None,
+    email: str | None = None,
     role: str = "client",
     password: str = "TestPass123!",
-    full_name: Optional[str] = None,
-    phone: Optional[str] = None,
+    full_name: str | None = None,
+    phone: str | None = None,
 ) -> dict:
     return {
         "email": email or f"test_{uuid4().hex[:8]}@example.com",
@@ -26,11 +25,11 @@ def user_data(
 
 
 def vendor_data(
-    business_name: Optional[str] = None,
+    business_name: str | None = None,
     business_type: str = "hotel",
-    description: Optional[str] = None,
-    phone: Optional[str] = None,
-    email: Optional[str] = None,
+    description: str | None = None,
+    phone: str | None = None,
+    email: str | None = None,
 ) -> dict:
     return {
         "business_name": business_name or f"Test Vendor {uuid4().hex[:6]}",
@@ -42,7 +41,7 @@ def vendor_data(
 
 
 def property_data(
-    name: Optional[str] = None,
+    name: str | None = None,
     property_type: str = "hotel",
     base_price: float = 150.0,
     **overrides,
@@ -64,7 +63,7 @@ def property_data(
 
 
 def tour_data(
-    name: Optional[str] = None,
+    name: str | None = None,
     category: str = "adventure",
     price: float = 75.0,
     duration_hours: float = 4.0,
@@ -86,8 +85,8 @@ def tour_data(
 
 def booking_data(
     booking_type: str = "property",
-    check_in: Optional[str] = None,
-    check_out: Optional[str] = None,
+    check_in: str | None = None,
+    check_out: str | None = None,
     **overrides,
 ) -> dict:
     now = datetime.utcnow()
@@ -109,7 +108,7 @@ def booking_data(
 
 
 def destination_data(
-    name: Optional[str] = None,
+    name: str | None = None,
     region: str = "San Jose",
     **overrides,
 ) -> dict:
@@ -125,13 +124,14 @@ def destination_data(
 
 
 def blog_data(
-    title: Optional[str] = None,
-    content: Optional[str] = None,
+    title: str | None = None,
+    content: str | None = None,
     **overrides,
 ) -> dict:
     data = {
         "title": title or f"Test Blog Post {uuid4().hex[:6]}",
-        "content": content or "This is a test blog post with enough content to pass validation. " * 5,
+        "content": content
+        or "This is a test blog post with enough content to pass validation. " * 5,
         "category": "travel",
         "status": "draft",
     }
@@ -157,7 +157,7 @@ def media_file_data(
 
 
 def vehicle_data(
-    name: Optional[str] = None,
+    name: str | None = None,
     vehicle_type: str = "sedan",
     **overrides,
 ) -> dict:

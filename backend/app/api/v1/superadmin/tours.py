@@ -1,17 +1,16 @@
-from typing import Optional, List
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from pydantic import BaseModel, Field
-from sqlalchemy import select, func, desc
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin
 from app.core.utils import escape_like_pattern
-from app.models import User, Tour, Vendor
-from app.schemas import TourResponse, TourCreate, TourUpdate, TourListResponse
+from app.models import Tour, User, Vendor
+from app.schemas import TourCreate, TourListResponse, TourResponse, TourUpdate
 
 router = APIRouter(prefix="/tours", tags=["Super Admin - Tours"])
 
@@ -24,11 +23,11 @@ class SuperAdminTourCreate(TourCreate):
 async def list_tours(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    category: Optional[str] = Query(None),
-    difficulty: Optional[str] = Query(None),
-    is_active: Optional[bool] = Query(None),
-    is_featured: Optional[bool] = Query(None),
-    search: Optional[str] = Query(None),
+    category: str | None = Query(None),
+    difficulty: str | None = Query(None),
+    is_active: bool | None = Query(None),
+    is_featured: bool | None = Query(None),
+    search: str | None = Query(None),
     sort_by: str = Query("created_at"),
     sort_order: str = Query("desc"),
     db: AsyncSession = Depends(get_db),
@@ -40,12 +39,8 @@ async def list_tours(
     if search:
         safe = escape_like_pattern(search)
         like = f"%{safe}%"
-        query = query.where(
-            (Tour.name.ilike(like)) | (Tour.location.ilike(like))
-        )
-        count_query = count_query.where(
-            (Tour.name.ilike(like)) | (Tour.location.ilike(like))
-        )
+        query = query.where((Tour.name.ilike(like)) | (Tour.location.ilike(like)))
+        count_query = count_query.where((Tour.name.ilike(like)) | (Tour.location.ilike(like)))
 
     if category:
         query = query.where(Tour.category == category)
@@ -129,8 +124,8 @@ async def create_tour(
         meeting_point=data.meeting_point,
         max_group_size=data.max_group_size,
         price=data.price,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
     db.add(tour)
     await db.commit()
@@ -154,17 +149,32 @@ async def update_tour(
 
     update_data = data.model_dump(exclude_unset=True)
     allowed_fields = {
-        "name", "description", "category", "difficulty", "location",
-        "duration_hours", "duration_text", "meeting_point", "max_group_size",
-        "min_age", "price", "currency", "included", "not_included",
-        "itinerary", "images", "cover_image", "schedule_days",
-        "is_featured", "is_active",
+        "name",
+        "description",
+        "category",
+        "difficulty",
+        "location",
+        "duration_hours",
+        "duration_text",
+        "meeting_point",
+        "max_group_size",
+        "min_age",
+        "price",
+        "currency",
+        "included",
+        "not_included",
+        "itinerary",
+        "images",
+        "cover_image",
+        "schedule_days",
+        "is_featured",
+        "is_active",
     }
     for key, value in update_data.items():
         if key in allowed_fields and value is not None:
             setattr(tour, key, value)
 
-    tour.updated_at = datetime.now(timezone.utc)
+    tour.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(tour)
     return TourResponse.model_validate(tour)
@@ -203,7 +213,7 @@ async def toggle_tour_featured(
         raise HTTPException(status_code=404, detail="Tour not found")
 
     tour.is_featured = featured
-    tour.updated_at = datetime.now(timezone.utc)
+    tour.updated_at = datetime.now(UTC)
     await db.commit()
     return {
         "success": True,

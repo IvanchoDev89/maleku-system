@@ -1,18 +1,18 @@
-from typing import Optional, List
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import select, func, desc
+from pydantic import BaseModel
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from pydantic import BaseModel, Field
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin
 from app.core.utils import escape_like_pattern
-from app.models import User, Property, Room, Vendor
-from app.schemas import PropertyResponse, PropertyCreate, PropertyUpdate, PropertyListResponse
+from app.models import Property, Room, User, Vendor
+from app.schemas import PropertyCreate, PropertyListResponse, PropertyResponse, PropertyUpdate
 
 router = APIRouter(prefix="/properties", tags=["Super Admin - Properties"])
 
@@ -23,41 +23,41 @@ class SuperAdminPropertyCreate(PropertyCreate):
 
 class RoomCreate(BaseModel):
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     max_guests: int = 2
     beds: int = 1
-    bed_type: Optional[str] = None
+    bed_type: str | None = None
     price_per_night: float = 0
     weekend_price: float = 0
     extra_guest_price: float = 0
     cleaning_fee: float = 0
-    images: List[str] = []
+    images: list[str] = []
     is_available: bool = True
 
 
 class RoomUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    max_guests: Optional[int] = None
-    beds: Optional[int] = None
-    bed_type: Optional[str] = None
-    price_per_night: Optional[float] = None
-    weekend_price: Optional[float] = None
-    extra_guest_price: Optional[float] = None
-    cleaning_fee: Optional[float] = None
-    images: Optional[List[str]] = None
-    is_available: Optional[bool] = None
+    name: str | None = None
+    description: str | None = None
+    max_guests: int | None = None
+    beds: int | None = None
+    bed_type: str | None = None
+    price_per_night: float | None = None
+    weekend_price: float | None = None
+    extra_guest_price: float | None = None
+    cleaning_fee: float | None = None
+    images: list[str] | None = None
+    is_available: bool | None = None
 
 
 @router.get("", response_model=dict)
 async def list_properties(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    property_type: Optional[str] = Query(None),
-    is_active: Optional[bool] = Query(None),
-    is_featured: Optional[bool] = Query(None),
-    is_verified: Optional[bool] = Query(None),
-    search: Optional[str] = Query(None),
+    property_type: str | None = Query(None),
+    is_active: bool | None = Query(None),
+    is_featured: bool | None = Query(None),
+    is_verified: bool | None = Query(None),
+    search: str | None = Query(None),
     sort_by: str = Query("created_at"),
     sort_order: str = Query("desc"),
     db: AsyncSession = Depends(get_db),
@@ -70,10 +70,14 @@ async def list_properties(
         safe = escape_like_pattern(search)
         like = f"%{safe}%"
         query = query.where(
-            (Property.name.ilike(like)) | (Property.city.ilike(like)) | (Property.region.ilike(like))
+            (Property.name.ilike(like))
+            | (Property.city.ilike(like))
+            | (Property.region.ilike(like))
         )
         count_query = count_query.where(
-            (Property.name.ilike(like)) | (Property.city.ilike(like)) | (Property.region.ilike(like))
+            (Property.name.ilike(like))
+            | (Property.city.ilike(like))
+            | (Property.region.ilike(like))
         )
 
     if property_type:
@@ -182,13 +186,13 @@ async def create_property(
         currency=data.currency,
         weekend_price=data.weekend_price,
         weekly_discount=data.weekly_discount,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
     db.add(prop)
     await db.flush()
 
-    for room_data in (data.rooms or []):
+    for room_data in data.rooms or []:
         room = Room(
             property_id=prop.id,
             name=room_data.get("name", "Room"),
@@ -230,22 +234,53 @@ async def update_property(
 
     update_data = data.model_dump(exclude_unset=True)
     allowed_fields = {
-        "name", "slug", "short_description", "description", "property_type",
-        "category", "address", "country", "province", "region", "city",
-        "district", "latitude", "longitude", "map_address",
-        "cover_image", "images", "videos", "virtual_tour_url",
-        "amenities", "features", "check_in_time", "check_out_time",
-        "cancellation_policy", "house_rules", "important_info",
-        "min_guests", "max_guests", "beds", "baths", "square_meters",
-        "base_price", "currency", "weekend_price", "weekly_discount",
-        "seo_title", "seo_description", "seo_keywords",
-        "is_featured", "is_active", "is_verified",
+        "name",
+        "slug",
+        "short_description",
+        "description",
+        "property_type",
+        "category",
+        "address",
+        "country",
+        "province",
+        "region",
+        "city",
+        "district",
+        "latitude",
+        "longitude",
+        "map_address",
+        "cover_image",
+        "images",
+        "videos",
+        "virtual_tour_url",
+        "amenities",
+        "features",
+        "check_in_time",
+        "check_out_time",
+        "cancellation_policy",
+        "house_rules",
+        "important_info",
+        "min_guests",
+        "max_guests",
+        "beds",
+        "baths",
+        "square_meters",
+        "base_price",
+        "currency",
+        "weekend_price",
+        "weekly_discount",
+        "seo_title",
+        "seo_description",
+        "seo_keywords",
+        "is_featured",
+        "is_active",
+        "is_verified",
     }
     for key, value in update_data.items():
         if key in allowed_fields and value is not None:
             setattr(prop, key, value)
 
-    prop.updated_at = datetime.now(timezone.utc)
+    prop.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(prop)
     return PropertyResponse.model_validate(prop)
@@ -284,7 +319,7 @@ async def toggle_property_featured(
         raise HTTPException(status_code=404, detail="Property not found")
 
     prop.is_featured = featured
-    prop.updated_at = datetime.now(timezone.utc)
+    prop.updated_at = datetime.now(UTC)
     await db.commit()
     return {
         "success": True,
@@ -295,7 +330,8 @@ async def toggle_property_featured(
 
 # --- Room management ---
 
-@router.get("/{property_id}/rooms", response_model=List[dict])
+
+@router.get("/{property_id}/rooms", response_model=list[dict])
 async def list_rooms(
     property_id: UUID,
     db: AsyncSession = Depends(get_db),

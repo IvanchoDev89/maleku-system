@@ -3,16 +3,17 @@ Flights API - Vuelos
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import select, or_
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
 from app.core.security import require_role
 from app.core.utils import escape_like_pattern
-from app.models import UserRole, Flight, RouteType
+from app.models import Flight, RouteType, UserRole
 from app.schemas import flight as flight_schema
 
 router = APIRouter(tags=["Flights"])
@@ -53,26 +54,19 @@ async def list_flights(
         query = query.where(Flight.route_type == route_type)
 
     count_query = select(
-        select(Flight)
-        .where(Flight.is_active, Flight.deleted_at.is_(None))
-        .subquery()
-        .c.id
+        select(Flight).where(Flight.is_active, Flight.deleted_at.is_(None)).subquery().c.id
     )
     if origin_airport:
         safe_origin = escape_like_pattern(origin_airport)
         count_query = count_query.where(Flight.origin_airport.ilike(f"%{safe_origin}%"))
     if destination_airport:
         safe_destination = escape_like_pattern(destination_airport)
-        count_query = count_query.where(
-            Flight.destination_airport.ilike(f"%{safe_destination}%")
-        )
+        count_query = count_query.where(Flight.destination_airport.ilike(f"%{safe_destination}%"))
     if route_type:
         count_query = count_query.where(Flight.route_type == route_type)
 
     limit = min(limit, 100)
-    result = await db.execute(
-        query.order_by(Flight.departure_time).offset(skip).limit(limit)
-    )
+    result = await db.execute(query.order_by(Flight.departure_time).offset(skip).limit(limit))
     flights = result.scalars().all()
 
     total_result = await db.execute(count_query)
@@ -87,9 +81,7 @@ async def list_flights(
 
 
 @router.get("/search", response_model=dict)
-async def search_flights(
-    origin: str, destination: str, db: AsyncSession = Depends(get_db)
-) -> dict:
+async def search_flights(origin: str, destination: str, db: AsyncSession = Depends(get_db)) -> dict:
     """
     Search flights between two airports.
 
@@ -224,7 +216,7 @@ async def update_flight(
         if key in allowed_fields:
             setattr(flight, key, value)
 
-    flight.updated_at = datetime.now(timezone.utc)
+    flight.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(flight)
 
@@ -247,7 +239,7 @@ async def delete_flight(
         raise HTTPException(status_code=404, detail="Flight not found")
 
     flight.is_active = False
-    flight.deleted_at = datetime.now(timezone.utc)
+    flight.deleted_at = datetime.now(UTC)
     await db.commit()
 
     return {"message": "Flight deleted"}

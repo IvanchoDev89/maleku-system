@@ -1,17 +1,14 @@
-from uuid import UUID
-from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select, func, or_
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
 from app.core.database import get_db
-from app.core.rate_limiter import limiter
 from app.core.security import get_current_user
-from app.models import User, Booking, BookingStatus, Review, Property, Tour, Vendor
+from app.models import Booking, BookingStatus, Property, Review, Tour, User, Vendor
 
 router = APIRouter(tags=["Reviews"])
 
@@ -20,16 +17,16 @@ class ReviewCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     booking_id: UUID
     rating: int = Field(..., ge=1, le=5)
-    title: Optional[str] = None
-    comment: Optional[str] = None
+    title: str | None = None
+    comment: str | None = None
 
 
 class ReviewResponse(BaseModel):
     id: UUID
     rating: int
-    title: Optional[str] = None
-    comment: Optional[str] = None
-    user_name: Optional[str] = None
+    title: str | None = None
+    comment: str | None = None
+    user_name: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -60,9 +57,7 @@ async def create_review(
             detail="You can only review completed bookings",
         )
 
-    existing = await db.execute(
-        select(Review).where(Review.booking_id == data.booking_id)
-    )
+    existing = await db.execute(select(Review).where(Review.booking_id == data.booking_id))
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -106,9 +101,7 @@ async def create_review(
             )
         )
         row = stats.one()
-        await db.execute(
-            select(Vendor).where(Vendor.id == vendor_id)
-        )
+        await db.execute(select(Vendor).where(Vendor.id == vendor_id))
         vendor_result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
         vendor = vendor_result.scalar_one_or_none()
         if vendor:

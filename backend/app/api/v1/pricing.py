@@ -3,16 +3,17 @@ Pricing API - Precios Dinámicos
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import select, or_
-from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
 from app.core.security import require_role
-from app.models import User, UserRole, PricingRule
+from app.models import PricingRule, User, UserRole
 from app.schemas import pricing as pricing_schema
 
 router = APIRouter(tags=["Pricing"])
@@ -85,9 +86,7 @@ async def list_pricing_rules(
 
 
 @router.get("/{rule_id}", response_model=pricing_schema.PricingRuleDetailResponse)
-async def get_pricing_rule(
-    rule_id: uuid.UUID, db: AsyncSession = Depends(get_db)
-) -> dict:
+async def get_pricing_rule(rule_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> dict:
     """Get pricing rule details with calculated final price"""
     result = await db.execute(select(PricingRule).where(PricingRule.id == rule_id))
     rule = result.scalar_one_or_none()
@@ -100,7 +99,9 @@ async def get_pricing_rule(
     return {**rule.__dict__, "final_price": round(final_price, 2)}
 
 
-@router.post("", response_model=pricing_schema.PricingRuleResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=pricing_schema.PricingRuleResponse, status_code=status.HTTP_201_CREATED
+)
 @limiter.limit("10/minute")
 async def create_pricing_rule(
     request: Request,
@@ -167,7 +168,7 @@ async def update_pricing_rule(
         if key in allowed_fields:
             setattr(rule, key, value)
 
-    rule.updated_at = datetime.now(timezone.utc)
+    rule.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(rule)
 
@@ -216,9 +217,7 @@ async def calculate_dynamic_price(
     rules = result.scalars().all()
 
     if not rules:
-        raise HTTPException(
-            status_code=404, detail="No pricing rules found for this service"
-        )
+        raise HTTPException(status_code=404, detail="No pricing rules found for this service")
 
     base_price = rules[0].base_price
     demand_multiplier = 1.0
@@ -235,7 +234,7 @@ async def calculate_dynamic_price(
         if rule.seasonal_multiplier and rule.seasonal_multiplier == 0:
             rule.seasonal_multiplier = 1.0
         if rule.advance_booking_days and rule.advance_discount_percent:
-            days_advance = (date - datetime.now(timezone.utc)).days
+            days_advance = (date - datetime.now(UTC)).days
             if days_advance >= rule.advance_booking_days:
                 advance_discount = rule.advance_discount_percent
 

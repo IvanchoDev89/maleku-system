@@ -1,47 +1,49 @@
-import uuid
-import secrets
 import hashlib
-from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from sqlalchemy import select, func, text, case
+import secrets
+import uuid
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import case, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from app.core.database import get_db
-from app.core.pagination import paginate_flat
-from app.core.security import require_role, require_permission, require_verified_email
+
 from app.core.config import settings
+from app.core.database import get_db
+from app.core.logging import get_logger
+from app.core.pagination import paginate_flat
+from app.core.rate_limiter import limiter
+from app.core.security import require_permission, require_role, require_verified_email
 from app.models import (
-    User,
-    UserRole,
-    Vendor,
+    Booking,
+    BookingStatus,
     Property,
     Room,
     Tour,
-    Booking,
-    BookingStatus,
+    User,
+    UserRole,
+    Vendor,
 )
 from app.schemas import (
-    BookingResponse,
     BookingPropertyRequest,
+    BookingResponse,
     BookingTourRequest,
     BookingUpdateStatus,
-    PaginationParams,
     PaginatedResponse,
+    PaginationParams,
     PricePreviewRequest,
     PricePreviewResponse,
-)
-from app.services.pricing_service import (
-    calculate_room_price,
-    calculate_tour_price,
-    calculate_commission,
 )
 from app.services.availability_service import (
     check_room_availability,
     check_tour_availability,
 )
-from app.services.email_service import email_service, EmailError
-from app.core.logging import get_logger
-from app.core.rate_limiter import limiter
+from app.services.email_service import EmailError, email_service
+from app.services.pricing_service import (
+    calculate_commission,
+    calculate_room_price,
+    calculate_tour_price,
+)
 
 router = APIRouter(tags=["Bookings"])
 logger = get_logger(__name__)
@@ -51,16 +53,12 @@ def generate_confirmation_code():
     return f"CRT-{secrets.token_hex(4).upper()}"
 
 
-def _generate_room_lock_key(
-    room_id: uuid.UUID, check_in: datetime, check_out: datetime
-) -> int:
+def _generate_room_lock_key(room_id: uuid.UUID, check_in: datetime, check_out: datetime) -> int:
     """
     Genera un advisory lock key único para prevenir race conditions en bookings.
     Usa hash de room_id + fechas para crear un lock único por habitación/rango.
     """
-    key_string = (
-        f"{room_id}:{check_in.date().isoformat()}:{check_out.date().isoformat()}"
-    )
+    key_string = f"{room_id}:{check_in.date().isoformat()}:{check_out.date().isoformat()}"
     return (
         int(hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()[:8], 16)
         & 0x7FFFFFFF
@@ -86,9 +84,7 @@ async def create_property_booking(
     property_obj = result.scalar_one_or_none()
 
     if not property_obj:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Property not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Property not found")
 
     # Validate dates
     nights = (data.check_out - data.check_in).days
@@ -97,7 +93,7 @@ async def create_property_booking(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Minimum stay is 1 night"
         )
 
-    if data.check_in < datetime.now(timezone.utc):
+    if data.check_in < datetime.now(UTC):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Check-in date cannot be in the past",
@@ -136,9 +132,7 @@ async def create_property_booking(
 
     # Adquirir advisory lock (bloquea hasta que esté disponible)
     if not settings.DATABASE_URL.startswith("sqlite"):
-        await db.execute(
-            text("SELECT pg_advisory_xact_lock(:lock_key)"), {"lock_key": lock_key}
-        )
+        await db.execute(text("SELECT pg_advisory_xact_lock(:lock_key)"), {"lock_key": lock_key})
         logger.debug(f"Acquired advisory lock {lock_key} for room {data.room_id}")
 
     # RE-VERIFICAR disponibilidad CON EL LOCK ADQUIRIDO
@@ -154,9 +148,7 @@ async def create_property_booking(
         )
 
     # Get vendor for commission
-    vendor_result = await db.execute(
-        select(Vendor).where(Vendor.id == property_obj.vendor_id)
-    )
+    vendor_result = await db.execute(select(Vendor).where(Vendor.id == property_obj.vendor_id))
     vendor = vendor_result.scalar_one_or_none()
 
     # Calculate pricing using real room rates
@@ -177,9 +169,7 @@ async def create_property_booking(
         discount_amount = subtotal * (property_obj.weekly_discount / 100)
         subtotal = round(subtotal - discount_amount, 2)
 
-    commission_rate = (
-        float(vendor.commission_rate) if vendor else settings.STRIPE_COMMISSION_RATE
-    )
+    commission_rate = float(vendor.commission_rate) if vendor else settings.STRIPE_COMMISSION_RATE
     commission = calculate_commission(subtotal, commission_rate)
     total = subtotal  # Total before payment processing fees (added by Stripe)
 
@@ -209,9 +199,7 @@ async def create_property_booking(
 
     # Send confirmation emails (async - don't block response)
     try:
-        await _send_booking_confirmation_emails(
-            db, booking, property_obj, room, current_user
-        )
+        await _send_booking_confirmation_emails(db, booking, property_obj, room, current_user)
     except (RuntimeError, ConnectionError, ValueError, EmailError) as e:
         logger.error(f"Failed to send booking confirmation emails: {e}")
 
@@ -236,9 +224,7 @@ async def _send_booking_confirmation_emails(
 
     # Email to vendor
     if booking.vendor_id:
-        vendor_result = await db.execute(
-            select(Vendor).where(Vendor.id == booking.vendor_id)
-        )
+        vendor_result = await db.execute(select(Vendor).where(Vendor.id == booking.vendor_id))
         vendor = vendor_result.scalar_one_or_none()
 
         if vendor and vendor.email:
@@ -273,9 +259,7 @@ async def create_tour_booking(
     tour = result.scalar_one_or_none()
 
     if not tour:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found")
 
     if not tour.is_active:
         raise HTTPException(
@@ -291,7 +275,7 @@ async def create_tour_booking(
         )
 
     # Validate date is not in the past
-    if data.booking_date < datetime.now(timezone.utc):
+    if data.booking_date < datetime.now(UTC):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Booking date cannot be in the past",
@@ -331,9 +315,7 @@ async def create_tour_booking(
     # Calculate pricing using pricing service
     pricing = calculate_tour_price(tour=tour, participants=data.participants)
     subtotal = pricing["subtotal"]
-    commission_rate = (
-        float(vendor.commission_rate) if vendor else settings.STRIPE_COMMISSION_RATE
-    )
+    commission_rate = float(vendor.commission_rate) if vendor else settings.STRIPE_COMMISSION_RATE
     commission = calculate_commission(subtotal, commission_rate)
     total = subtotal
 
@@ -368,9 +350,7 @@ async def create_tour_booking(
     return BookingResponse.model_validate(booking)
 
 
-async def _send_tour_booking_emails(
-    db: AsyncSession, booking: Booking, tour: Tour, user: User
-):
+async def _send_tour_booking_emails(db: AsyncSession, booking: Booking, tour: Tour, user: User):
     """Send tour booking confirmation emails"""
     # Email to customer
     await email_service.send_email(
@@ -403,9 +383,7 @@ async def _send_tour_booking_emails(
 
     # Email to vendor
     if booking.vendor_id:
-        vendor_result = await db.execute(
-            select(Vendor).where(Vendor.id == booking.vendor_id)
-        )
+        vendor_result = await db.execute(select(Vendor).where(Vendor.id == booking.vendor_id))
         vendor = vendor_result.scalar_one_or_none()
 
         if vendor and vendor.email:
@@ -438,9 +416,7 @@ async def get_bookings(
     if current_user.role == UserRole.CLIENT:
         query = select(Booking).where(Booking.user_id == current_user.id)
     elif current_user.role == UserRole.VENDOR:
-        vendor_result = await db.execute(
-            select(Vendor).where(Vendor.user_id == current_user.id)
-        )
+        vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
         vendor = vendor_result.scalar_one_or_none()
         if vendor:
             query = select(Booking).where(Booking.vendor_id == vendor.id)
@@ -493,14 +469,10 @@ async def preview_price(
     room = room_result.scalar_one_or_none()
 
     if not room:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Room not found")
 
     # Get property for weekly discount
-    property_result = await db.execute(
-        select(Property).where(Property.id == room.property_id)
-    )
+    property_result = await db.execute(select(Property).where(Property.id == room.property_id))
     property_obj = property_result.scalar_one_or_none()
 
     # Validate dates
@@ -534,9 +506,7 @@ async def preview_price(
     # Get vendor for commission calculation
     commission = 0
     if property_obj:
-        vendor_result = await db.execute(
-            select(Vendor).where(Vendor.id == property_obj.vendor_id)
-        )
+        vendor_result = await db.execute(select(Vendor).where(Vendor.id == property_obj.vendor_id))
         vendor = vendor_result.scalar_one_or_none()
         if vendor:
             commission = calculate_commission(subtotal, float(vendor.commission_rate))
@@ -589,25 +559,17 @@ async def get_booking(
     booking = result.scalar_one_or_none()
 
     if not booking:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
 
     # Check access
     if current_user.role == UserRole.CLIENT and booking.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
     if current_user.role == UserRole.VENDOR:
-        vendor_result = await db.execute(
-            select(Vendor).where(Vendor.user_id == current_user.id)
-        )
+        vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
         vendor = vendor_result.scalar_one_or_none()
         if not vendor or booking.vendor_id != vendor.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
     return BookingResponse.model_validate(booking)
 
@@ -640,20 +602,14 @@ async def update_booking_status(
     booking = result.scalar_one_or_none()
 
     if not booking:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
 
     # Check access
     if current_user.role == UserRole.VENDOR:
-        vendor_result = await db.execute(
-            select(Vendor).where(Vendor.user_id == current_user.id)
-        )
+        vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
         vendor = vendor_result.scalar_one_or_none()
         if not vendor or booking.vendor_id != vendor.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
         # Vendors can only confirm or cancel
         if data.status not in ["confirmed", "cancelled"]:
             raise HTTPException(
@@ -662,9 +618,7 @@ async def update_booking_status(
             )
     elif current_user.role == UserRole.CLIENT:
         if current_user.id != booking.user_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
         if data.status != "cancelled":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -674,9 +628,7 @@ async def update_booking_status(
     try:
         booking.status = BookingStatus(data.status)
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid status"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid status")
 
     await db.flush()
     await db.commit()
@@ -694,9 +646,7 @@ async def get_vendor_booking_stats(
     current_user: User = Depends(require_role(UserRole.VENDOR)),
     db: AsyncSession = Depends(get_db),
 ):
-    vendor_result = await db.execute(
-        select(Vendor).where(Vendor.user_id == current_user.id)
-    )
+    vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     vendor = vendor_result.scalar_one_or_none()
 
     if not vendor:
@@ -706,18 +656,16 @@ async def get_vendor_booking_stats(
     stats_result = await db.execute(
         select(
             func.count(Booking.id).label("total"),
-            func.sum(case((Booking.status == BookingStatus.PENDING, 1), else_=0)).label(
-                "pending"
+            func.sum(case((Booking.status == BookingStatus.PENDING, 1), else_=0)).label("pending"),
+            func.sum(case((Booking.status == BookingStatus.CONFIRMED, 1), else_=0)).label(
+                "confirmed"
             ),
-            func.sum(
-                case((Booking.status == BookingStatus.CONFIRMED, 1), else_=0)
-            ).label("confirmed"),
-            func.sum(
-                case((Booking.status == BookingStatus.COMPLETED, 1), else_=0)
-            ).label("completed"),
-            func.sum(
-                case((Booking.status == BookingStatus.CANCELLED, 1), else_=0)
-            ).label("cancelled"),
+            func.sum(case((Booking.status == BookingStatus.COMPLETED, 1), else_=0)).label(
+                "completed"
+            ),
+            func.sum(case((Booking.status == BookingStatus.CANCELLED, 1), else_=0)).label(
+                "cancelled"
+            ),
             func.coalesce(
                 func.sum(
                     case(
@@ -775,9 +723,7 @@ async def get_vendor_my_bookings(
             detail="Only vendors can access this resource",
         )
 
-    vendor_result = await db.execute(
-        select(Vendor).where(Vendor.user_id == current_user.id)
-    )
+    vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     vendor = vendor_result.scalar_one_or_none()
 
     if not vendor:

@@ -3,18 +3,19 @@ Vehicles API - Rent a Car
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import select, func
+from pydantic import BaseModel
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
 from app.core.security import get_current_user, require_role
 from app.core.utils import escape_like_pattern
-from app.models import User, UserRole, Vendor, Vehicle, VehicleType
+from app.models import User, UserRole, Vehicle, VehicleType, Vendor
 from app.schemas import vehicle as vehicle_schema
-from pydantic import BaseModel
 
 router = APIRouter(tags=["Vehicles"])
 
@@ -92,18 +93,14 @@ async def list_vehicles(
     query = select(Vehicle).where(Vehicle.is_active, Vehicle.is_available)
 
     if location:
-        query = query.where(
-            Vehicle.location.ilike(f"%{escape_like_pattern(location)}%")
-        )
+        query = query.where(Vehicle.location.ilike(f"%{escape_like_pattern(location)}%"))
     if vehicle_type:
         query = query.where(Vehicle.vehicle_type == vehicle_type)
     if seats:
         query = query.where(Vehicle.seats >= seats)
 
     count_query = (
-        select(func.count())
-        .select_from(Vehicle)
-        .where(Vehicle.is_active, Vehicle.is_available)
+        select(func.count()).select_from(Vehicle).where(Vehicle.is_active, Vehicle.is_available)
     )
     if location:
         count_query = count_query.where(
@@ -115,9 +112,7 @@ async def list_vehicles(
         count_query = count_query.where(Vehicle.seats >= seats)
 
     limit = min(limit, 100)
-    result = await db.execute(
-        query.order_by(Vehicle.price_per_day).offset(skip).limit(limit)
-    )
+    result = await db.execute(query.order_by(Vehicle.price_per_day).offset(skip).limit(limit))
     vehicles = result.scalars().all()
 
     total_result = await db.execute(count_query)
@@ -225,9 +220,7 @@ async def update_vehicle(
         raise HTTPException(status_code=404, detail="Vehicle not found")
 
     # Verify ownership
-    vendor_result = await db.execute(
-        select(Vendor).where(Vendor.user_id == current_user.id)
-    )
+    vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     vendor = vendor_result.scalar_one_or_none()
 
     if not vendor:
@@ -264,7 +257,7 @@ async def update_vehicle(
         if key in allowed_fields:
             setattr(vehicle, key, value)
 
-    vehicle.updated_at = datetime.now(timezone.utc)
+    vehicle.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(vehicle)
 
@@ -285,9 +278,7 @@ async def delete_vehicle(
         raise HTTPException(status_code=404, detail="Vehicle not found")
 
     # Verify ownership
-    vendor_result = await db.execute(
-        select(Vendor).where(Vendor.user_id == current_user.id)
-    )
+    vendor_result = await db.execute(select(Vendor).where(Vendor.user_id == current_user.id))
     vendor = vendor_result.scalar_one_or_none()
 
     if not vendor:
@@ -314,9 +305,7 @@ async def get_my_vehicles(
     if not vendor:
         return []
 
-    vehicles_result = await db.execute(
-        select(Vehicle).where(Vehicle.vendor_id == vendor.id)
-    )
+    vehicles_result = await db.execute(select(Vehicle).where(Vehicle.vendor_id == vendor.id))
     vehicles = vehicles_result.scalars().all()
 
     return vehicles

@@ -1,19 +1,19 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
 
 
 class LandingPropertyItem(BaseModel):
     id: UUID
     name: str
     slug: str
-    cover_image: Optional[str] = None
+    cover_image: str | None = None
     property_type: str = "hotel"
-    city: Optional[str] = None
-    region: Optional[str] = None
+    city: str | None = None
+    region: str | None = None
     base_price: float = 0
-    rating: Optional[float] = 0.0
+    rating: float | None = 0.0
     total_reviews: int = 0
 
     model_config = ConfigDict(from_attributes=True)
@@ -23,12 +23,12 @@ class LandingTourItem(BaseModel):
     id: UUID
     name: str
     slug: str
-    cover_image: Optional[str] = None
+    cover_image: str | None = None
     category: str
     duration_hours: float = 0
-    location: Optional[str] = None
+    location: str | None = None
     price: float = 0
-    rating: Optional[float] = 0.0
+    rating: float | None = 0.0
     total_reviews: int = 0
 
     model_config = ConfigDict(from_attributes=True)
@@ -40,7 +40,7 @@ class LandingVehicleItem(BaseModel):
     model: str
     vehicle_type: str = "car"
     seats: int = 5
-    images: List[str] = []
+    images: list[str] = []
     price_per_day: float = 0
     rating: float = 0.0
     total_reviews: int = 0
@@ -50,11 +50,11 @@ class LandingVehicleItem(BaseModel):
 
 class LandingBoatItem(BaseModel):
     id: UUID
-    brand: Optional[str] = None
-    model: Optional[str] = None
+    brand: str | None = None
+    model: str | None = None
     equipment_type: str = "boat"
     capacity: int = 4
-    images: List[str] = []
+    images: list[str] = []
     price_per_day: float = 0
     rating: float = 0.0
     total_reviews: int = 0
@@ -66,9 +66,9 @@ class LandingTransportItem(BaseModel):
     id: UUID
     service_type: str = "airport_transfer"
     vehicle_type: str = "sedan"
-    vehicle_description: Optional[str] = None
+    vehicle_description: str | None = None
     capacity: int = 4
-    images: List[str] = []
+    images: list[str] = []
     base_price: float = 0
     rating: float = 0.0
     total_reviews: int = 0
@@ -79,9 +79,9 @@ class LandingTransportItem(BaseModel):
 class LandingReview(BaseModel):
     id: UUID
     rating: int
-    title: Optional[str] = None
-    comment: Optional[str] = None
-    user_name: Optional[str] = None
+    title: str | None = None
+    comment: str | None = None
+    user_name: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -95,7 +95,7 @@ class LandingStats(BaseModel):
     total_transportation: int = 0
     total_reviews: int = 0
     total_bookings: int = 0
-    member_since: Optional[datetime] = None
+    member_since: datetime | None = None
 
 
 class LandingRanking(BaseModel):
@@ -108,28 +108,28 @@ class VendorLandingResponse(BaseModel):
     business_name: str
     business_slug: str
     business_type: str
-    description: Optional[str] = None
-    logo_url: Optional[str] = None
-    cover_image: Optional[str] = None
-    phone: Optional[str] = None
-    email: Optional[str] = None
-    address: Optional[str] = None
-    rating: Optional[float] = 0.0
+    description: str | None = None
+    logo_url: str | None = None
+    cover_image: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
+    rating: float | None = 0.0
     total_reviews: int = 0
     is_verified: bool = False
 
-    properties: List[LandingPropertyItem] = []
+    properties: list[LandingPropertyItem] = []
     properties_has_more: bool = False
-    tours: List[LandingTourItem] = []
+    tours: list[LandingTourItem] = []
     tours_has_more: bool = False
-    vehicles: List[LandingVehicleItem] = []
+    vehicles: list[LandingVehicleItem] = []
     vehicles_has_more: bool = False
-    boats: List[LandingBoatItem] = []
+    boats: list[LandingBoatItem] = []
     boats_has_more: bool = False
-    transportation: List[LandingTransportItem] = []
+    transportation: list[LandingTransportItem] = []
     transportation_has_more: bool = False
 
-    reviews: List[LandingReview] = []
+    reviews: list[LandingReview] = []
     reviews_total: int = 0
     reviews_average_rating: float = 0.0
 

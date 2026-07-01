@@ -1,7 +1,6 @@
 """Mock Cloudinary upload service for testing."""
 
 from unittest.mock import MagicMock
-from typing import Optional
 
 
 class MockCloudinaryUploadResult:
@@ -27,5 +26,7 @@ def mock_cloudinary_module():
     mock.api = MagicMock()
     mock.api.delete_resources = MagicMock(return_value={"deleted": {"test/mock_image": "deleted"}})
     mock.utils = MagicMock()
-    mock.utils.cloudinary_url = MagicMock(return_value=("https://res.cloudinary.com/mock/image/upload/v1/test/mock_image", {}))
+    mock.utils.cloudinary_url = MagicMock(
+        return_value=("https://res.cloudinary.com/mock/image/upload/v1/test/mock_image", {})
+    )
     return mock

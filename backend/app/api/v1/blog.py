@@ -1,29 +1,30 @@
-import uuid
 import re
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from slugify import slugify
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
+from app.core.config import settings
 from app.core.database import get_db
+from app.core.logging import get_logger
 from app.core.pagination import paginate_flat
 from app.core.security import require_role
-from app.core.logging import get_logger
-from app.models import User, UserRole, BlogPost, BlogPostStatus
+from app.models import BlogPost, BlogPostStatus, User, UserRole
 from app.schemas import (
-    BlogPostResponse,
     BlogPostCreate,
-    BlogPostUpdate,
     BlogPostListResponse,
-    PaginationParams,
+    BlogPostResponse,
+    BlogPostUpdate,
     PaginatedResponse,
+    PaginationParams,
 )
-from app.core.config import settings
 from app.services.cache_service import cache
-from pydantic import BaseModel
 
 router = APIRouter(tags=["Blog"])
 
@@ -67,9 +68,7 @@ async def get_blog_posts(
     # SECURITY: Sanitize cache key parameters to prevent injection
     safe_category = _sanitize_cache_key(category) if category else "all"
     safe_status = _sanitize_cache_key(status) if status else "published"
-    cache_key = (
-        f"blog:list:{safe_category}:{safe_status}:{params.page}:{params.page_size}"
-    )
+    cache_key = f"blog:list:{safe_category}:{safe_status}:{params.page}:{params.page_size}"
 
     # Try cache first
     cached = await cache.get(cache_key)
@@ -147,16 +146,12 @@ async def get_blog_post(post_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
         return BlogPostResponse(**cached)
 
     result = await db.execute(
-        select(BlogPost)
-        .where(BlogPost.id == post_id)
-        .options(selectinload(BlogPost.author))
+        select(BlogPost).where(BlogPost.id == post_id).options(selectinload(BlogPost.author))
     )
     post = result.scalar_one_or_none()
 
     if not post:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Blog post not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog post not found")
 
     response = BlogPostResponse.model_validate(post)
     response.author_name = post.author.name if post.author else None
@@ -190,16 +185,12 @@ async def get_blog_post_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
         return BlogPostResponse(**cached)
 
     result = await db.execute(
-        select(BlogPost)
-        .where(BlogPost.slug == slug)
-        .options(selectinload(BlogPost.author))
+        select(BlogPost).where(BlogPost.slug == slug).options(selectinload(BlogPost.author))
     )
     post = result.scalar_one_or_none()
 
     if not post:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Blog post not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog post not found")
 
     post.views_count += 1
     await db.flush()
@@ -300,9 +291,7 @@ async def update_blog_post(
     post = result.scalar_one_or_none()
 
     if not post:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Blog post not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog post not found")
 
     # SECURITY: Prevent mass assignment - only allow specific updatable fields
     allowed_fields = {
@@ -354,9 +343,7 @@ async def delete_blog_post(
     post = result.scalar_one_or_none()
 
     if not post:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Blog post not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog post not found")
 
     post.status = BlogPostStatus.ARCHIVED
     await db.flush()
@@ -377,9 +364,7 @@ async def delete_blog_post(
 )
 async def get_blog_categories(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(BlogPost.category)
-        .where(BlogPost.status == BlogPostStatus.PUBLISHED)
-        .distinct()
+        select(BlogPost.category).where(BlogPost.status == BlogPostStatus.PUBLISHED).distinct()
     )
     categories = [r[0] for r in result.all() if r[0]]
     return {"categories": categories}

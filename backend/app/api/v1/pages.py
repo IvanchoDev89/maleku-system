@@ -1,5 +1,4 @@
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +9,7 @@ from app.schemas.content import StaticPageResponse as StaticPageResponseSchema
 router = APIRouter(prefix="/pages", tags=["Pages"])
 
 
-@router.get("/public", response_model=List[StaticPageResponseSchema])
+@router.get("/public", response_model=list[StaticPageResponseSchema])
 async def list_public_pages(
     db: AsyncSession = Depends(get_db),
 ):
@@ -30,8 +29,9 @@ async def get_public_page(
 ):
     """Get a single active static page by slug."""
     result = await db.execute(
-        select(StaticPageModel)
-        .where(StaticPageModel.slug == slug, StaticPageModel.is_active == True)
+        select(StaticPageModel).where(
+            StaticPageModel.slug == slug, StaticPageModel.is_active == True
+        )
     )
     page = result.scalar_one_or_none()
     if not page:

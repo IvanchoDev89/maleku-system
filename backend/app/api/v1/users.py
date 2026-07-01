@@ -1,16 +1,17 @@
 import uuid
-from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
-from sqlalchemy import select, func, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.logging import get_logger
 from app.core.rate_limiter import limiter
 from app.core.security import get_current_user, require_role
-from app.models import User, UserRole, Booking, Review
-from app.schemas import UserResponse, UserUpdate, PaginationParams, PaginatedResponse
+from app.models import Booking, Review, User, UserRole
+from app.schemas import PaginatedResponse, PaginationParams, UserResponse, UserUpdate
 
 logger = get_logger(__name__)
 
@@ -75,10 +76,7 @@ async def get_users(
     # Get users with pagination
     offset = (params.page - 1) * params.page_size
     result = await db.execute(
-        select(User)
-        .order_by(User.created_at.desc())
-        .offset(offset)
-        .limit(params.page_size)
+        select(User).order_by(User.created_at.desc()).offset(offset).limit(params.page_size)
     )
     users = result.scalars().all()
 
@@ -110,9 +108,7 @@ async def get_user(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return UserResponse.model_validate(user)
 
@@ -130,9 +126,7 @@ async def update_user(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     if data.full_name:
         user.full_name = data.full_name
@@ -163,9 +157,7 @@ async def delete_user(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     user.is_active = False
     await db.flush()
@@ -186,9 +178,7 @@ async def activate_user(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     user.is_active = True
     await db.flush()
@@ -216,9 +206,7 @@ async def anonymize_user(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # Anonymize PII fields
     user.email = f"deleted-{uuid.uuid4().hex[:8]}@anonymized.com"
@@ -227,7 +215,7 @@ async def anonymize_user(
     user.avatar_url = None
     user.password_hash = ""
     user.is_active = False
-    user.deleted_at = datetime.now(timezone.utc)
+    user.deleted_at = datetime.now(UTC)
 
     # Anonymize related data
     await db.execute(
@@ -269,16 +257,12 @@ async def change_user_role(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     try:
         user.role = UserRole(role)
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
 
     await db.flush()
     await db.commit()

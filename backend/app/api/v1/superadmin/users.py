@@ -3,21 +3,21 @@ Super Admin User Management endpoints.
 Provides comprehensive CRUD for users with audit logging.
 """
 
-from datetime import datetime, timezone, timedelta
-from typing import Optional, List
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
-from sqlalchemy import select, desc, func
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, EmailStr, Field
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
-from app.core.security import require_superadmin, get_password_hash
+from app.core.security import get_password_hash, require_superadmin
 from app.core.utils import escape_like_pattern
-from app.models import User, UserRole, Vendor, Booking, AuditAction
+from app.models import AuditAction, Booking, User, UserRole, Vendor
 from app.models.audit import SecurityAction
-from app.services.audit_service import log_create, log_update, log_delete, AuditService
+from app.services.audit_service import AuditService, log_create, log_delete, log_update
 
 router = APIRouter(tags=["SuperAdmin - Users"])
 
@@ -32,9 +32,9 @@ class UserListItem(BaseModel):
     role: str
     is_active: bool
     is_verified: bool
-    phone: Optional[str]
-    avatar_url: Optional[str]
-    last_login: Optional[datetime]
+    phone: str | None
+    avatar_url: str | None
+    last_login: datetime | None
     created_at: datetime
     vendor_count: int
     booking_count: int
@@ -46,14 +46,14 @@ class UserDetail(BaseModel):
     id: str
     email: str
     full_name: str
-    phone: Optional[str]
-    avatar_url: Optional[str]
+    phone: str | None
+    avatar_url: str | None
     role: str
     is_active: bool
     is_verified: bool
-    last_login: Optional[datetime]
+    last_login: datetime | None
     failed_login_attempts: int
-    locked_until: Optional[datetime]
+    locked_until: datetime | None
     created_at: datetime
     updated_at: datetime
 
@@ -64,7 +64,7 @@ class UserCreateRequest(BaseModel):
     email: EmailStr
     password: str
     full_name: str
-    phone: Optional[str] = None
+    phone: str | None = None
     role: UserRole = UserRole.CLIENT
     is_active: bool = True
 
@@ -72,12 +72,12 @@ class UserCreateRequest(BaseModel):
 class UserUpdateRequest(BaseModel):
     """Request to update a user."""
 
-    email: Optional[EmailStr] = None
-    full_name: Optional[str] = None
-    phone: Optional[str] = None
-    role: Optional[UserRole] = None
-    is_active: Optional[bool] = None
-    is_verified: Optional[bool] = None
+    email: EmailStr | None = None
+    full_name: str | None = None
+    phone: str | None = None
+    role: UserRole | None = None
+    is_active: bool | None = None
+    is_verified: bool | None = None
 
 
 class UserActivityItem(BaseModel):
@@ -86,9 +86,9 @@ class UserActivityItem(BaseModel):
     id: str
     action: str
     entity_type: str
-    entity_name: Optional[str]
-    changes_summary: Optional[str]
-    ip_address: Optional[str]
+    entity_name: str | None
+    changes_summary: str | None
+    ip_address: str | None
     created_at: datetime
 
 
@@ -96,18 +96,18 @@ class BlockUserRequest(BaseModel):
     """Request to block a user."""
 
     reason: str = Field(..., max_length=500, description="Reason for blocking")
-    duration_hours: Optional[int] = Field(
+    duration_hours: int | None = Field(
         None, description="Block duration in hours (null for permanent)"
     )
 
 
 # Endpoints
-@router.get("", response_model=List[UserListItem])
+@router.get("", response_model=list[UserListItem])
 async def list_users(
-    search: Optional[str] = Query(None, description="Search by name or email"),
-    role: Optional[UserRole] = Query(None, description="Filter by role"),
-    is_active: Optional[bool] = Query(None, description="Filter by active status"),
-    is_verified: Optional[bool] = Query(None, description="Filter by verified status"),
+    search: str | None = Query(None, description="Search by name or email"),
+    role: UserRole | None = Query(None, description="Filter by role"),
+    is_active: bool | None = Query(None, description="Filter by active status"),
+    is_verified: bool | None = Query(None, description="Filter by verified status"),
     sort_by: str = Query("created_at", description="Sort field"),
     sort_order: str = Query("desc", description="Sort order: asc or desc"),
     limit: int = Query(20, ge=1, le=100),
@@ -186,9 +186,9 @@ async def list_users(
 
 @router.get("/count", response_model=dict)
 async def get_user_count(
-    search: Optional[str] = Query(None),
-    role: Optional[UserRole] = Query(None),
-    is_active: Optional[bool] = Query(None),
+    search: str | None = Query(None),
+    role: UserRole | None = Query(None),
+    is_active: bool | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
 ):
@@ -229,9 +229,7 @@ async def get_user_detail(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return {
         "id": str(user.id),
@@ -278,8 +276,8 @@ async def create_user(
         role=data.role,
         is_active=data.is_active,
         is_verified=True,  # Super Admin created users are pre-verified
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
 
     db.add(new_user)
@@ -335,9 +333,7 @@ async def update_user(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # Store old values for audit
     old_values = {
@@ -391,7 +387,7 @@ async def update_user(
             changes.append(f"verification: {user.is_verified} -> {data.is_verified}")
         user.is_verified = data.is_verified
 
-    user.updated_at = datetime.now(timezone.utc)
+    user.updated_at = datetime.now(UTC)
 
     await db.flush()
 
@@ -413,9 +409,7 @@ async def update_user(
         entity_name=user.full_name,
         old_values=old_values,
         new_values=new_values,
-        changes_summary=f"Updated user: {', '.join(changes)}"
-        if changes
-        else "No changes made",
+        changes_summary=f"Updated user: {', '.join(changes)}" if changes else "No changes made",
     )
 
     await db.commit()
@@ -451,9 +445,7 @@ async def delete_user(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # Cannot delete yourself
     if user.id == current_user.id:
@@ -496,7 +488,7 @@ async def delete_user(
     await db.commit()
 
 
-@router.get("/{user_id}/activity", response_model=List[UserActivityItem])
+@router.get("/{user_id}/activity", response_model=list[UserActivityItem])
 async def get_user_activity(
     user_id: UUID,
     limit: int = Query(50, ge=1, le=100),
@@ -549,9 +541,7 @@ async def impersonate_user(
     target_user = result.scalar_one_or_none()
 
     if not target_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # Cannot impersonate super admins
     if target_user.role == UserRole.SUPER_ADMIN:
@@ -618,9 +608,7 @@ async def block_user(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     if user.role == UserRole.SUPER_ADMIN:
         raise HTTPException(
@@ -631,7 +619,7 @@ async def block_user(
     user.is_active = False
 
     if body.duration_hours:
-        user.locked_until = datetime.now(timezone.utc) + timedelta(hours=body.duration_hours)
+        user.locked_until = datetime.now(UTC) + timedelta(hours=body.duration_hours)
     else:
         user.locked_until = None  # Permanent
 
@@ -685,9 +673,7 @@ async def unblock_user(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     user.is_active = True
     user.locked_until = None

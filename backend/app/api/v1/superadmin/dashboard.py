@@ -3,29 +3,29 @@ Super Admin Dashboard endpoints.
 Provides comprehensive overview metrics and real-time system status.
 """
 
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
+
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import require_superadmin
 from app.models import (
+    BlogPost,
+    BlogPostStatus,
+    Booking,
+    BookingStatus,
+    Destination,
+    NewsletterSubscriber,
+    Property,
+    Review,
+    Tour,
     User,
     UserRole,
     Vendor,
     VendorStatus,
-    Booking,
-    BookingStatus,
-    Property,
-    Tour,
-    Review,
-    BlogPost,
-    BlogPostStatus,
-    Destination,
-    NewsletterSubscriber,
 )
 
 router = APIRouter(tags=["SuperAdmin - Dashboard"])
@@ -84,7 +84,7 @@ class RecentActivityItem(BaseModel):
     id: str
     action: str
     entity_type: str
-    entity_name: Optional[str]
+    entity_name: str | None
     user_name: str
     user_email: str
     timestamp: datetime
@@ -98,8 +98,8 @@ class AlertItem(BaseModel):
     severity: str  # info, warning, critical
     title: str
     description: str
-    entity_type: Optional[str]
-    entity_id: Optional[str]
+    entity_type: str | None
+    entity_id: str | None
     created_at: datetime
     is_resolved: bool
 
@@ -110,7 +110,7 @@ class RecentActivityResponse(BaseModel):
     id: str
     action: str
     entity_type: str
-    entity_name: Optional[str]
+    entity_name: str | None
     user_name: str
     user_email: str
     timestamp: datetime
@@ -124,8 +124,8 @@ class AlertResponse(BaseModel):
     severity: str
     title: str
     description: str
-    entity_type: Optional[str]
-    entity_id: Optional[str]
+    entity_type: str | None
+    entity_id: str | None
     created_at: datetime
     is_resolved: bool
 
@@ -177,7 +177,7 @@ class QuickActionsResponse(BaseModel):
 class TopVendorItem(BaseModel):
     vendor_id: str
     vendor_name: str
-    logo_url: Optional[str]
+    logo_url: str | None
     total_bookings: int
     total_revenue: float
 
@@ -199,27 +199,31 @@ async def get_dashboard_stats(
     Get comprehensive dashboard statistics for Super Admin.
     Includes user metrics, vendor status, bookings, revenue, and content stats.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=7)
     month_start = today_start.replace(day=1)
 
     # === Consolidated user statistics (1 query replaces 9) ===
-    user_row = (await db.execute(
-        select(
-            func.count(User.id).label("total"),
-            func.count(User.id).filter(User.role == UserRole.SUPER_ADMIN).label("super_admin"),
-            func.count(User.id).filter(User.role == UserRole.ADMIN).label("admin"),
-            func.count(User.id).filter(User.role == UserRole.VENDOR).label("vendor"),
-            func.count(User.id).filter(User.role == UserRole.CLIENT).label("client"),
-            func.count(User.id).filter(User.role == UserRole.AGENT).label("agent"),
-            func.count(User.id).filter(User.role == UserRole.CUSTOMER_SERVICE).label("customer_service"),
-            func.count(User.id).filter(User.created_at >= today_start).label("new_today"),
-            func.count(User.id).filter(User.created_at >= week_start).label("new_week"),
-            func.count(User.id).filter(User.created_at >= month_start).label("new_month"),
-            func.count(User.id).filter(User.last_login >= today_start).label("active_today"),
+    user_row = (
+        await db.execute(
+            select(
+                func.count(User.id).label("total"),
+                func.count(User.id).filter(User.role == UserRole.SUPER_ADMIN).label("super_admin"),
+                func.count(User.id).filter(User.role == UserRole.ADMIN).label("admin"),
+                func.count(User.id).filter(User.role == UserRole.VENDOR).label("vendor"),
+                func.count(User.id).filter(User.role == UserRole.CLIENT).label("client"),
+                func.count(User.id).filter(User.role == UserRole.AGENT).label("agent"),
+                func.count(User.id)
+                .filter(User.role == UserRole.CUSTOMER_SERVICE)
+                .label("customer_service"),
+                func.count(User.id).filter(User.created_at >= today_start).label("new_today"),
+                func.count(User.id).filter(User.created_at >= week_start).label("new_week"),
+                func.count(User.id).filter(User.created_at >= month_start).label("new_month"),
+                func.count(User.id).filter(User.last_login >= today_start).label("active_today"),
+            )
         )
-    )).one()
+    ).one()
     total_users = user_row.total
     users_by_role = {
         "super_admin": user_row.super_admin,
@@ -235,35 +239,43 @@ async def get_dashboard_stats(
     active_users_today = user_row.active_today
 
     # === Consolidated vendor statistics (1 query replaces 4) ===
-    vendor_row = (await db.execute(
-        select(
-            func.count(Vendor.id).label("total"),
-            func.count(Vendor.id).filter(Vendor.status == VendorStatus.PENDING).label("pending"),
-            func.count(Vendor.id).filter(Vendor.status == VendorStatus.ACTIVE).label("active"),
-            func.count(Vendor.id).filter(Vendor.status == VendorStatus.SUSPENDED).label("suspended"),
+    vendor_row = (
+        await db.execute(
+            select(
+                func.count(Vendor.id).label("total"),
+                func.count(Vendor.id)
+                .filter(Vendor.status == VendorStatus.PENDING)
+                .label("pending"),
+                func.count(Vendor.id).filter(Vendor.status == VendorStatus.ACTIVE).label("active"),
+                func.count(Vendor.id)
+                .filter(Vendor.status == VendorStatus.SUSPENDED)
+                .label("suspended"),
+            )
         )
-    )).one()
+    ).one()
     total_vendors = vendor_row.total
     pending_vendors = vendor_row.pending
     active_vendors = vendor_row.active
     suspended_vendors = vendor_row.suspended
 
     # === Consolidated booking + revenue statistics (1 query replaces 7) ===
-    booking_row = (await db.execute(
-        select(
-            func.count(Booking.id).label("total"),
-            func.count(Booking.id).filter(Booking.created_at >= today_start).label("today"),
-            func.count(Booking.id).filter(Booking.created_at >= week_start).label("week"),
-            func.count(Booking.id).filter(Booking.created_at >= month_start).label("month"),
-            func.coalesce(func.sum(Booking.total_amount), 0).label("revenue_total"),
-            func.coalesce(
-                func.sum(Booking.total_amount).filter(Booking.created_at >= today_start), 0
-            ).label("revenue_today"),
-            func.coalesce(
-                func.sum(Booking.total_amount).filter(Booking.created_at >= month_start), 0
-            ).label("revenue_month"),
+    booking_row = (
+        await db.execute(
+            select(
+                func.count(Booking.id).label("total"),
+                func.count(Booking.id).filter(Booking.created_at >= today_start).label("today"),
+                func.count(Booking.id).filter(Booking.created_at >= week_start).label("week"),
+                func.count(Booking.id).filter(Booking.created_at >= month_start).label("month"),
+                func.coalesce(func.sum(Booking.total_amount), 0).label("revenue_total"),
+                func.coalesce(
+                    func.sum(Booking.total_amount).filter(Booking.created_at >= today_start), 0
+                ).label("revenue_today"),
+                func.coalesce(
+                    func.sum(Booking.total_amount).filter(Booking.created_at >= month_start), 0
+                ).label("revenue_month"),
+            )
         )
-    )).one()
+    ).one()
     total_bookings = booking_row.total
     bookings_today = booking_row.today
     bookings_this_week = booking_row.week
@@ -274,17 +286,21 @@ async def get_dashboard_stats(
     net_revenue = total_revenue * 0.90
 
     # === Consolidated content statistics (1 query replaces 8) ===
-    content_row = (await db.execute(
-        select(
-            func.count(Property.id).label("properties"),
-            func.count(Tour.id).label("tours"),
-            func.count(Review.id).label("reviews"),
-            func.coalesce(func.avg(Review.rating), 0).label("avg_rating"),
-            func.count(BlogPost.id).label("blog_posts"),
-            func.count(BlogPost.id).filter(BlogPost.status == BlogPostStatus.PUBLISHED).label("published_posts"),
-            func.count(Destination.id).label("destinations"),
+    content_row = (
+        await db.execute(
+            select(
+                func.count(Property.id).label("properties"),
+                func.count(Tour.id).label("tours"),
+                func.count(Review.id).label("reviews"),
+                func.coalesce(func.avg(Review.rating), 0).label("avg_rating"),
+                func.count(BlogPost.id).label("blog_posts"),
+                func.count(BlogPost.id)
+                .filter(BlogPost.status == BlogPostStatus.PUBLISHED)
+                .label("published_posts"),
+                func.count(Destination.id).label("destinations"),
+            )
         )
-    )).one()
+    ).one()
     total_properties = content_row.properties
     total_tours = content_row.tours
     total_reviews = content_row.reviews
@@ -294,22 +310,34 @@ async def get_dashboard_stats(
     total_destinations = content_row.destinations
 
     # === Consolidated newsletter statistics (2 queries replace 7) ===
-    ns_row = (await db.execute(
-        select(
-            func.count(NewsletterSubscriber.id).label("total"),
-            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.is_active).label("active"),
-            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.is_confirmed).label("confirmed"),
-            func.count(NewsletterSubscriber.id).filter(
-                NewsletterSubscriber.created_at >= today_start, NewsletterSubscriber.is_active
-            ).label("new_today"),
-            func.count(NewsletterSubscriber.id).filter(
-                NewsletterSubscriber.created_at >= week_start, NewsletterSubscriber.is_active
-            ).label("new_week"),
-            func.count(NewsletterSubscriber.id).filter(
-                NewsletterSubscriber.created_at >= month_start, NewsletterSubscriber.is_active
-            ).label("new_month"),
+    ns_row = (
+        await db.execute(
+            select(
+                func.count(NewsletterSubscriber.id).label("total"),
+                func.count(NewsletterSubscriber.id)
+                .filter(NewsletterSubscriber.is_active)
+                .label("active"),
+                func.count(NewsletterSubscriber.id)
+                .filter(NewsletterSubscriber.is_confirmed)
+                .label("confirmed"),
+                func.count(NewsletterSubscriber.id)
+                .filter(
+                    NewsletterSubscriber.created_at >= today_start, NewsletterSubscriber.is_active
+                )
+                .label("new_today"),
+                func.count(NewsletterSubscriber.id)
+                .filter(
+                    NewsletterSubscriber.created_at >= week_start, NewsletterSubscriber.is_active
+                )
+                .label("new_week"),
+                func.count(NewsletterSubscriber.id)
+                .filter(
+                    NewsletterSubscriber.created_at >= month_start, NewsletterSubscriber.is_active
+                )
+                .label("new_month"),
+            )
         )
-    )).one()
+    ).one()
     newsletter_subscribers = ns_row.active
     newsletter_subscribers_today = ns_row.new_today
     newsletter_subscribers_this_week = ns_row.new_week
@@ -408,7 +436,7 @@ async def get_system_alerts(
     Includes pending vendors, failed bookings, system issues, etc.
     """
     alerts = []
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Check for pending vendors
     pending_vendors_result = await db.execute(
@@ -496,9 +524,9 @@ async def get_revenue_trend(
     """
     Get daily revenue trend for the specified period.
     """
-    from sqlalchemy import func, cast, Date
+    from sqlalchemy import Date, cast, func
 
-    end_date = datetime.now(timezone.utc)
+    end_date = datetime.now(UTC)
     start_date = end_date - timedelta(days=days)
 
     result = await db.execute(
@@ -539,22 +567,34 @@ async def get_newsletter_stats(
     """
     Get detailed newsletter subscription statistics.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=7)
     month_start = today_start.replace(day=1)
 
     # Consolidated counts (1 query replaces 6)
-    ns_row = (await db.execute(
-        select(
-            func.count(NewsletterSubscriber.id).label("total"),
-            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.is_active).label("active"),
-            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.is_confirmed).label("confirmed"),
-            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.created_at >= today_start).label("new_today"),
-            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.created_at >= week_start).label("new_week"),
-            func.count(NewsletterSubscriber.id).filter(NewsletterSubscriber.created_at >= month_start).label("new_month"),
+    ns_row = (
+        await db.execute(
+            select(
+                func.count(NewsletterSubscriber.id).label("total"),
+                func.count(NewsletterSubscriber.id)
+                .filter(NewsletterSubscriber.is_active)
+                .label("active"),
+                func.count(NewsletterSubscriber.id)
+                .filter(NewsletterSubscriber.is_confirmed)
+                .label("confirmed"),
+                func.count(NewsletterSubscriber.id)
+                .filter(NewsletterSubscriber.created_at >= today_start)
+                .label("new_today"),
+                func.count(NewsletterSubscriber.id)
+                .filter(NewsletterSubscriber.created_at >= week_start)
+                .label("new_week"),
+                func.count(NewsletterSubscriber.id)
+                .filter(NewsletterSubscriber.created_at >= month_start)
+                .label("new_month"),
+            )
         )
-    )).one()
+    ).one()
     total = ns_row.total
     active = ns_row.active
     confirmed = ns_row.confirmed
@@ -564,9 +604,9 @@ async def get_newsletter_stats(
 
     # By source
     sources_result = await db.execute(
-        select(
-            NewsletterSubscriber.source, func.count(NewsletterSubscriber.id)
-        ).group_by(NewsletterSubscriber.source)
+        select(NewsletterSubscriber.source, func.count(NewsletterSubscriber.id)).group_by(
+            NewsletterSubscriber.source
+        )
     )
     by_source = {row[0]: row[1] for row in sources_result.all()}
 
@@ -660,7 +700,7 @@ async def get_quick_actions(
     """
     Get available quick actions with counts for the Super Admin dashboard.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Pending vendors
     pending_vendors = await db.execute(
@@ -790,12 +830,10 @@ async def get_system_metrics(
     import psutil
 
     # Database connection test
-    db_start = datetime.now(timezone.utc)
+    db_start = datetime.now(UTC)
     try:
         await db.execute(select(func.count(User.id)))
-        db_response_time = (
-            datetime.now(timezone.utc) - db_start
-        ).total_seconds() * 1000
+        db_response_time = (datetime.now(UTC) - db_start).total_seconds() * 1000
         db_status = "healthy"
     except (OSError, RuntimeError):
         db_response_time = 0
@@ -824,7 +862,7 @@ async def get_system_metrics(
         }
 
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "database": {
             "status": db_status,
             "response_time_ms": round(db_response_time, 2),

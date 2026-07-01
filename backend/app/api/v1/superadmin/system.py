@@ -3,12 +3,12 @@ Super Admin System & Infrastructure endpoints.
 Provides health checks, database stats, and system monitoring.
 """
 
-from datetime import datetime, timezone, timedelta
-from typing import Optional
+from datetime import UTC, datetime, timedelta
+
 from fastapi import APIRouter, Depends, Request
-from sqlalchemy import text, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
+from sqlalchemy import func, select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
@@ -26,7 +26,7 @@ class SystemHealth(BaseModel):
     api_status: str
     database_status: str
     timestamp: datetime
-    uptime_seconds: Optional[int]
+    uptime_seconds: int | None
     version: str
 
 
@@ -69,7 +69,7 @@ class BackupInfo(BaseModel):
     status: str
     size_mb: float
     created_at: datetime
-    completed_at: Optional[datetime]
+    completed_at: datetime | None
 
 
 # Endpoints
@@ -98,7 +98,7 @@ async def get_system_health(
         "status": overall_status,
         "api_status": "operational",
         "database_status": db_status,
-        "timestamp": datetime.now(timezone.utc),
+        "timestamp": datetime.now(UTC),
         "uptime_seconds": None,  # Would need to track application start time
         "version": "1.0.0",  # Should come from app config
     }
@@ -147,17 +147,13 @@ async def get_database_stats(
     ]
 
     # Get connection count
-    connections_result = await db.execute(
-        text("SELECT count(*) as count FROM pg_stat_activity")
-    )
+    connections_result = await db.execute(text("SELECT count(*) as count FROM pg_stat_activity"))
     connections = connections_result.scalar() or 0
 
     return {
         "total_size": size_row.size if size_row else "unknown",
         "total_size_bytes": size_row.size_bytes if size_row else 0,
-        "total_size_mb": round((size_row.size_bytes / (1024 * 1024)), 2)
-        if size_row
-        else 0,
+        "total_size_mb": round((size_row.size_bytes / (1024 * 1024)), 2) if size_row else 0,
         "tables": tables,
         "connection_count": connections,
         "slow_queries": [],  # Would need to track query performance
@@ -196,15 +192,11 @@ async def get_database_connections(
                 "pid": row.pid,
                 "username": row.username,
                 "application": row.application_name,
-                "client_address": str(row.client_address)
-                if row.client_address
-                else None,
+                "client_address": str(row.client_address) if row.client_address else None,
                 "backend_start": row.backend_start,
                 "state": row.state,
                 "query_start": row.query_start,
-                "query": row.query[:200]
-                if row.query
-                else None,  # Truncate long queries
+                "query": row.query[:200] if row.query else None,  # Truncate long queries
             }
         )
 
@@ -269,9 +261,7 @@ async def get_backups(current_user: User = Depends(require_superadmin())):
 
 @router.post("/backups/trigger", response_model=dict)
 @limiter.limit("5/minute")
-async def trigger_backup(
-    request: Request, current_user: User = Depends(require_superadmin())
-):
+async def trigger_backup(request: Request, current_user: User = Depends(require_superadmin())):
     """
     Manually trigger a database backup.
     Placeholder - would integrate with actual backup system.
@@ -279,7 +269,7 @@ async def trigger_backup(
     # This is a placeholder - actual implementation would trigger pg_dump or similar
     return {
         "message": "Backup initiated",
-        "backup_id": "manual-" + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S"),
+        "backup_id": "manual-" + datetime.now(UTC).strftime("%Y%m%d-%H%M%S"),
         "status": "processing",
         "note": "Backup system not yet fully configured. This is a placeholder.",
     }
@@ -293,7 +283,7 @@ async def get_system_metrics(
     """
     Get key system metrics for monitoring dashboards.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     day_ago = now - timedelta(hours=24)
 
     # User metrics
@@ -335,13 +325,11 @@ async def get_system_metrics(
     }
 
 
-async def _get_db_connection_count(db: AsyncSession) -> Optional[int]:
+async def _get_db_connection_count(db: AsyncSession) -> int | None:
     """Query active database connection count."""
     try:
         result = await db.execute(
-            text(
-                "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database()"
-            )
+            text("SELECT count(*) FROM pg_stat_activity WHERE datname = current_database()")
         )
         return result.scalar() or 0
     except Exception:
@@ -353,7 +341,7 @@ async def _get_db_connection_count(db: AsyncSession) -> Optional[int]:
 async def toggle_maintenance_mode(
     request: Request,
     enabled: bool,
-    message: Optional[str] = None,
+    message: str | None = None,
     current_user: User = Depends(require_superadmin()),
 ):
     """
@@ -381,9 +369,7 @@ async def get_environment_info(current_user: User = Depends(require_superadmin()
     from app.core.config import settings
 
     return {
-        "environment": settings.ENVIRONMENT
-        if hasattr(settings, "ENVIRONMENT")
-        else "unknown",
+        "environment": settings.ENVIRONMENT if hasattr(settings, "ENVIRONMENT") else "unknown",
         "debug_mode": settings.DEBUG if hasattr(settings, "DEBUG") else False,
         "database_url_masked": settings.DATABASE_URL.replace(
             settings.DATABASE_URL.split("://")[1].split(":")[0], "***"

@@ -4,15 +4,15 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from slowapi.errors import RateLimitExceeded
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from slowapi.errors import RateLimitExceeded
 
+from app.api.v1 import blog, bookings, destinations, properties, tours, users, vendors
+from app.api.v1.endpoints import auth
 from app.core.config import settings
 from app.core.database import init_db
 from app.core.rate_limiter import limiter, rate_limit_exceeded_handler
-from app.api.v1.endpoints import auth
-from app.api.v1 import users, vendors, properties, tours, bookings, blog, destinations
 
 try:
     from app.api.v1.landing import router as landing_router
@@ -21,33 +21,33 @@ try:
 except Exception as e:
     print(f"Failed to import landing router: {e}")
     landing_router = None
-from app.api.v1.analytics import router as analytics_router
 from app.api.v1.admin.settings import router as settings_router
 from app.api.v1.admin.vendors import router as admin_vendors_router
-from app.api.v1.vehicles import router as vehicles_router
-from app.api.v1.boats import router as boats_router
-from app.api.v1.flights import router as flights_router
-from app.api.v1.transportation import router as transportation_router
-from app.api.v1.pricing import router as pricing_router
-from app.api.v1.chat import router as chat_router
-from app.api.v1.search import router as search_router
-from app.api.v1.upload import router as upload_router
+from app.api.v1.analytics import router as analytics_router
 from app.api.v1.availability import router as availability_router
-from app.api.v1.stripe import router as stripe_router
+from app.api.v1.boats import router as boats_router
+from app.api.v1.chat import router as chat_router
+from app.api.v1.contact import router as contact_router
+from app.api.v1.flights import router as flights_router
 from app.api.v1.marketing import router as marketing_router
 from app.api.v1.newsletter import router as newsletter_router
-from app.api.v1.reviews import router as reviews_router
 from app.api.v1.pages import router as pages_router
-from app.api.v1.contact import router as contact_router
 from app.api.v1.planner import router as planner_router
-from app.api.v1.trip_planner import router as trip_planner_router
+from app.api.v1.pricing import router as pricing_router
+from app.api.v1.reviews import router as reviews_router
+from app.api.v1.search import router as search_router
+from app.api.v1.stripe import router as stripe_router
 from app.api.v1.superadmin import router as superadmin_router
-from app.core.logging import setup_logging, get_logger
+from app.api.v1.transportation import router as transportation_router
+from app.api.v1.trip_planner import router as trip_planner_router
+from app.api.v1.upload import router as upload_router
+from app.api.v1.vehicles import router as vehicles_router
+from app.core.logging import get_logger, setup_logging
 from app.core.token_blacklist import token_blacklist
 from app.middleware.error_handler import ErrorHandlerMiddleware
-from app.middleware.request_id import RequestIDMiddleware
-from app.middleware.metrics import MetricsMiddleware
 from app.middleware.feature_flags import FeatureFlagMiddleware
+from app.middleware.metrics import MetricsMiddleware
+from app.middleware.request_id import RequestIDMiddleware
 
 # Setup Sentry monitoring
 if settings.SENTRY_DSN:
@@ -62,9 +62,7 @@ if settings.SENTRY_DSN:
     )
 
 # Setup logging (env-driven: LOG_FORMAT=json|text, default: text en dev, json en prod)
-_json_format = (
-    settings.LOG_FORMAT == "json" if settings.LOG_FORMAT else settings.is_production
-)
+_json_format = settings.LOG_FORMAT == "json" if settings.LOG_FORMAT else settings.is_production
 setup_logging(level=settings.LOG_LEVEL, json_format=_json_format)
 logger = get_logger(__name__)
 
@@ -167,9 +165,7 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["Permissions-Policy"] = (
         "camera=(), microphone=(), geolocation=(), fullscreen=(), payment=(), autoplay=(), clipboard-read=(), display-capture=(), screen-wake-lock=()"
     )
-    response.headers["Strict-Transport-Security"] = (
-        "max-age=31536000; includeSubDomains"
-    )
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
     response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
@@ -260,34 +256,22 @@ api_v1 = "/api/v1"
 app.include_router(auth.router, prefix=f"{api_v1}/auth", tags=["Authentication"])
 
 # Admin routes
-app.include_router(
-    analytics_router, prefix=f"{api_v1}/admin/analytics", tags=["Admin Analytics"]
-)
-app.include_router(
-    settings_router, prefix=f"{api_v1}/admin/settings", tags=["Admin Settings"]
-)
-app.include_router(
-    admin_vendors_router, prefix=f"{api_v1}/admin/vendors", tags=["Admin Vendors"]
-)
+app.include_router(analytics_router, prefix=f"{api_v1}/admin/analytics", tags=["Admin Analytics"])
+app.include_router(settings_router, prefix=f"{api_v1}/admin/settings", tags=["Admin Settings"])
+app.include_router(admin_vendors_router, prefix=f"{api_v1}/admin/vendors", tags=["Admin Vendors"])
 
 # Super Admin routes (exclusive access for SUPER_ADMIN)
-app.include_router(
-    superadmin_router, prefix=f"{api_v1}/superadmin", tags=["Super Admin"]
-)
+app.include_router(superadmin_router, prefix=f"{api_v1}/superadmin", tags=["Super Admin"])
 
 # Standard routes - default rate limit
 app.include_router(users.router, prefix=f"{api_v1}/users", tags=["Users"])
 app.include_router(vendors.router, prefix=f"{api_v1}/vendors", tags=["Vendors"])
-app.include_router(
-    properties.router, prefix=f"{api_v1}/properties", tags=["Properties"]
-)
+app.include_router(properties.router, prefix=f"{api_v1}/properties", tags=["Properties"])
 app.include_router(tours.router, prefix=f"{api_v1}/tours", tags=["Tours"])
 app.include_router(bookings.router, prefix=f"{api_v1}/bookings", tags=["Bookings"])
 app.include_router(reviews_router, prefix=api_v1, tags=["Reviews"])
 app.include_router(blog.router, prefix=f"{api_v1}/blog", tags=["Blog"])
-app.include_router(
-    destinations.router, prefix=f"{api_v1}/destinations", tags=["Destinations"]
-)
+app.include_router(destinations.router, prefix=f"{api_v1}/destinations", tags=["Destinations"])
 if landing_router is not None:
     app.include_router(landing_router, prefix=f"{api_v1}/landing", tags=["Landing"])
 app.include_router(search_router, prefix=f"{api_v1}/search", tags=["Search"])
@@ -302,19 +286,13 @@ app.include_router(
 app.include_router(pricing_router, prefix=f"{api_v1}/pricing", tags=["Pricing"])
 app.include_router(chat_router, prefix=f"{api_v1}/chat", tags=["Chat"])
 app.include_router(upload_router, prefix=f"{api_v1}/upload", tags=["Upload"])
-app.include_router(
-    availability_router, prefix=f"{api_v1}/availability", tags=["Availability"]
-)
+app.include_router(availability_router, prefix=f"{api_v1}/availability", tags=["Availability"])
 app.include_router(stripe_router, prefix=f"{api_v1}/stripe", tags=["Stripe Payments"])
-app.include_router(
-    newsletter_router, prefix=f"{api_v1}/newsletter", tags=["Newsletter"]
-)
+app.include_router(newsletter_router, prefix=f"{api_v1}/newsletter", tags=["Newsletter"])
 app.include_router(pages_router, prefix=api_v1, tags=["Pages"])
 app.include_router(contact_router, prefix=api_v1, tags=["Contact"])
 app.include_router(planner_router, prefix=f"{api_v1}/planner", tags=["Planner"])
-app.include_router(
-    trip_planner_router, prefix=f"{api_v1}/trip-planner", tags=["Trip Planner"]
-)
+app.include_router(trip_planner_router, prefix=f"{api_v1}/trip-planner", tags=["Trip Planner"])
 
 # Marketing routes (BillionMail integration)
 app.include_router(marketing_router, prefix=f"{api_v1}/marketing", tags=["Marketing"])
@@ -358,9 +336,10 @@ async def health_check():
 @app.get("/health/ready")
 async def health_ready():
     """Readiness check - verifies database, Redis, and configured external services."""
-    from app.core.database import engine
-    from sqlalchemy import text
     import redis.asyncio as redis_asyncio
+    from sqlalchemy import text
+
+    from app.core.database import engine
 
     services = {}
 
@@ -388,9 +367,7 @@ async def health_ready():
         services["redis"] = "unavailable"
 
     # Stripe (config check)
-    services["stripe"] = (
-        "configured" if settings.is_stripe_configured else "not_configured"
-    )
+    services["stripe"] = "configured" if settings.is_stripe_configured else "not_configured"
 
     # Cloudinary (config check)
     services["cloudinary"] = (
@@ -399,9 +376,7 @@ async def health_ready():
         else "not_configured"
     )
 
-    critical_ok = (
-        services["database"] == "connected" and services["redis"] == "connected"
-    )
+    critical_ok = services["database"] == "connected" and services["redis"] == "connected"
 
     return {
         "status": "ready" if critical_ok else "degraded",
@@ -448,6 +423,6 @@ if settings.DEBUG:
 # Prometheus metrics endpoint (no auth — intended for internal scraping)
 @app.get("/metrics", include_in_schema=False)
 async def metrics():
-    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+    from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)

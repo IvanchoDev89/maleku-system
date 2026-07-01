@@ -5,32 +5,43 @@ Manages blog posts, static pages, SEO settings, and media library.
 Exclusive access for SUPER_ADMIN role.
 """
 
-from typing import List, Optional
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import select, func, desc, or_
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin
-from app.models import User, BlogPost as BlogPostModel
-from app.models.content import StaticPage as StaticPageModel
-from app.models.content import SEOSettings as SEOSettingsModel
+from app.models import BlogPost as BlogPostModel
+from app.models import User
+from app.models.audit import AuditAction
 from app.models.content import MediaFile as MediaFileModel
-from app.schemas import BlogPostCreate as BlogPostCreateSchema, BlogPostUpdate as BlogPostUpdateSchema
+from app.models.content import SEOSettings as SEOSettingsModel
+from app.models.content import StaticPage as StaticPageModel
+from app.schemas import BlogPostCreate as BlogPostCreateSchema
+from app.schemas import BlogPostUpdate as BlogPostUpdateSchema
 from app.schemas.content import (
-    StaticPageCreate as StaticPageCreateSchema,
-    StaticPageUpdate as StaticPageUpdateSchema,
-    StaticPageResponse as StaticPageResponseSchema,
-    SEOSettingsUpdate as SEOSettingsUpdateSchema,
-    SEOSettingsResponse as SEOSettingsResponseSchema,
     MediaFileResponse as MediaFileResponseSchema,
 )
+from app.schemas.content import (
+    SEOSettingsResponse as SEOSettingsResponseSchema,
+)
+from app.schemas.content import (
+    SEOSettingsUpdate as SEOSettingsUpdateSchema,
+)
+from app.schemas.content import (
+    StaticPageCreate as StaticPageCreateSchema,
+)
+from app.schemas.content import (
+    StaticPageResponse as StaticPageResponseSchema,
+)
+from app.schemas.content import (
+    StaticPageUpdate as StaticPageUpdateSchema,
+)
 from app.services.audit_service import AuditService
-from app.models.audit import AuditAction
 
 router = APIRouter(prefix="/content", tags=["Super Admin - Content"])
 
@@ -77,10 +88,11 @@ async def _get_or_create_seo(db: AsyncSession) -> SEOSettingsModel:
 
 # ---- Blog posts ----
 
-@router.get("/blog", response_model=List[dict])
+
+@router.get("/blog", response_model=list[dict])
 async def list_blog_posts(
-    status_filter: Optional[str] = Query(None, alias="status"),
-    search: Optional[str] = Query(None, max_length=100),
+    status_filter: str | None = Query(None, alias="status"),
+    search: str | None = Query(None, max_length=100),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
@@ -184,8 +196,8 @@ async def create_blog_post(
         tags=getattr(data, "tags", None) or [],
         author_id=current_user.id,
         status="draft",
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
 
     if hasattr(data, "status") and data.status:
@@ -233,14 +245,22 @@ async def update_blog_post(
     old_title = post.title
     update_data = data.model_dump(exclude_unset=True)
     allowed_fields = {
-        "title", "excerpt", "content", "featured_image", "category",
-        "tags", "status", "published_at", "seo_title", "seo_description",
+        "title",
+        "excerpt",
+        "content",
+        "featured_image",
+        "category",
+        "tags",
+        "status",
+        "published_at",
+        "seo_title",
+        "seo_description",
     }
     for key, value in update_data.items():
         if key in allowed_fields and value is not None:
             setattr(post, key, value)
 
-    post.updated_at = datetime.now(timezone.utc)
+    post.updated_at = datetime.now(UTC)
     await db.flush()
 
     await AuditService.log_action(
@@ -273,7 +293,7 @@ async def delete_blog_post(
     if not post:
         raise HTTPException(status_code=404, detail="Blog post not found")
 
-    post.deleted_at = datetime.now(timezone.utc)
+    post.deleted_at = datetime.now(UTC)
     await db.flush()
 
     await AuditService.log_action(
@@ -293,7 +313,8 @@ async def delete_blog_post(
 
 # ---- Static Pages ----
 
-@router.get("/pages", response_model=List[StaticPageResponseSchema])
+
+@router.get("/pages", response_model=list[StaticPageResponseSchema])
 async def list_static_pages(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
@@ -313,9 +334,7 @@ async def get_static_page(
     current_user: User = Depends(require_superadmin()),
 ):
     """Get single static page"""
-    result = await db.execute(
-        select(StaticPageModel).where(StaticPageModel.id == page_id)
-    )
+    result = await db.execute(select(StaticPageModel).where(StaticPageModel.id == page_id))
     page = result.scalar_one_or_none()
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
@@ -331,9 +350,7 @@ async def create_static_page(
     current_user: User = Depends(require_superadmin()),
 ):
     """Create new static page"""
-    existing = await db.execute(
-        select(StaticPageModel).where(StaticPageModel.slug == data.slug)
-    )
+    existing = await db.execute(select(StaticPageModel).where(StaticPageModel.slug == data.slug))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="A page with this slug already exists")
 
@@ -378,9 +395,7 @@ async def update_static_page(
     current_user: User = Depends(require_superadmin()),
 ):
     """Update static page"""
-    result = await db.execute(
-        select(StaticPageModel).where(StaticPageModel.id == page_id)
-    )
+    result = await db.execute(select(StaticPageModel).where(StaticPageModel.id == page_id))
     page = result.scalar_one_or_none()
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
@@ -407,14 +422,22 @@ async def update_static_page(
             raise HTTPException(status_code=409, detail="A page with this slug already exists")
 
     allowed_fields = {
-        "title", "slug", "content", "template", "meta_title", "meta_description",
-        "is_active", "show_in_footer", "show_in_header", "sort_order",
+        "title",
+        "slug",
+        "content",
+        "template",
+        "meta_title",
+        "meta_description",
+        "is_active",
+        "show_in_footer",
+        "show_in_header",
+        "sort_order",
     }
     for key, value in update_data.items():
         if key in allowed_fields and value is not None:
             setattr(page, key, value)
 
-    page.updated_at = datetime.now(timezone.utc)
+    page.updated_at = datetime.now(UTC)
     await db.flush()
 
     await AuditService.log_action(
@@ -425,11 +448,13 @@ async def update_static_page(
         entity_id=page.id,
         entity_name=page.title,
         old_values=_serialize_for_audit(old_values),
-        new_values=_serialize_for_audit({
-            "title": page.title,
-            "slug": page.slug,
-            "is_active": page.is_active,
-        }),
+        new_values=_serialize_for_audit(
+            {
+                "title": page.title,
+                "slug": page.slug,
+                "is_active": page.is_active,
+            }
+        ),
         changes_summary=f"Static page '{page.title}' updated",
     )
 
@@ -445,9 +470,7 @@ async def delete_static_page(
     current_user: User = Depends(require_superadmin()),
 ):
     """Delete static page"""
-    result = await db.execute(
-        select(StaticPageModel).where(StaticPageModel.id == page_id)
-    )
+    result = await db.execute(select(StaticPageModel).where(StaticPageModel.id == page_id))
     page = result.scalar_one_or_none()
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
@@ -468,6 +491,7 @@ async def delete_static_page(
 
 
 # ---- SEO Settings ----
+
 
 @router.get("/seo", response_model=SEOSettingsResponseSchema)
 async def get_seo_settings(
@@ -500,16 +524,21 @@ async def update_seo_settings(
 
     update_data = data.model_dump(exclude_unset=True)
     allowed_fields = {
-        "site_title_template", "default_meta_title", "default_meta_description",
-        "default_meta_keywords", "google_site_verification", "robots_txt",
-        "sitemap_enabled", "structured_data_enabled",
+        "site_title_template",
+        "default_meta_title",
+        "default_meta_description",
+        "default_meta_keywords",
+        "google_site_verification",
+        "robots_txt",
+        "sitemap_enabled",
+        "structured_data_enabled",
     }
     for key, value in update_data.items():
         if key in allowed_fields and value is not None:
             setattr(settings, key, value)
 
     settings.updated_by = current_user.id
-    settings.updated_at = datetime.now(timezone.utc)
+    settings.updated_at = datetime.now(UTC)
     await db.flush()
 
     await AuditService.log_action(
@@ -531,11 +560,12 @@ async def update_seo_settings(
 
 # ---- Media Files ----
 
-@router.get("/media", response_model=List[MediaFileResponseSchema])
+
+@router.get("/media", response_model=list[MediaFileResponseSchema])
 async def list_media(
-    folder: Optional[str] = Query(None, max_length=100),
-    mime_type: Optional[str] = Query(None, max_length=50),
-    search: Optional[str] = Query(None, max_length=100),
+    folder: str | None = Query(None, max_length=100),
+    mime_type: str | None = Query(None, max_length=50),
+    search: str | None = Query(None, max_length=100),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
@@ -587,9 +617,7 @@ async def delete_media(
     current_user: User = Depends(require_superadmin()),
 ):
     """Delete media file"""
-    result = await db.execute(
-        select(MediaFileModel).where(MediaFileModel.id == media_id)
-    )
+    result = await db.execute(select(MediaFileModel).where(MediaFileModel.id == media_id))
     media = result.scalar_one_or_none()
     if not media:
         raise HTTPException(status_code=404, detail="Media file not found")

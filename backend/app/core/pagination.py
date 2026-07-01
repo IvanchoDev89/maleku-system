@@ -2,13 +2,14 @@
 Pagination utilities for consistent API responses
 """
 
-from typing import TypeVar, Generic, List, Optional
 from math import ceil
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Callable, Generic, TypeVar
 
 from pydantic import BaseModel
-from app.schemas import PaginationParams, PaginatedResponse
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.schemas import PaginatedResponse, PaginationParams
 
 T = TypeVar("T")
 
@@ -27,7 +28,7 @@ class PaginationMetadata(BaseModel):
 class PaginatedResult(BaseModel, Generic[T]):
     """Generic paginated result container"""
 
-    items: List[T]
+    items: list[T]
     pagination: PaginationMetadata
 
 
@@ -35,7 +36,7 @@ async def paginate_query(
     session: AsyncSession,
     query,
     params: PaginationParams,
-    transform_func: Optional[callable] = None,
+    transform_func: Callable | None = None,
 ) -> PaginatedResult:
     """
     Execute a query with pagination.
@@ -78,7 +79,7 @@ async def paginate_query(
     return PaginatedResult(items=items, pagination=metadata)
 
 
-async def paginate_list(items: List[T], params: PaginationParams) -> PaginatedResult:
+async def paginate_list(items: list[T], params: PaginationParams) -> PaginatedResult:
     """
     Paginate an in-memory list.
 
@@ -112,7 +113,7 @@ async def paginate_flat(
     session: AsyncSession,
     query,
     params: PaginationParams,
-    transform_func: Optional[callable] = None,
+    transform_func: Callable | None = None,
     order_by=None,
 ) -> PaginatedResponse:
     """

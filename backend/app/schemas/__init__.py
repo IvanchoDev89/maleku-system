@@ -1,8 +1,9 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
-from typing import Optional, Any, List
-from datetime import datetime
-from uuid import UUID
 import re
+from datetime import datetime
+from typing import Any, List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 def sanitize_html(value: str) -> str:
@@ -78,11 +79,11 @@ class UserBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
     email: EmailStr
     full_name: str = Field(..., min_length=2, max_length=255)
-    phone: Optional[str] = Field(None, min_length=8, max_length=20)
+    phone: str | None = Field(None, min_length=8, max_length=20)
 
     @field_validator("full_name", "phone")
     @classmethod
-    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+    def sanitize_input(cls, v: str | None) -> str | None:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
@@ -106,13 +107,13 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    full_name: Optional[str] = Field(None, min_length=2, max_length=255)
-    phone: Optional[str] = Field(None, min_length=8, max_length=20)
-    avatar_url: Optional[str] = None
+    full_name: str | None = Field(None, min_length=2, max_length=255)
+    phone: str | None = Field(None, min_length=8, max_length=20)
+    avatar_url: str | None = None
 
     @field_validator("full_name", "phone")
     @classmethod
-    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+    def sanitize_input(cls, v: str | None) -> str | None:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
@@ -121,13 +122,11 @@ class UserUpdate(BaseModel):
 
     @field_validator("avatar_url")
     @classmethod
-    def validate_avatar_url(cls, v: Optional[str]) -> Optional[str]:
+    def validate_avatar_url(cls, v: str | None) -> str | None:
         if v:
             v = v.strip()
             # Validate URL format (only allow safe URLs)
-            if not (
-                v.startswith("http://") or v.startswith("https://") or v.startswith("/")
-            ):
+            if not (v.startswith("http://") or v.startswith("https://") or v.startswith("/")):
                 raise ValueError(
                     "avatar_url must be a valid URL starting with http://, https://, or /"
                 )
@@ -142,7 +141,7 @@ class UserResponse(UserBase):
     role: str
     is_active: bool
     is_verified: bool
-    avatar_url: Optional[str]
+    avatar_url: str | None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True, extra="forbid")
@@ -200,7 +199,7 @@ class PaginationParams(BaseModel):
 
 class PaginatedResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    items: List[Any]
+    items: list[Any]
     total: int
     page: int
     page_size: int
@@ -214,9 +213,9 @@ class VendorBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
     business_name: str = Field(..., min_length=2, max_length=255)
     business_type: str
-    description: Optional[str] = None
-    phone: Optional[str] = None
-    email: Optional[EmailStr] = None
+    description: str | None = None
+    phone: str | None = None
+    email: EmailStr | None = None
 
 
 class VendorCreate(VendorBase):
@@ -231,14 +230,14 @@ class VendorCreate(VendorBase):
 
 class VendorUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    business_name: Optional[str] = None
-    description: Optional[str] = None
-    phone: Optional[str] = None
-    email: Optional[EmailStr] = None
+    business_name: str | None = None
+    description: str | None = None
+    phone: str | None = None
+    email: EmailStr | None = None
 
     @field_validator("business_name", "description")
     @classmethod
-    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+    def sanitize_input(cls, v: str | None) -> str | None:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
@@ -249,8 +248,8 @@ class VendorUpdate(BaseModel):
 class VendorResponse(VendorBase):
     id: UUID
     user_id: UUID
-    rating: Optional[float]
-    total_reviews: Optional[int]
+    rating: float | None
+    total_reviews: int | None
     is_verified: bool
     is_active: bool
     created_at: datetime
@@ -262,10 +261,10 @@ class VendorPublicResponse(BaseModel):
     id: UUID
     business_name: str
     business_type: str
-    description: Optional[str]
-    logo_url: Optional[str]
-    rating: Optional[float]
-    total_reviews: Optional[int]
+    description: str | None
+    logo_url: str | None
+    rating: float | None
+    total_reviews: int | None
 
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
@@ -274,54 +273,54 @@ class VendorPublicResponse(BaseModel):
 class PropertyBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str = Field(..., min_length=2, max_length=255)
-    slug: Optional[str] = None
-    short_description: Optional[str] = None
-    description: Optional[str] = None
+    slug: str | None = None
+    short_description: str | None = None
+    description: str | None = None
     property_type: str = "hotel"
-    category: Optional[str] = None
+    category: str | None = None
 
-    address: Optional[str] = None
+    address: str | None = None
     country: str = "Costa Rica"
-    province: Optional[str] = None
-    region: Optional[str] = None
-    city: Optional[str] = None
-    district: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    map_address: Optional[str] = None
+    province: str | None = None
+    region: str | None = None
+    city: str | None = None
+    district: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    map_address: str | None = None
 
-    cover_image: Optional[str] = None
-    images: Optional[List[str]] = []
-    videos: Optional[List[str]] = []
-    virtual_tour_url: Optional[str] = None
+    cover_image: str | None = None
+    images: list[str] | None = []
+    videos: list[str] | None = []
+    virtual_tour_url: str | None = None
 
-    amenities: Optional[List[str]] = []
-    features: Optional[List[str]] = []
+    amenities: list[str] | None = []
+    features: list[str] | None = []
 
     check_in_time: str = "15:00"
     check_out_time: str = "11:00"
-    cancellation_policy: Optional[str] = None
-    house_rules: Optional[str] = None
-    important_info: Optional[str] = None
+    cancellation_policy: str | None = None
+    house_rules: str | None = None
+    important_info: str | None = None
 
     min_guests: int = 1
     max_guests: int = 10
     beds: int = 1
     baths: int = 1
-    square_meters: Optional[int] = None
+    square_meters: int | None = None
 
     base_price: float = 0
     currency: str = "USD"
     weekend_price: float = 0
     weekly_discount: float = 0
 
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
-    seo_keywords: Optional[List[str]] = []
+    seo_title: str | None = None
+    seo_description: str | None = None
+    seo_keywords: list[str] | None = []
 
     @field_validator("name", "address", "slug")
     @classmethod
-    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+    def sanitize_input(cls, v: str | None) -> str | None:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
@@ -330,56 +329,56 @@ class PropertyBase(BaseModel):
 
 
 class PropertyCreate(PropertyBase):
-    rooms: Optional[List[dict]] = []
-    pricing_rules: Optional[List[dict]] = []
+    rooms: list[dict] | None = []
+    pricing_rules: list[dict] | None = []
 
 
 class PropertyUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    name: Optional[str] = None
-    slug: Optional[str] = None
-    short_description: Optional[str] = None
-    description: Optional[str] = None
-    property_type: Optional[str] = None
-    category: Optional[str] = None
-    address: Optional[str] = None
-    country: Optional[str] = None
-    province: Optional[str] = None
-    region: Optional[str] = None
-    city: Optional[str] = None
-    district: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    map_address: Optional[str] = None
-    cover_image: Optional[str] = None
-    images: Optional[List[str]] = None
-    videos: Optional[List[str]] = None
-    virtual_tour_url: Optional[str] = None
-    amenities: Optional[List[str]] = None
-    features: Optional[List[str]] = None
-    check_in_time: Optional[str] = None
-    check_out_time: Optional[str] = None
-    cancellation_policy: Optional[str] = None
-    house_rules: Optional[str] = None
-    important_info: Optional[str] = None
-    min_guests: Optional[int] = None
-    max_guests: Optional[int] = None
-    beds: Optional[int] = None
-    baths: Optional[int] = None
-    square_meters: Optional[int] = None
-    base_price: Optional[float] = None
-    weekend_price: Optional[float] = None
-    weekly_discount: Optional[float] = None
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
-    seo_keywords: Optional[List[str]] = None
-    is_featured: Optional[bool] = None
-    is_active: Optional[bool] = None
-    is_verified: Optional[bool] = None
+    name: str | None = None
+    slug: str | None = None
+    short_description: str | None = None
+    description: str | None = None
+    property_type: str | None = None
+    category: str | None = None
+    address: str | None = None
+    country: str | None = None
+    province: str | None = None
+    region: str | None = None
+    city: str | None = None
+    district: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    map_address: str | None = None
+    cover_image: str | None = None
+    images: list[str] | None = None
+    videos: list[str] | None = None
+    virtual_tour_url: str | None = None
+    amenities: list[str] | None = None
+    features: list[str] | None = None
+    check_in_time: str | None = None
+    check_out_time: str | None = None
+    cancellation_policy: str | None = None
+    house_rules: str | None = None
+    important_info: str | None = None
+    min_guests: int | None = None
+    max_guests: int | None = None
+    beds: int | None = None
+    baths: int | None = None
+    square_meters: int | None = None
+    base_price: float | None = None
+    weekend_price: float | None = None
+    weekly_discount: float | None = None
+    seo_title: str | None = None
+    seo_description: str | None = None
+    seo_keywords: list[str] | None = None
+    is_featured: bool | None = None
+    is_active: bool | None = None
+    is_verified: bool | None = None
 
     @field_validator("name", "description", "address")
     @classmethod
-    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+    def sanitize_input(cls, v: str | None) -> str | None:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
@@ -392,29 +391,29 @@ class RoomSchema(BaseModel):
     id: UUID
     property_id: UUID
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     max_guests: int = 2
     beds: int = 1
-    bed_type: Optional[str] = None
+    bed_type: str | None = None
     price_per_night: float = 0
     weekend_price: float = 0
     extra_guest_price: float = 0
     cleaning_fee: float = 0
-    images: List[str] = []
+    images: list[str] = []
     is_available: bool = True
 
 
 class PropertyResponse(PropertyBase):
     id: UUID
     vendor_id: UUID
-    rating: Optional[float] = 0.0
+    rating: float | None = 0.0
     total_reviews: int = 0
     total_bookings: int = 0
     is_featured: bool = False
     is_active: bool = True
     is_verified: bool = False
-    rooms: List[RoomSchema] = []
-    vendor: Optional[VendorPublicResponse] = None
+    rooms: list[RoomSchema] = []
+    vendor: VendorPublicResponse | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True, extra="forbid")
@@ -425,14 +424,14 @@ class PropertyListResponse(BaseModel):
     id: UUID
     name: str
     slug: str
-    short_description: Optional[str] = None
+    short_description: str | None = None
     property_type: str
-    category: Optional[str] = None
-    city: Optional[str] = None
-    region: Optional[str] = None
-    province: Optional[str] = None
-    cover_image: Optional[str] = None
-    rating: Optional[float] = 0.0
+    category: str | None = None
+    city: str | None = None
+    region: str | None = None
+    province: str | None = None
+    cover_image: str | None = None
+    rating: float | None = 0.0
     total_reviews: int = 0
     base_price: float = 0
     is_active: bool = True
@@ -442,7 +441,7 @@ class PropertyListResponse(BaseModel):
 class TourBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str = Field(..., min_length=2, max_length=255)
-    description: Optional[str] = None
+    description: str | None = None
     category: str
     location: str
 
@@ -458,37 +457,37 @@ class TourBase(BaseModel):
 class TourCreate(TourBase):
     duration_hours: float
     difficulty: str = "easy"
-    meeting_point: Optional[str] = None
+    meeting_point: str | None = None
     max_group_size: int = 20
     price: float
 
 
 class TourUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    name: Optional[str] = None
-    description: Optional[str] = None
-    category: Optional[str] = None
-    difficulty: Optional[str] = None
-    location: Optional[str] = None
-    duration_hours: Optional[float] = None
-    duration_text: Optional[str] = None
-    meeting_point: Optional[str] = None
-    max_group_size: Optional[int] = None
-    min_age: Optional[int] = None
-    price: Optional[float] = None
-    currency: Optional[str] = None
-    included: Optional[List[str]] = None
-    not_included: Optional[List[str]] = None
-    itinerary: Optional[List[dict]] = None
-    images: Optional[List[str]] = None
-    cover_image: Optional[str] = None
-    schedule_days: Optional[List[str]] = None
-    is_featured: Optional[bool] = None
-    is_active: Optional[bool] = None
+    name: str | None = None
+    description: str | None = None
+    category: str | None = None
+    difficulty: str | None = None
+    location: str | None = None
+    duration_hours: float | None = None
+    duration_text: str | None = None
+    meeting_point: str | None = None
+    max_group_size: int | None = None
+    min_age: int | None = None
+    price: float | None = None
+    currency: str | None = None
+    included: list[str] | None = None
+    not_included: list[str] | None = None
+    itinerary: list[dict] | None = None
+    images: list[str] | None = None
+    cover_image: str | None = None
+    schedule_days: list[str] | None = None
+    is_featured: bool | None = None
+    is_active: bool | None = None
 
     @field_validator("name", "description", "location")
     @classmethod
-    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+    def sanitize_input(cls, v: str | None) -> str | None:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
@@ -501,14 +500,14 @@ class TourResponse(TourBase):
     vendor_id: UUID
     slug: str
     duration_hours: float
-    duration_text: Optional[str] = None
+    duration_text: str | None = None
     difficulty: str
-    location: Optional[str] = None
-    meeting_point: Optional[str] = None
+    location: str | None = None
+    meeting_point: str | None = None
     price: float
     currency: str = "USD"
-    rating: Optional[float] = None
-    total_reviews: Optional[int] = None
+    rating: float | None = None
+    total_reviews: int | None = None
     is_active: bool
     is_featured: bool = False
     max_group_size: int = 15
@@ -517,10 +516,10 @@ class TourResponse(TourBase):
     not_included: list = []
     itinerary: list = []
     images: list = []
-    cover_image: Optional[str] = None
+    cover_image: str | None = None
     schedule_days: list = []
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
+    created_at: str | None = None
+    updated_at: str | None = None
 
     model_config = ConfigDict(from_attributes=True, extra="ignore")
 
@@ -533,10 +532,10 @@ class TourListResponse(BaseModel):
     category: str
     difficulty: str
     duration_hours: float
-    location: Optional[str] = None
+    location: str | None = None
     price: float
-    rating: Optional[float] = None
-    cover_image: Optional[str] = None
+    rating: float | None = None
+    cover_image: str | None = None
     is_featured: bool = False
 
 
@@ -545,8 +544,8 @@ class BookingBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
     guest_name: str = Field(..., min_length=2, max_length=255)
     guest_email: EmailStr
-    guest_phone: Optional[str] = None
-    guest_notes: Optional[str] = None
+    guest_phone: str | None = None
+    guest_notes: str | None = None
 
     @field_validator("guest_name")
     @classmethod
@@ -559,7 +558,7 @@ class BookingBase(BaseModel):
 
 class BookingPropertyRequest(BookingBase):
     property_id: UUID
-    room_id: Optional[UUID] = None
+    room_id: UUID | None = None
     check_in: datetime
     check_out: datetime
     guests: int = Field(1, ge=1)
@@ -609,11 +608,11 @@ class PricePreviewResponse(BaseModel):
 
 class BookingResponse(BookingBase):
     id: UUID
-    user_id: Optional[UUID]
-    vendor_id: Optional[UUID]
-    property_id: Optional[UUID]
-    room_id: Optional[UUID]
-    tour_id: Optional[UUID]
+    user_id: UUID | None
+    vendor_id: UUID | None
+    property_id: UUID | None
+    room_id: UUID | None
+    tour_id: UUID | None
     booking_type: str
     status: str
     total_amount: float
@@ -626,9 +625,9 @@ class BookingResponse(BookingBase):
 class BlogPostBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
     title: str = Field(..., min_length=5, max_length=255)
-    excerpt: Optional[str] = None
+    excerpt: str | None = None
     content: str = Field(..., min_length=50)
-    category: Optional[str] = None
+    category: str | None = None
 
     @field_validator("title", "content")
     @classmethod
@@ -640,26 +639,26 @@ class BlogPostBase(BaseModel):
 
 
 class BlogPostCreate(BlogPostBase):
-    featured_image: Optional[str] = None
-    tags: Optional[List[str]] = None
+    featured_image: str | None = None
+    tags: list[str] | None = None
 
 
 class BlogPostUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    title: Optional[str] = None
-    excerpt: Optional[str] = None
-    content: Optional[str] = None
-    featured_image: Optional[str] = None
-    category: Optional[str] = None
-    tags: Optional[List[str]] = None
-    status: Optional[str] = None
-    published_at: Optional[datetime] = None
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
+    title: str | None = None
+    excerpt: str | None = None
+    content: str | None = None
+    featured_image: str | None = None
+    category: str | None = None
+    tags: list[str] | None = None
+    status: str | None = None
+    published_at: datetime | None = None
+    seo_title: str | None = None
+    seo_description: str | None = None
 
     @field_validator("title", "content")
     @classmethod
-    def sanitize_input(cls, v: Optional[str]) -> Optional[str]:
+    def sanitize_input(cls, v: str | None) -> str | None:
         if v:
             v = v.strip()
             if is_dangerous_sql(v):
@@ -670,17 +669,17 @@ class BlogPostUpdate(BaseModel):
 class BlogPostResponse(BlogPostBase):
     id: UUID
     slug: str
-    author_id: Optional[UUID]
+    author_id: UUID | None
     status: str
     views_count: int
     is_featured: bool
-    featured_image: Optional[str] = None
-    tags: Optional[List[str]] = None
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
-    published_at: Optional[datetime]
+    featured_image: str | None = None
+    tags: list[str] | None = None
+    seo_title: str | None = None
+    seo_description: str | None = None
+    published_at: datetime | None
     created_at: datetime
-    author_name: Optional[str] = None
+    author_name: str | None = None
 
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
@@ -690,8 +689,8 @@ class BlogPostListResponse(BaseModel):
     id: UUID
     slug: str
     title: str
-    excerpt: Optional[str]
-    category: Optional[str]
+    excerpt: str | None
+    category: str | None
     status: str
     views_count: int
     is_featured: bool
@@ -701,39 +700,39 @@ class BlogPostListResponse(BaseModel):
 class DestinationBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str = Field(..., min_length=2, max_length=255)
-    slug: Optional[str] = None
-    description: Optional[str] = None
+    slug: str | None = None
+    description: str | None = None
     country: str = "Costa Rica"
-    region: Optional[str] = None
-    province: Optional[str] = None
-    canton: Optional[str] = None
-    district: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    region: str | None = None
+    province: str | None = None
+    canton: str | None = None
+    district: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     zoom: int = 10
-    highlights: List[str] = []
-    things_to_do: List[str] = []
-    culture: Optional[str] = None
-    gastronomy: Optional[str] = None
-    history: Optional[str] = None
-    best_time: Optional[str] = None
-    weather_info: Optional[str] = None
-    getting_there: Optional[str] = None
-    local_tips: Optional[str] = None
-    safety_info: Optional[str] = None
-    language: Optional[str] = None
-    currency: Optional[str] = None
-    timezone: Optional[str] = None
-    phone_code: Optional[str] = None
-    visa_info: Optional[str] = None
-    emergency_numbers: List[str] = []
-    image: Optional[str] = None
-    gallery: List[str] = []
-    videos: List[str] = []
-    featured_photo: Optional[str] = None
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
-    seo_keywords: List[str] = []
+    highlights: list[str] = []
+    things_to_do: list[str] = []
+    culture: str | None = None
+    gastronomy: str | None = None
+    history: str | None = None
+    best_time: str | None = None
+    weather_info: str | None = None
+    getting_there: str | None = None
+    local_tips: str | None = None
+    safety_info: str | None = None
+    language: str | None = None
+    currency: str | None = None
+    timezone: str | None = None
+    phone_code: str | None = None
+    visa_info: str | None = None
+    emergency_numbers: list[str] = []
+    image: str | None = None
+    gallery: list[str] = []
+    videos: list[str] = []
+    featured_photo: str | None = None
+    seo_title: str | None = None
+    seo_description: str | None = None
+    seo_keywords: list[str] = []
     is_featured: bool = False
     is_active: bool = True
     order: int = 0
@@ -759,7 +758,7 @@ class DestinationBase(BaseModel):
         "visa_info",
     )
     @classmethod
-    def sanitize_text(cls, v: Optional[str]) -> Optional[str]:
+    def sanitize_text(cls, v: str | None) -> str | None:
         if v:
             v = sanitize_html(v).strip()
             if is_dangerous_sql(v):
@@ -768,14 +767,14 @@ class DestinationBase(BaseModel):
 
     @field_validator("latitude")
     @classmethod
-    def validate_latitude(cls, v: Optional[float]) -> Optional[float]:
+    def validate_latitude(cls, v: float | None) -> float | None:
         if v is not None and (v < -90 or v > 90):
             raise ValueError("Latitude must be between -90 and 90")
         return v
 
     @field_validator("longitude")
     @classmethod
-    def validate_longitude(cls, v: Optional[float]) -> Optional[float]:
+    def validate_longitude(cls, v: float | None) -> float | None:
         if v is not None and (v < -180 or v > 180):
             raise ValueError("Longitude must be between -180 and 180")
         return v
@@ -789,18 +788,16 @@ class DestinationBase(BaseModel):
 
     @field_validator("image", "featured_photo")
     @classmethod
-    def validate_url(cls, v: Optional[str]) -> Optional[str]:
+    def validate_url(cls, v: str | None) -> str | None:
         if v:
             v = v.strip()
-            if not (
-                v.startswith("http://") or v.startswith("https://") or v.startswith("/")
-            ):
+            if not (v.startswith("http://") or v.startswith("https://") or v.startswith("/")):
                 raise ValueError("Must be a valid URL (http://, https://, or relative)")
         return v
 
     @field_validator("phone_code")
     @classmethod
-    def validate_phone_code(cls, v: Optional[str]) -> Optional[str]:
+    def validate_phone_code(cls, v: str | None) -> str | None:
         if v and not re.match(r"^\+?\d{1,6}$", v):
             raise ValueError("Invalid phone code format (e.g., +506)")
         return v
@@ -812,47 +809,47 @@ class DestinationCreate(DestinationBase):
 
 class DestinationUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    name: Optional[str] = None
-    slug: Optional[str] = None
-    description: Optional[str] = None
-    country: Optional[str] = None
-    region: Optional[str] = None
-    province: Optional[str] = None
-    canton: Optional[str] = None
-    district: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    zoom: Optional[int] = None
-    highlights: Optional[List[str]] = None
-    things_to_do: Optional[List[str]] = None
-    culture: Optional[str] = None
-    gastronomy: Optional[str] = None
-    history: Optional[str] = None
-    best_time: Optional[str] = None
-    weather_info: Optional[str] = None
-    getting_there: Optional[str] = None
-    local_tips: Optional[str] = None
-    safety_info: Optional[str] = None
-    language: Optional[str] = None
-    currency: Optional[str] = None
-    timezone: Optional[str] = None
-    phone_code: Optional[str] = None
-    visa_info: Optional[str] = None
-    emergency_numbers: Optional[List[str]] = None
-    image: Optional[str] = None
-    gallery: Optional[List[str]] = None
-    videos: Optional[List[str]] = None
-    featured_photo: Optional[str] = None
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
-    seo_keywords: Optional[List[str]] = None
-    is_featured: Optional[bool] = None
-    is_active: Optional[bool] = None
-    order: Optional[int] = None
+    name: str | None = None
+    slug: str | None = None
+    description: str | None = None
+    country: str | None = None
+    region: str | None = None
+    province: str | None = None
+    canton: str | None = None
+    district: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    zoom: int | None = None
+    highlights: list[str] | None = None
+    things_to_do: list[str] | None = None
+    culture: str | None = None
+    gastronomy: str | None = None
+    history: str | None = None
+    best_time: str | None = None
+    weather_info: str | None = None
+    getting_there: str | None = None
+    local_tips: str | None = None
+    safety_info: str | None = None
+    language: str | None = None
+    currency: str | None = None
+    timezone: str | None = None
+    phone_code: str | None = None
+    visa_info: str | None = None
+    emergency_numbers: list[str] | None = None
+    image: str | None = None
+    gallery: list[str] | None = None
+    videos: list[str] | None = None
+    featured_photo: str | None = None
+    seo_title: str | None = None
+    seo_description: str | None = None
+    seo_keywords: list[str] | None = None
+    is_featured: bool | None = None
+    is_active: bool | None = None
+    order: int | None = None
 
     @field_validator("name", "description", "culture", "gastronomy", "history")
     @classmethod
-    def sanitize_update_input(cls, v: Optional[str]) -> Optional[str]:
+    def sanitize_update_input(cls, v: str | None) -> str | None:
         if v:
             v = sanitize_html(v).strip()
             if is_dangerous_sql(v):
@@ -861,39 +858,37 @@ class DestinationUpdate(BaseModel):
 
     @field_validator("latitude")
     @classmethod
-    def validate_update_latitude(cls, v: Optional[float]) -> Optional[float]:
+    def validate_update_latitude(cls, v: float | None) -> float | None:
         if v is not None and (v < -90 or v > 90):
             raise ValueError("Latitude must be between -90 and 90")
         return v
 
     @field_validator("longitude")
     @classmethod
-    def validate_update_longitude(cls, v: Optional[float]) -> Optional[float]:
+    def validate_update_longitude(cls, v: float | None) -> float | None:
         if v is not None and (v < -180 or v > 180):
             raise ValueError("Longitude must be between -180 and 180")
         return v
 
     @field_validator("zoom")
     @classmethod
-    def validate_update_zoom(cls, v: Optional[int]) -> Optional[int]:
+    def validate_update_zoom(cls, v: int | None) -> int | None:
         if v is not None and (v < 1 or v > 20):
             raise ValueError("Zoom must be between 1 and 20")
         return v
 
     @field_validator("image", "featured_photo")
     @classmethod
-    def validate_update_url(cls, v: Optional[str]) -> Optional[str]:
+    def validate_update_url(cls, v: str | None) -> str | None:
         if v:
             v = v.strip()
-            if not (
-                v.startswith("http://") or v.startswith("https://") or v.startswith("/")
-            ):
+            if not (v.startswith("http://") or v.startswith("https://") or v.startswith("/")):
                 raise ValueError("Must be a valid URL (http://, https://, or relative)")
         return v
 
     @field_validator("phone_code")
     @classmethod
-    def validate_update_phone_code(cls, v: Optional[str]) -> Optional[str]:
+    def validate_update_phone_code(cls, v: str | None) -> str | None:
         if v and not re.match(r"^\+?\d{1,6}$", v):
             raise ValueError("Invalid phone code format (e.g., +506)")
         return v
@@ -903,13 +898,13 @@ class DestinationResponse(DestinationBase):
     id: UUID
     created_at: datetime
     updated_at: datetime
-    deleted_at: Optional[datetime] = None
-    highlights: Optional[List[str]] = None
-    things_to_do: Optional[List[str]] = None
-    emergency_numbers: Optional[List[str]] = None
-    gallery: Optional[List[str]] = None
-    videos: Optional[List[str]] = None
-    seo_keywords: Optional[List[str]] = None
+    deleted_at: datetime | None = None
+    highlights: list[str] | None = None
+    things_to_do: list[str] | None = None
+    emergency_numbers: list[str] | None = None
+    gallery: list[str] | None = None
+    videos: list[str] | None = None
+    seo_keywords: list[str] | None = None
 
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
@@ -931,11 +926,11 @@ class DestinationResponse(DestinationBase):
 class NewsletterSubscribe(BaseModel):
     model_config = ConfigDict(extra="forbid")
     email: EmailStr
-    first_name: Optional[str] = Field(None, max_length=100)
+    first_name: str | None = Field(None, max_length=100)
 
     @field_validator("first_name")
     @classmethod
-    def sanitize_name(cls, v: Optional[str]) -> Optional[str]:
+    def sanitize_name(cls, v: str | None) -> str | None:
         if v is not None:
             if is_dangerous_sql(v):
                 raise ValueError("Invalid input")
@@ -953,7 +948,7 @@ class NewsletterSubscriberResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
     id: UUID
     email: str
-    first_name: Optional[str]
+    first_name: str | None
     is_active: bool
     is_confirmed: bool
     source: str

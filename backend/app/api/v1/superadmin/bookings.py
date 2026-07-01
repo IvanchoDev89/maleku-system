@@ -1,12 +1,11 @@
-from typing import List, Optional
-from uuid import UUID
 from datetime import datetime
 from math import ceil
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
@@ -21,10 +20,10 @@ class BookingListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    user_id: Optional[UUID] = None
-    vendor_id: Optional[UUID] = None
-    property_id: Optional[UUID] = None
-    tour_id: Optional[UUID] = None
+    user_id: UUID | None = None
+    vendor_id: UUID | None = None
+    property_id: UUID | None = None
+    tour_id: UUID | None = None
     booking_type: str
     status: str
     guest_name: str
@@ -32,12 +31,12 @@ class BookingListItem(BaseModel):
     total_amount: float = 0
     currency: str = "USD"
     created_at: datetime
-    check_in: Optional[datetime] = None
-    check_out: Optional[datetime] = None
+    check_in: datetime | None = None
+    check_out: datetime | None = None
 
 
 class BookingListResponse(BaseModel):
-    items: List[BookingListItem]
+    items: list[BookingListItem]
     total: int
     page: int
     page_size: int
@@ -48,31 +47,31 @@ class BookingDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    user_id: Optional[UUID] = None
-    vendor_id: Optional[UUID] = None
-    property_id: Optional[UUID] = None
-    room_id: Optional[UUID] = None
-    tour_id: Optional[UUID] = None
+    user_id: UUID | None = None
+    vendor_id: UUID | None = None
+    property_id: UUID | None = None
+    room_id: UUID | None = None
+    tour_id: UUID | None = None
     booking_type: str
     status: str
     guest_name: str
     guest_email: str
-    guest_phone: Optional[str] = None
-    guest_notes: Optional[str] = None
-    check_in: Optional[datetime] = None
-    check_out: Optional[datetime] = None
+    guest_phone: str | None = None
+    guest_notes: str | None = None
+    check_in: datetime | None = None
+    check_out: datetime | None = None
     guests: int = 1
     participants: int = 1
     subtotal: float = 0
     commission_amount: float = 0
     total_amount: float = 0
     currency: str = "USD"
-    confirmation_code: Optional[str] = None
-    cancellation_reason: Optional[str] = None
+    confirmation_code: str | None = None
+    cancellation_reason: str | None = None
     created_at: datetime
     updated_at: datetime
-    confirmed_at: Optional[datetime] = None
-    cancelled_at: Optional[datetime] = None
+    confirmed_at: datetime | None = None
+    cancelled_at: datetime | None = None
 
 
 class BookingStatusUpdate(BaseModel):
@@ -84,9 +83,9 @@ class BookingStatusUpdate(BaseModel):
 async def list_bookings(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    status: Optional[str] = Query(None),
-    booking_type: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
+    status: str | None = Query(None),
+    booking_type: str | None = Query(None),
+    search: str | None = Query(None),
     current_user: User = Depends(require_superadmin()),
     db: AsyncSession = Depends(get_db),
 ):
@@ -96,9 +95,7 @@ async def list_bookings(
     if search:
         safe = escape_like_pattern(search)
         like = f"%{safe}%"
-        query = query.where(
-            (Booking.guest_name.ilike(like)) | (Booking.guest_email.ilike(like))
-        )
+        query = query.where((Booking.guest_name.ilike(like)) | (Booking.guest_email.ilike(like)))
         count_query = count_query.where(
             (Booking.guest_name.ilike(like)) | (Booking.guest_email.ilike(like))
         )

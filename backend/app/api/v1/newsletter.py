@@ -3,13 +3,14 @@ Newsletter API endpoints for email subscriptions.
 """
 
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
 from app.core.config import settings
+from app.core.database import get_db
 from app.core.logging import get_logger
 from app.core.rate_limiter import limiter
 from app.models import NewsletterSubscriber
@@ -115,7 +116,7 @@ async def unsubscribe_from_newsletter(
     # This prevents email enumeration attacks
     if subscriber and subscriber.is_active:
         subscriber.is_active = False
-        subscriber.unsubscribed_at = datetime.now(timezone.utc)
+        subscriber.unsubscribed_at = datetime.now(UTC)
         await db.commit()
 
     # Always return generic success message

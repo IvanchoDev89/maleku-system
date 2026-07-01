@@ -3,20 +3,21 @@ Super Admin Reviews Management endpoints.
 Moderation of reviews and ratings.
 """
 
-from typing import Optional
+from datetime import UTC
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import select, desc
+from pydantic import BaseModel
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from pydantic import BaseModel
 
 from app.core.database import get_db
+from app.core.pagination import paginate_flat
 from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin
-from app.core.pagination import paginate_flat
 from app.models import Review, User
-from app.schemas import PaginationParams, PaginatedResponse
+from app.schemas import PaginatedResponse, PaginationParams
 
 router = APIRouter(tags=["SuperAdmin - Reviews"])
 
@@ -28,14 +29,14 @@ class ReviewListItem(BaseModel):
     user_id: str
     user_name: str
     user_email: str
-    property_id: Optional[str] = None
-    property_name: Optional[str] = None
-    tour_id: Optional[str] = None
-    tour_name: Optional[str] = None
-    booking_id: Optional[str] = None
+    property_id: str | None = None
+    property_name: str | None = None
+    tour_id: str | None = None
+    tour_name: str | None = None
+    booking_id: str | None = None
     rating: int
-    title: Optional[str] = None
-    comment: Optional[str] = None
+    title: str | None = None
+    comment: str | None = None
     is_approved: bool
     created_at: str
 
@@ -46,7 +47,7 @@ class ReviewUpdateRequest(BaseModel):
     is_approved: bool
 
 
-def review_to_item(review: Review, user: Optional[User] = None) -> ReviewListItem:
+def review_to_item(review: Review, user: User | None = None) -> ReviewListItem:
     """Convert a Review model to a ReviewListItem."""
     return ReviewListItem(
         id=str(review.id),
@@ -75,7 +76,7 @@ def review_to_item(review: Review, user: Optional[User] = None) -> ReviewListIte
 async def list_reviews(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    status_filter: Optional[str] = Query(None, alias="status"),
+    status_filter: str | None = Query(None, alias="status"),
     db: AsyncSession = Depends(get_db),
     _current_user: User = Depends(require_superadmin()),
 ):
@@ -145,13 +146,13 @@ async def delete_review(
     db: AsyncSession = Depends(get_db),
     _current_user: User = Depends(require_superadmin()),
 ):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     result = await db.execute(select(Review).where(Review.id == review_id))
     review = result.scalar_one_or_none()
     if not review:
         raise HTTPException(status_code=404, detail="Review not found")
 
-    review.deleted_at = datetime.now(timezone.utc)
+    review.deleted_at = datetime.now(UTC)
     await db.commit()
     return {"success": True}

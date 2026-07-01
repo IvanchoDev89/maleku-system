@@ -1,34 +1,35 @@
+import asyncio
 from logging.config import fileConfig
+
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from alembic import context
-import asyncio
 
-from app.core.config import settings
-from app.core.database import Base
+import app.models.audit  # noqa: F401
+import app.models.blog  # noqa: F401
+import app.models.boat  # noqa: F401
+import app.models.booking  # noqa: F401
+import app.models.chat  # noqa: F401
+import app.models.content  # noqa: F401
+import app.models.destination  # noqa: F401
+import app.models.flight  # noqa: F401
+import app.models.marketing  # noqa: F401
+import app.models.newsletter  # noqa: F401
+import app.models.planner  # noqa: F401
+import app.models.pricing  # noqa: F401
+import app.models.property  # noqa: F401
+import app.models.review  # noqa: F401
+import app.models.room_availability  # noqa: F401
+import app.models.tour  # noqa: F401
+import app.models.transportation  # noqa: F401
+import app.models.trip_planner  # noqa: F401
 
 # Import all models to register them with Base metadata
 import app.models.user  # noqa: F401
-import app.models.vendor  # noqa: F401
-import app.models.destination  # noqa: F401
-import app.models.property  # noqa: F401
-import app.models.booking  # noqa: F401
-import app.models.tour  # noqa: F401
-import app.models.review  # noqa: F401
-import app.models.blog  # noqa: F401
 import app.models.vehicle  # noqa: F401
-import app.models.boat  # noqa: F401
-import app.models.flight  # noqa: F401
-import app.models.transportation  # noqa: F401
-import app.models.newsletter  # noqa: F401
-import app.models.marketing  # noqa: F401
-import app.models.audit  # noqa: F401
-import app.models.chat  # noqa: F401
-import app.models.planner  # noqa: F401
-import app.models.pricing  # noqa: F401
-import app.models.room_availability  # noqa: F401
-import app.models.trip_planner  # noqa: F401
-import app.models.content  # noqa: F401
+import app.models.vendor  # noqa: F401
+from alembic import context
+from app.core.config import settings
+from app.core.database import Base
 
 config = context.config
 

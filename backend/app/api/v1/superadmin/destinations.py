@@ -1,16 +1,16 @@
-from typing import Optional, List
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import select, func, desc
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limiter import limiter
 from app.core.security import require_superadmin
 from app.core.utils import escape_like_pattern
-from app.models import User, Destination
-from app.schemas import DestinationResponse, DestinationCreate, DestinationUpdate
+from app.models import Destination, User
+from app.schemas import DestinationCreate, DestinationResponse, DestinationUpdate
 
 router = APIRouter(prefix="/destinations", tags=["Super Admin - Destinations"])
 
@@ -19,10 +19,10 @@ router = APIRouter(prefix="/destinations", tags=["Super Admin - Destinations"])
 async def list_destinations(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    region: Optional[str] = Query(None),
-    is_active: Optional[bool] = Query(None),
-    is_featured: Optional[bool] = Query(None),
-    search: Optional[str] = Query(None),
+    region: str | None = Query(None),
+    is_active: bool | None = Query(None),
+    is_featured: bool | None = Query(None),
+    search: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_superadmin()),
 ):
@@ -32,9 +32,7 @@ async def list_destinations(
     if search:
         safe = escape_like_pattern(search)
         like = f"%{safe}%"
-        query = query.where(
-            (Destination.name.ilike(like)) | (Destination.region.ilike(like))
-        )
+        query = query.where((Destination.name.ilike(like)) | (Destination.region.ilike(like)))
         count_query = count_query.where(
             (Destination.name.ilike(like)) | (Destination.region.ilike(like))
         )
@@ -135,8 +133,8 @@ async def create_destination(
         is_featured=data.is_featured,
         is_active=data.is_active,
         order=data.order,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
     db.add(dest)
     await db.commit()
@@ -160,20 +158,49 @@ async def update_destination(
 
     update_data = data.model_dump(exclude_unset=True)
     allowed_fields = {
-        "name", "slug", "description", "country", "region", "province",
-        "canton", "district", "latitude", "longitude", "zoom",
-        "highlights", "things_to_do", "culture", "gastronomy", "history",
-        "best_time", "weather_info", "getting_there", "local_tips",
-        "safety_info", "language", "currency", "timezone", "phone_code",
-        "visa_info", "emergency_numbers", "image", "gallery", "videos",
-        "featured_photo", "seo_title", "seo_description", "seo_keywords",
-        "is_featured", "is_active", "order",
+        "name",
+        "slug",
+        "description",
+        "country",
+        "region",
+        "province",
+        "canton",
+        "district",
+        "latitude",
+        "longitude",
+        "zoom",
+        "highlights",
+        "things_to_do",
+        "culture",
+        "gastronomy",
+        "history",
+        "best_time",
+        "weather_info",
+        "getting_there",
+        "local_tips",
+        "safety_info",
+        "language",
+        "currency",
+        "timezone",
+        "phone_code",
+        "visa_info",
+        "emergency_numbers",
+        "image",
+        "gallery",
+        "videos",
+        "featured_photo",
+        "seo_title",
+        "seo_description",
+        "seo_keywords",
+        "is_featured",
+        "is_active",
+        "order",
     }
     for key, value in update_data.items():
         if key in allowed_fields and value is not None:
             setattr(dest, key, value)
 
-    dest.updated_at = datetime.now(timezone.utc)
+    dest.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(dest)
     return DestinationResponse.model_validate(dest)
@@ -212,7 +239,7 @@ async def toggle_destination_featured(
         raise HTTPException(status_code=404, detail="Destination not found")
 
     dest.is_featured = featured
-    dest.updated_at = datetime.now(timezone.utc)
+    dest.updated_at = datetime.now(UTC)
     await db.commit()
     return {
         "success": True,

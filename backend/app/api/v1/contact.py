@@ -3,11 +3,12 @@ Contact form endpoint.
 Receives contact messages and logs them.
 """
 
+import logging
+
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, EmailStr, Field
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-import logging
 
 from app.core.config import settings
 
